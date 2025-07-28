@@ -6,6 +6,6 @@ database:
   host: "localhost"
   port: "5432"
   db_name: "bala"
-  db_password: "qwaq"
-  db_username: "qwaq"
+  db_password: ""
+  db_username: "postgres"
   sslmode: "disable"

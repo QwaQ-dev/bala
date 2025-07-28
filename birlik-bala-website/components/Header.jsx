@@ -28,9 +28,16 @@ export default function Header() {
             </Link>
           </nav>
 
-          <Button className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg">
-            Онлайн-консультация
-          </Button>
+          <div className="flex flex-row gap-10">
+          <Link href="/sign-up">
+            <Button className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-lg">
+              Онлайн-консультация
+            </Button>
+          </Link>
+          <Link href='/sign-in'>
+            <Button>Войти</Button>
+          </Link>
+          </div>
         </div>
       </div>
     </header>

@@ -11,8 +11,10 @@ import (
 )
 
 func InitDatabase(cfg config.Database, log *slog.Logger) (*sql.DB, error) {
-	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s",
-		cfg.DBhost, cfg.Port, cfg.DBusername, cfg.DBname, cfg.DBpassword, cfg.SSLMode))
+	db, err := sql.Open("postgres", fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		cfg.DBhost, cfg.Port, cfg.DBusername, cfg.DBpassword, cfg.DBname, cfg.SSLMode,
+	))
 	if err != nil {
 		log.Error("Error with connecting to database", sl.Err(err))
 		return nil, err
