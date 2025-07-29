@@ -51,7 +51,7 @@ func main() {
 	userService := services.NewUserService(log, userRepo, cfg)
 	articleService := services.NewArticleService(articleRepo, log, cfg)
 	checklistService := services.NewChecklistService(checklistRepo, log, cfg)
-	courseService := services.NewCourseService(courseRepo, log, cfg)
+	courseService := services.NewCourseService(courseRepo, log, cfg, userRepo)
 
 	userHandler := handlers.NewUserHandler(log, userService, cfg)
 	articleHandler := handlers.NewArticleHandler(articleService, log)

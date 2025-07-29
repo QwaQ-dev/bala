@@ -65,20 +65,29 @@ func (h *CourseHandler) CreateCourse(c *fiber.Ctx) error {
 }
 
 func (h *CourseHandler) GetCourseByID(c *fiber.Ctx) error {
-	id, err := strconv.Atoi(c.Params("id"))
+	course_id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid course ID"})
 	}
 
-	course, err := h.courseService.GetCourseByID(id)
+	user_id, _ := c.Locals("userId").(int)
+
+	course, err := h.courseService.GetCourseByID(course_id, user_id)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "course not found"})
+		switch err.Error() {
+		case "This user has no access for course":
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "User has no access for course"})
+		default:
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Course is not found"})
+		}
 	}
 
 	return c.JSON(course)
 }
 
 func (h *CourseHandler) UpdateCourse(c *fiber.Ctx) error {
+	user_id, _ := c.Locals("userId").(int)
+
 	idStr := c.FormValue("id")
 	if idStr == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "id is required"})
@@ -109,7 +118,7 @@ func (h *CourseHandler) UpdateCourse(c *fiber.Ctx) error {
 		}
 		imgPath = "/uploads/photos/" + filename
 	} else {
-		existingCourse, err := h.courseService.GetCourseByID(id)
+		existingCourse, err := h.courseService.GetCourseByID(id, user_id)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to get existing course"})
 		}

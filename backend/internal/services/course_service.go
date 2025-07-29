@@ -10,16 +10,18 @@ import (
 )
 
 type CourseService struct {
-	repo *postgres.CourseRepo
-	log  *slog.Logger
-	cfg  *config.Config
+	repo     *postgres.CourseRepo
+	userRepo *postgres.UserRepo
+	log      *slog.Logger
+	cfg      *config.Config
 }
 
-func NewCourseService(repo *postgres.CourseRepo, log *slog.Logger, cfg *config.Config) *CourseService {
+func NewCourseService(repo *postgres.CourseRepo, log *slog.Logger, cfg *config.Config, userRepo *postgres.UserRepo) *CourseService {
 	return &CourseService{
-		repo: repo,
-		log:  log,
-		cfg:  cfg,
+		repo:     repo,
+		userRepo: userRepo,
+		log:      log,
+		cfg:      cfg,
 	}
 }
 
@@ -37,11 +39,20 @@ func (s *CourseService) CreateCourse(course structures.Course) error {
 	return nil
 }
 
-func (s *CourseService) GetCourseByID(id int) (structures.Course, error) {
+func (s *CourseService) GetCourseByID(course_id, user_id int) (structures.Course, error) {
 	const op = "service.course_service.GetCourseByID"
-	course, err := s.repo.SelectCourseById(id)
+
+	user, err := s.userRepo.GetUserById(user_id)
 	if err != nil {
-		s.log.Error("failed to get course by id", slog.String("op", op), slog.Int("id", id), slog.Any("err", err))
+		return structures.Course{}, err
+	}
+	if !user.IsPaid {
+		return structures.Course{}, fmt.Errorf("This user has no access for course")
+	}
+
+	course, err := s.repo.SelectCourseById(course_id)
+	if err != nil {
+		s.log.Error("failed to get course by id", slog.String("op", op), slog.Int("course_id", course_id), slog.Any("err", err))
 		return course, fmt.Errorf("%s: %w", op, err)
 	}
 	return course, nil
