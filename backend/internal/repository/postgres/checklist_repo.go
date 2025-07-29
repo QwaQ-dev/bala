@@ -155,3 +155,22 @@ func (r *ChecklistRepo) DeleteChecklist(id int64) error {
 	log.Info("checklist deleted", slog.Int64("id", id))
 	return nil
 }
+
+func (r *CourseRepo) AddVideoToCourse(courseID int, path string) error {
+	const op = "postgres.course_repo.AddVideoToCourse"
+	log := r.log.With("op", op)
+
+	query := `
+		INSERT INTO videos (path, course_id)
+		VALUES ($1, $2)
+	`
+
+	_, err := r.db.Exec(query, path, courseID)
+	if err != nil {
+		log.Error("failed to insert video path", sl.Err(err))
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	log.Info("video added to course", slog.Int("course_id", courseID), slog.String("path", path))
+	return nil
+}

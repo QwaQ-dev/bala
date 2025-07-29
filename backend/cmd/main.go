@@ -34,6 +34,8 @@ func main() {
 		AllowHeaders: "Origin, Content-Type, Accept",
 	}))
 
+	app.Static("/uploads", "./uploads")
+
 	log.Info("Starting bala backend", slog.String("env", cfg.Env))
 	db, err := postgres.InitDatabase(cfg.Database, log)
 	if err != nil {
@@ -44,16 +46,19 @@ func main() {
 	userRepo := postgres.NewUserRepo(log, db)
 	articleRepo := postgres.NewArticleRepo(log, db)
 	checklistRepo := postgres.NewChecklistRepo(log, db)
+	courseRepo := postgres.NewCourseRepo(log, db)
 
 	userService := services.NewUserService(log, userRepo, cfg)
 	articleService := services.NewArticleService(articleRepo, log, cfg)
 	checklistService := services.NewChecklistService(checklistRepo, log, cfg)
+	courseService := services.NewCourseService(courseRepo, log, cfg)
 
 	userHandler := handlers.NewUserHandler(log, userService, cfg)
 	articleHandler := handlers.NewArticleHandler(articleService, log)
 	checklistHandler := handlers.NewChecklistHandler(checklistService, log)
+	courseHandler := handlers.NewCourseHandler(courseService, log)
 
-	routes.InitRoutes(app, log, cfg, userHandler, articleHandler, checklistHandler)
+	routes.InitRoutes(app, log, cfg, userHandler, articleHandler, checklistHandler, courseHandler)
 	log.Info("starting server", slog.String("address", cfg.Server.Port))
 
 	go func() {

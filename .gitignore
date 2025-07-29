@@ -1,3 +1,5 @@
 birlik-bala-website/node_modules
 .vscode
 backend/cmd/.env
+backend/cmd/uploads/videos
+backend/cmd/uploads/photos

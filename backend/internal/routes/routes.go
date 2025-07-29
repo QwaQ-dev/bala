@@ -15,7 +15,8 @@ func InitRoutes(
 	cfg *config.Config,
 	userHandler *handlers.UserHandler,
 	articleHandler *handlers.ArticleHandler,
-	checklistHandler *handlers.ChecklistHandler) {
+	checklistHandler *handlers.ChecklistHandler,
+	courseHandler *handlers.CourseHandler) {
 	v1 := app.Group("/api/v1")
 
 	authorizedGroup := v1.Group("/auth")
@@ -23,6 +24,7 @@ func InitRoutes(
 
 	checklists := authorizedGroup.Group("/checklist")
 	articles := authorizedGroup.Group("/article")
+	courses := authorizedGroup.Group("/course")
 	user := v1.Group("/user")
 
 	user.Post("/sign-in", userHandler.SignIn)
@@ -30,15 +32,21 @@ func InitRoutes(
 
 	checklists.Post("/create", checklistHandler.CreateChecklist)
 	checklists.Put("/update", checklistHandler.UpdateChecklist)
-	checklists.Get("/get", checklistHandler.GetAllChecklists)
-	checklists.Get("/get/:id", checklistHandler.GetOneChecklist)
+	user.Get("/get", checklistHandler.GetAllChecklists)
+	user.Get("/get/:id", checklistHandler.GetOneChecklist)
 	checklists.Delete("/:id", checklistHandler.DeleteChecklist)
 
 	articles.Post("/create", articleHandler.CreateArticle)
 	articles.Put("/update", articleHandler.UpdateArticle)
-	articles.Get("/get", articleHandler.GetAllArticles)
-	articles.Get("/get/:id", articleHandler.GetOneArticle)
+	user.Get("/get", articleHandler.GetAllArticles)
+	user.Get("/get/:id", articleHandler.GetOneArticle)
 	articles.Delete("/:id", articleHandler.DeleteArticle)
+
+	courses.Post("/create", courseHandler.CreateCourse)
+	courses.Put("/update", courseHandler.UpdateCourse)
+	courses.Get("/get/:id", courseHandler.GetCourseByID)
+	courses.Delete("/:id", courseHandler.DeleteCourse)
+	courses.Post("/add-video", courseHandler.UploadVideo)
 
 	log.Debug("All routes were initialized")
 }
