@@ -22,11 +22,6 @@ export default function HeroSection() {
               <Button className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold px-8 py-3 rounded-lg">
                 Записаться
               </Button>
-              <Button variant="ghost" className="flex items-center space-x-2 text-gray-600">
-                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md">
-                  <Play className="w-4 h-4 text-gray-600 ml-1" />
-                </div>
-              </Button>
             </div>
 
             <div className="flex items-center space-x-8">

@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import Header from "@/components/Header"
 import Link from "next/link"
 
 export const revalidate = 1800 // 30 минут
@@ -15,7 +16,7 @@ async function getArticles() {
       date: "2024-01-15",
       readTime: "5 мин",
       image: "/placeholder.svg?height=200&width=300",
-      slug: "1",
+      slug: 1,
     },
     {
       id: 2,
@@ -26,7 +27,7 @@ async function getArticles() {
       date: "2024-01-10",
       readTime: "7 мин",
       image: "/placeholder.svg?height=200&width=300",
-      slug: "2",
+      slug: 2,
     },
     {
       id: 3,
@@ -37,7 +38,7 @@ async function getArticles() {
       date: "2024-01-05",
       readTime: "6 мин",
       image: "/placeholder.svg?height=200&width=300",
-      slug: "socialnye-navyki-detey",
+      slug: 3,
     },
   ]
 }
@@ -54,6 +55,7 @@ export default async function ArticlesPage({ searchParams }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Header/>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Список статей</h1>

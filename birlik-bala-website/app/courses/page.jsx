@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button"
+import Header from "@/components/Header"
 import Link from "next/link"
 import CoursesClient from "@/components/CoursesClient"
 
@@ -108,6 +109,7 @@ export default async function CoursesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+        <Header/>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Заголовок */}
         <div className="text-center mb-12">

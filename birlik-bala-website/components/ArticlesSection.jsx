@@ -1,4 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card"
+import Link from "next/link"
 
 export default function ArticlesSection() {
   const articles = [
@@ -54,7 +55,9 @@ export default function ArticlesSection() {
         </div>
 
         <div className="text-center mt-8">
-          <button className="text-blue-600 font-medium hover:text-blue-700 transition-colors">Все статьи →</button>
+          <Link href="/articles">
+            <button className="text-blue-600 font-medium hover:text-blue-700 transition-colors">Все статьи →</button>
+          </Link>
         </div>
       </div>
     </section>
