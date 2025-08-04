@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button"
 import Header from "@/components/Header"
+import Action from "@/components/Action"
 import Link from "next/link"
 import CoursesClient from "@/components/CoursesClient"
 
@@ -121,7 +122,7 @@ export default async function CoursesPage() {
         <CoursesClient courses={courses} />
 
         {/* Призыв к действию */}
-        <div className="mt-16 bg-blue-50 rounded-lg p-8 text-center">
+        {/* <div className="mt-16 bg-blue-50 rounded-lg p-8 text-center">;
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Нужна персональная помощь?</h2>
           <p className="text-gray-600 mb-6">
             Получите индивидуальную консультацию и рекомендации от наших специалистов
@@ -129,7 +130,8 @@ export default async function CoursesPage() {
           <Link href="/consultation">
             <Button className="bg-blue-600 hover:bg-blue-700 text-white">Записаться на консультацию</Button>
           </Link>
-        </div>
+        </div> */}
+        <Action/>
       </div>
     </div>
   )
