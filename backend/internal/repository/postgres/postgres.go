@@ -50,17 +50,12 @@ func InitDatabase(cfg config.Database, log *slog.Logger) (*sql.DB, error) {
 		"postgres",
 		driver,
 	)
-	runMigrations(m, "down")
-	runMigrations(m, "up")
 	if err != nil {
 		log.Error("failed to create migrate instance", sl.Err(err))
 		return nil, err
 	}
 
-	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
-		log.Error("migration up failed", sl.Err(err))
-		return nil, err
-	}
+	runMigrations(m, "up")
 
 	log.Info("Database connected successfully")
 	return db, nil
