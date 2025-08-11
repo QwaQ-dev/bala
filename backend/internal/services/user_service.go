@@ -26,7 +26,7 @@ func NewUserService(log *slog.Logger, repo *postgres.UserRepo, cfg *config.Confi
 	}
 }
 
-func (s *UserService) CreateUser(user *structures.User) (string, error) {
+func (s *UserService) SignUp(user *structures.User) (string, error) {
 	const op = "services.user_service.CreateUser"
 	log := s.log.With("op", op)
 
@@ -62,7 +62,7 @@ func (s *UserService) CreateUser(user *structures.User) (string, error) {
 	return accessToken, nil
 }
 
-func (s *UserService) SignUp(user structures.User) (string, error) {
+func (s *UserService) SignIn(user *structures.User) (string, error) {
 	const op = "services.user_service.SigIn"
 	log := s.log.With("op", op)
 

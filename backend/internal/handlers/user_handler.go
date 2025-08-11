@@ -43,7 +43,7 @@ func (u *UserHandler) SignIn(c *fiber.Ctx) error {
 		})
 	}
 
-	accessToken, err := u.userService.CreateUser(user)
+	accessToken, err := u.userService.SignIn(user)
 	if err != nil {
 		log.Error("Error with creating user", sl.Err(err))
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -71,7 +71,7 @@ func (u *UserHandler) SignUp(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "username and password are required"})
 	}
 
-	accessToken, err := u.userService.SignUp(*user)
+	accessToken, err := u.userService.SignUp(user)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"Error": err,
