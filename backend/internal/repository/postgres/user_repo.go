@@ -25,13 +25,14 @@ func NewUserRepo(log *slog.Logger, db *sql.DB) *UserRepo {
 func (r *UserRepo) CreateUser(user *structures.User) (int, error) {
 	const op = "postgres.user_repo.CreateUser"
 	log := r.log.With("op", op)
+
 	var id int
 
 	query := "INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id"
 	err := r.db.QueryRow(query, user.Username, user.Password).Scan(&id)
 	if err != nil {
 		log.Error("Error with inserting user data", sl.Err(err))
-		return id, nil
+		return id, err
 	}
 
 	return id, nil
@@ -48,13 +49,13 @@ func (r *UserRepo) GetUserByUsername(username string) (*structures.User, error) 
 	err := r.db.QueryRow(query, username).Scan(&user.Id, &user.Username, &user.Password, &user.IsPaid)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
+			return nil, fmt.Errorf("No user with this username")
 		}
 		log.Debug("User with this username already exists", sl.Err(err))
 		return nil, err
 	}
 
-	return user, err
+	return user, nil
 }
 
 func (r *UserRepo) GetUserById(id int) (*structures.User, error) {

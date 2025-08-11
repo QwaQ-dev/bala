@@ -37,11 +37,7 @@ func (s *UserService) SignUp(user *structures.User) (string, error) {
 	}
 	user.Password = string(hash)
 
-	userExists, err := s.repo.GetUserByUsername(user.Username)
-	if err != nil {
-		log.Error("Error with db", sl.Err(err))
-		return "", err
-	}
+	userExists, _ := s.repo.GetUserByUsername(user.Username)
 	if userExists != nil {
 		log.Info("User is already exists")
 		return "", fmt.Errorf("User is already exists")
@@ -73,8 +69,8 @@ func (s *UserService) SignIn(user *structures.User) (string, error) {
 	}
 
 	if userFromDb == nil {
-		log.Error("Invalid username", sl.Err(err))
-		return "", fmt.Errorf("Invalid username, error: %v", err)
+		log.Error("Invalid username")
+		return "", fmt.Errorf("Invalid username")
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(userFromDb.Password), []byte(user.Password)); err != nil {

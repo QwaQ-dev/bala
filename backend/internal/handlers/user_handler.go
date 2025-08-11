@@ -47,7 +47,7 @@ func (u *UserHandler) SignIn(c *fiber.Ctx) error {
 	if err != nil {
 		log.Error("Error with creating user", sl.Err(err))
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "User already exists",
+			"error": err.Error(),
 		})
 	}
 
@@ -74,7 +74,7 @@ func (u *UserHandler) SignUp(c *fiber.Ctx) error {
 	accessToken, err := u.userService.SignUp(user)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
-			"Error": err,
+			"Error": err.Error(),
 		})
 	}
 
