@@ -32,14 +32,14 @@ func InitRoutes(
 
 	checklists.Post("/create", checklistHandler.CreateChecklist)
 	checklists.Put("/update", checklistHandler.UpdateChecklist)
-	user.Get("/get", checklistHandler.GetAllChecklists)
-	user.Get("/get/:id", checklistHandler.GetOneChecklist)
+	user.Get("/get/checklists", checklistHandler.GetAllChecklists)
+	user.Get("/get/checklist/:id", checklistHandler.GetOneChecklist)
 	checklists.Delete("/:id", checklistHandler.DeleteChecklist)
 
 	articles.Post("/create", articleHandler.CreateArticle)
 	articles.Put("/update", articleHandler.UpdateArticle)
-	user.Get("/get", articleHandler.GetAllArticles)
-	user.Get("/get/:id", articleHandler.GetOneArticle)
+	user.Get("/get/articles", articleHandler.GetAllArticles)
+	user.Get("/get/article/:id", articleHandler.GetOneArticle)
 	articles.Delete("/:id", articleHandler.DeleteArticle)
 
 	courses.Post("/create", courseHandler.CreateCourse)

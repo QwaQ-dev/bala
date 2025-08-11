@@ -3,7 +3,7 @@ jwtsecretkey: "asdw1qp3ojsmdalcxz"
 server:
   port: ":8080"
 database:
-  host: "localhost"
+  host: "db"
   port: "5432"
   db_name: "bala"
   db_password: "postgres"

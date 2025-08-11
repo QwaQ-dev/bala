@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/ilyakaznacheev/cleanenv"
-	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -29,11 +28,6 @@ type Database struct {
 }
 
 func MustLoad() *Config {
-	// Загружаем .env
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("Ошибка загрузки .env файла")
-	}
-
 	configPath := os.Getenv("CONFIG")
 	if configPath == "" {
 		log.Fatal("CONFIG переменная не установлена в .env")
