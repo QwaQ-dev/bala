@@ -5,6 +5,7 @@
 ```bash
 api/v1/user/sign-in
 api/v1/user/sign-up
+api/v1/auth/user/get-info
 ```
 
 ## Requests for user:
