@@ -5,4 +5,5 @@ type User struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 	IsPaid   bool   `json:"isPaid, omitempty"`
+	IsAdmin  bool   `json:"isAdmin"`
 }

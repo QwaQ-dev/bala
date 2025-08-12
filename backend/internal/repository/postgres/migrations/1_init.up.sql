@@ -84,6 +84,7 @@ CREATE TABLE IF NOT EXISTS public.users (
     username character varying(155) NOT NULL,
     password character varying(255) NOT NULL,
     ispaid boolean DEFAULT false,
+    isAdmin boolean DEFAULT false,
     CONSTRAINT users_pkey PRIMARY KEY (id)
 );
 

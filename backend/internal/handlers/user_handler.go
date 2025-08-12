@@ -83,3 +83,22 @@ func (u *UserHandler) SignUp(c *fiber.Ctx) error {
 		"access_token": accessToken,
 	})
 }
+
+func (u *UserHandler) GetUserViaToken(c *fiber.Ctx) error {
+	const op = "handlers.user_handler.GetUserViaToken"
+	log := u.log.With("op", op)
+
+	userId := c.Locals("userId").(int)
+
+	user, err := u.userService.GetUserViaToken(userId)
+	if err != nil {
+		log.Error("Error with service", sl.Err(err))
+		return c.Status(500).JSON(fiber.Map{
+			"error": err,
+		})
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"user": user,
+	})
+}

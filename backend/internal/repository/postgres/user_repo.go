@@ -42,11 +42,11 @@ func (r *UserRepo) GetUserByUsername(username string) (*structures.User, error) 
 	const op = "postgres.user_repo.GetUserByUsername"
 	log := r.log.With("op", op)
 
-	query := "SELECT id, username, password, isPaid FROM users WHERE username=$1"
+	query := "SELECT id, username, password, isPaid, isAdmin FROM users WHERE username=$1"
 
 	user := new(structures.User)
 
-	err := r.db.QueryRow(query, username).Scan(&user.Id, &user.Username, &user.Password, &user.IsPaid)
+	err := r.db.QueryRow(query, username).Scan(&user.Id, &user.Username, &user.Password, &user.IsPaid, &user.IsAdmin)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("No user with this username")
@@ -64,9 +64,9 @@ func (r *UserRepo) GetUserById(id int) (*structures.User, error) {
 
 	user := new(structures.User)
 
-	query := "SELECT username, password, isPaid FROM users WHERE id=$1"
+	query := "SELECT username, password, isPaid, isAdmin FROM users WHERE id=$1"
 
-	err := r.db.QueryRow(query, id).Scan(&user.Username, &user.Password, &user.IsPaid)
+	err := r.db.QueryRow(query, id).Scan(&user.Username, &user.Password, &user.IsPaid, &user.IsAdmin)
 	if err != nil {
 		log.Error("Error with scanning user data", sl.Err(err))
 		return user, err

@@ -86,3 +86,16 @@ func (s *UserService) SignIn(user *structures.User) (string, error) {
 
 	return accessToken, nil
 }
+
+func (s *UserService) GetUserViaToken(id int) (*structures.User, error) {
+	const op = "services.user_service.GetUserViaToken"
+	log := s.log.With("op", op)
+
+	user, err := s.repo.GetUserById(id)
+	if err != nil {
+		log.Error("Error with getting user by id", sl.Err(err))
+		return user, err
+	}
+
+	return user, nil
+}
