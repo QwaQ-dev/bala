@@ -1,6 +1,4 @@
 
-
-
 ## Endpoints for user:
 ```bash
 api/v1/user/sign-in
