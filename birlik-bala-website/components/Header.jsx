@@ -4,31 +4,21 @@ import Link from "next/link"
 import { Button } from "./ui/button"
 import { useState, useEffect } from "react"
 import { User, LogOut, ChevronDown, Menu } from "lucide-react"
+import { useUser } from "@/context/UserContext";
+
+
 
 export default function Header() {
-  const [user, setUser] = useState(null)
+  const { user, logout } = useUser();
+  
+  const [isAdmin, setIsAdmin] = useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  useEffect(() => {
-    // Проверяем авторизацию при загрузке
-    const token = localStorage.getItem("token")
-    const userData = localStorage.getItem("user")
-    if (token && userData) {
-      try {
-        setUser(JSON.parse(userData))
-      } catch (error) {
-        console.error("Error parsing user data:", error)
-        localStorage.removeItem("token")
-        localStorage.removeItem("user")
-      }
-    }
-  }, [])
 
   const handleLogout = () => {
-    localStorage.removeItem("token")
-    localStorage.removeItem("user")
-    setUser(null)
+    localStorage.removeItem("access_token")
+    logout()
     setIsDropdownOpen(false)
     window.location.href = "/"
   }
@@ -94,30 +84,19 @@ export default function Header() {
                 {isDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
                     <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-100">
-                      <div className="font-medium">{user.username}</div>
+                      <div className="font-medium">{user}</div>
                       <div className="text-xs text-gray-500">Пользователь</div>
                     </div>
+                    {isAdmin && 
+                  
                     <Link
-                      href="/profile"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      onClick={() => setIsDropdownOpen(false)}
-                    >
-                      Мой профиль
-                    </Link>
-                    <Link
-                      href="/courses"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      onClick={() => setIsDropdownOpen(false)}
-                    >
-                      Мои курсы
-                    </Link>
-                    <Link
-                      href="/admin/create-article"
+                      href="/admin"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       onClick={() => setIsDropdownOpen(false)}
                     >
                       Создать статью
                     </Link>
+                    }
                     <div className="border-t border-gray-100">
                       <button
                         onClick={handleLogout}
