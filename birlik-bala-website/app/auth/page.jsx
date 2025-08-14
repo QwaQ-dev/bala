@@ -1,16 +1,21 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Eye, EyeOff, User, Lock } from "lucide-react"
+import { useUser } from "@/context/UserContext";
 import Link from "next/link"
 
+
 export default function AuthPage() {
+  const {login} = useUser()
   const [isLogin, setIsLogin] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState({})
+  const router = useRouter()
 
   const [formData, setFormData] = useState({
     username: "",
@@ -44,7 +49,9 @@ export default function AuthPage() {
     setIsLoading(true)
 
     try {
-      const endpoint = isLogin ? "http://localhost:8080/api/v1/user/sign-in" : "http://localhost:8080/api/v1/user/sign-up"
+      const endpoint = isLogin
+        ? "http://localhost:8080/api/v1/user/sign-in"
+        : "http://localhost:8080/api/v1/user/sign-up"
 
       const response = await fetch(endpoint, {
         method: "POST",
@@ -55,13 +62,31 @@ export default function AuthPage() {
       const data = await response.json()
 
       console.log(data)
-      if (data.data.ok) {
-        // Сохранить токен и данные пользователя
-        localStorage.setItem("token", data.token)
-        localStorage.setItem("user", JSON.stringify(data.user))
 
-        alert(isLogin ? "Вход выполнен успешно!" : "Регистрация прошла успешно!")
-        window.location.href = "/courses"
+      if (data.access_token) {
+        // Сохраняем токен в localStorage
+        localStorage.setItem("access_token", data.access_token)
+
+        // Получаем данные пользователя отдельным запросом
+        try {
+          const userResponse = await fetch("http://localhost:8080/api/v1/auth/user/get-info", {
+            headers: {
+              Authorization: `Bearer ${data.access_token}`,
+            },
+          })
+
+          if (userResponse.ok) {
+            const userData = await userResponse.json()
+            console.log("User data:", userData.user)
+            login(userData);
+          }
+        } catch (userError) {
+          console.error("Failed to fetch user data:", userError)
+        }
+        
+        router.push("/courses")
+
+        
       } else {
         alert(data.error || "Произошла ошибка")
       }
@@ -102,7 +127,7 @@ export default function AuthPage() {
         </div>
 
         <Card className="p-6">
-          <CardContent >
+          <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Username */}
               <div>

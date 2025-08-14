@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import Header from "@/components/Header"
+
 import Action from "@/components/Action"
 import Link from "next/link"
 import CoursesClient from "@/components/CoursesClient"
@@ -10,7 +10,7 @@ export const revalidate = 1800
 async function getCourses() {
   try {
     // Здесь будет запрос к API
-    const res = await fetch("https://api.example.com/courses", {
+    const res = await fetch("http://localhost:8080/api/v1/courses", {
       next: { revalidate: 1800 },
     })
 
@@ -110,7 +110,6 @@ export default async function CoursesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-        <Header/>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Заголовок */}
         <div className="text-center mb-12">

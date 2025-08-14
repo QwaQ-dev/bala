@@ -6,6 +6,7 @@ import ArticlesSection from "@/components/ArticlesSection"
 import MethodologySection from "@/components/MethodologySection"
 import ConsultationSection from "@/components/ConsultationSection"
 import Footer from "@/components/Footer"
+import {UserProvider} from "@/context/UserContext"
 
 // ISR: страница будет перегенерироваться каждые 3600 секунд (1 час)
 export const revalidate = 3600
@@ -13,7 +14,6 @@ export const revalidate = 3600
 export default function Home() {
   return (
     <main className="min-h-screen">
-      <Header />
       <HeroSection />
       <CourseSection />
       <ChecklistSection />
