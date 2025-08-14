@@ -42,13 +42,13 @@ func (s *CourseService) CreateCourse(course structures.Course) error {
 func (s *CourseService) GetCourseByID(course_id, user_id int) (structures.Course, error) {
 	const op = "service.course_service.GetCourseByID"
 
-	user, err := s.userRepo.GetUserById(user_id)
-	if err != nil {
-		return structures.Course{}, err
-	}
-	if !user.IsPaid {
-		return structures.Course{}, fmt.Errorf("This user has no access for course")
-	}
+	// user, err := s.userRepo.GetUserById(user_id)
+	// if err != nil {
+	// 	return structures.Course{}, err
+	// }
+	// if !user.IsPaid {
+	// 	return structures.Course{}, fmt.Errorf("This user has no access for course")
+	// }
 
 	course, err := s.repo.SelectCourseById(course_id)
 	if err != nil {
@@ -90,4 +90,16 @@ func (s *CourseService) AddVideoToCourse(courseID int, path string) error {
 	}
 
 	return nil
+}
+
+func (s *CourseService) GetAllCourses() ([]structures.Course, error) {
+	const op = "service.course_service.GetAllCourses"
+
+	courses, err := s.repo.SelectAllCourses()
+	if err != nil {
+		s.log.Error("failed to get all courses", slog.String("op", op), slog.Any("err", err))
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return courses, nil
 }

@@ -3,7 +3,8 @@
 ```bash
 api/v1/user/sign-in
 api/v1/user/sign-up
-api/v1/auth/user/get-info
+api/v1/admin/users
+api/v1/auth/user-info
 ```
 
 ## Requests for user:
@@ -16,11 +17,11 @@ api/v1/auth/user/get-info
 
 ## Endpoints for checklists:
 ```bash
-api/v1/auth/checklist/create  CREATE
-api/v1/auth/checklist/update  UPDATE
-api/v1/user/checklist/get     GET ALL
-api/v1/user/checklist/get/:id GET BY ID
-api/v1/auth/checklist/:id     DELETE BY ID
+api/v1/admin/checklist/create  CREATE
+api/v1/admin/checklist/update  UPDATE
+api/v1/checklist/get           GET ALL
+api/v1/checklist/get/:id       GET BY ID
+api/v1/admin/checklist/:id     DELETE BY ID
 ```
 
 ## Requests for checklists:
@@ -46,11 +47,11 @@ PUT:
 
 ## Endpoints for articles:
 ```bash
-api/v1/auth/article/create    CREATE
-api/v1/auth/article/update    UPDATE
-api/v1/user/article/get       GET ALL
-api/v1/user/article/get/:id   GET BY ID
-api/v1/auth/article/:id       DELETE BY ID
+api/v1/admin/article/create    CREATE
+api/v1/admin/article/update    UPDATE
+api/v1/article/get             GET ALL
+api/v1/article/get/:id         GET BY ID
+api/v1/admin/article/:id       DELETE BY ID
 ```
 
 ## Requests for articles:
@@ -82,11 +83,12 @@ PUT:
 ## Endpoints for courses:
 ```bash
 
-api/v1/auth/course/create     CREATE
-api/v1/auth/course/update     UPDATE
-api/v1/auth/course/:id        DELETE BY ID
-api/v1/auth/course/get:id     GET BY ID
-api/v1/auth/course/add-video  ADD VIDEO
+api/v1/admin/course/create     CREATE
+api/v1/admin/course/update     UPDATE
+api/v1/admin/course/:id        DELETE BY ID
+api/v1/auth/course/get:id      GET BY ID
+api/v1/auth/course/get         GET ALL
+api/v1/admin/course/add-video  ADD VIDEO
 ``` 
 
 ## Requests for courses:

@@ -176,3 +176,16 @@ func (h *CourseHandler) UploadVideo(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{"message": "video uploaded", "path": relativePath})
 }
+
+func (h *CourseHandler) GetAllCourses(c *fiber.Ctx) error {
+	const op = "handlers.checklist_handler.GetAllChecklists"
+	log := h.log.With("op", op)
+
+	courses, err := h.courseService.GetAllCourses()
+	if err != nil {
+		log.Error("failed to fetch courses", slog.Any("err", err))
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch courses"})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(courses)
+}

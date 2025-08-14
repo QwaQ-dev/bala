@@ -124,3 +124,49 @@ func (r *CourseRepo) UpdateCourse(c *structures.Course) error {
 	log.Info("course updated", slog.Int("id", c.Id))
 	return nil
 }
+
+func (r *CourseRepo) SelectAllCourses() ([]structures.Course, error) {
+	const op = "postgres.course_repo.SelectAllCourses"
+	log := r.log.With("op", op)
+
+	query := `
+		SELECT id, title, description, cost, img 
+		FROM courses
+		ORDER BY id DESC
+	`
+
+	rows, err := r.db.Query(query)
+	if err != nil {
+		log.Error("failed to execute query", sl.Err(err))
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	defer rows.Close()
+
+	var courses []structures.Course
+
+	for rows.Next() {
+		var course structures.Course
+
+		err := rows.Scan(
+			&course.Id,
+			&course.Title,
+			&course.Description,
+			&course.Cost,
+			&course.Videos,
+			&course.Img,
+		)
+		if err != nil {
+			log.Error("failed to scan article row", sl.Err(err))
+			continue
+		}
+
+		courses = append(courses, course)
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Error("rows iteration error", sl.Err(err))
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return courses, nil
+}

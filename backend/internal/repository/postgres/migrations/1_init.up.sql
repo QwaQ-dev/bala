@@ -83,8 +83,8 @@ CREATE TABLE IF NOT EXISTS public.users (
     id integer NOT NULL DEFAULT nextval('public.users_id_seq'::regclass),
     username character varying(155) NOT NULL,
     password character varying(255) NOT NULL,
-    ispaid boolean DEFAULT false,
-    isAdmin boolean DEFAULT false,
+    course_ids integer[] DEFAULT '{}',
+    role character varying(255) DEFAULT 'user',
     CONSTRAINT users_pkey PRIMARY KEY (id)
 );
 

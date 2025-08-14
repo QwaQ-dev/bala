@@ -17,38 +17,50 @@ func InitRoutes(
 	articleHandler *handlers.ArticleHandler,
 	checklistHandler *handlers.ChecklistHandler,
 	courseHandler *handlers.CourseHandler) {
+
 	v1 := app.Group("/api/v1")
 
 	authorizedGroup := v1.Group("/auth")
 	authorizedGroup.Use(middleware.JWTMiddleware(cfg.JWTSecretKey))
 
-	checklists := authorizedGroup.Group("/checklist")
-	articles := authorizedGroup.Group("/article")
-	courses := authorizedGroup.Group("/course")
+	admin := v1.Group("/admin")
+	admin.Use(middleware.JWTMiddleware(cfg.JWTSecretKey))
+	admin.Use(middleware.AdminOnly())
+
 	user := v1.Group("/user")
+
+	adminArticles := admin.Group("/article")
+	adminChecklists := admin.Group("/checklist")
+	adminCourses := admin.Group("/course")
+
+	articles := v1.Group("/article")
+	checklists := v1.Group("/checklist")
+
+	courses := authorizedGroup.Group("/course")
 
 	user.Post("/sign-in", userHandler.SignIn)
 	user.Post("/sign-up", userHandler.SignUp)
+	admin.Get("/users", userHandler.GetAllUsers)
+	authorizedGroup.Get("/user-info", userHandler.GetUserViaToken)
 
-	authorizedGroup.Get("/user/get-info", userHandler.GetUserViaToken)
+	adminChecklists.Post("/create", checklistHandler.CreateChecklist)
+	adminChecklists.Put("/update", checklistHandler.UpdateChecklist)
+	checklists.Get("/get", checklistHandler.GetAllChecklists)
+	checklists.Get("/get/:id", checklistHandler.GetOneChecklist)
+	adminChecklists.Delete("/:id", checklistHandler.DeleteChecklist)
 
-	checklists.Post("/create", checklistHandler.CreateChecklist)
-	checklists.Put("/update", checklistHandler.UpdateChecklist)
-	user.Get("/get/checklists", checklistHandler.GetAllChecklists)
-	user.Get("/get/checklist/:id", checklistHandler.GetOneChecklist)
-	checklists.Delete("/:id", checklistHandler.DeleteChecklist)
+	adminArticles.Post("/create", articleHandler.CreateArticle)
+	adminArticles.Put("/update", articleHandler.UpdateArticle)
+	articles.Get("/get", articleHandler.GetAllArticles)
+	articles.Get("/get/:id", articleHandler.GetOneArticle)
+	adminArticles.Delete("/:id", articleHandler.DeleteArticle)
 
-	articles.Post("/create", articleHandler.CreateArticle)
-	articles.Put("/update", articleHandler.UpdateArticle)
-	user.Get("/get/articles", articleHandler.GetAllArticles)
-	user.Get("/get/article/:id", articleHandler.GetOneArticle)
-	articles.Delete("/:id", articleHandler.DeleteArticle)
-
-	courses.Post("/create", courseHandler.CreateCourse)
-	courses.Put("/update", courseHandler.UpdateCourse)
+	adminCourses.Post("/create", courseHandler.CreateCourse)
+	adminCourses.Put("/update", courseHandler.UpdateCourse)
+	courses.Get("/get", courseHandler.GetAllCourses)
 	courses.Get("/get/:id", courseHandler.GetCourseByID)
-	courses.Delete("/:id", courseHandler.DeleteCourse)
-	courses.Post("/add-video", courseHandler.UploadVideo)
+	adminCourses.Delete("/:id", courseHandler.DeleteCourse)
+	adminCourses.Post("/add-video", courseHandler.UploadVideo)
 
 	log.Debug("All routes were initialized")
 }

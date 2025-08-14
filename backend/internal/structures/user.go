@@ -4,6 +4,6 @@ type User struct {
 	Id       int64  `json:"id, omitempty"`
 	Username string `json:"username"`
 	Password string `json:"password"`
-	IsPaid   bool   `json:"isPaid, omitempty"`
-	IsAdmin  bool   `json:"isAdmin"`
+	Courses  []int  `json:"courses, omitempty"`
+	Role     string `json:"role"`
 }

@@ -55,31 +55,51 @@ func InitDatabase(cfg config.Database, log *slog.Logger) (*sql.DB, error) {
 		return nil, err
 	}
 
-	runMigrations(m, "down")
+	runMigrations(m, "down", log)
 
-	runMigrations(m, "up")
+	runMigrations(m, "up", log)
 
 	log.Info("Database connected successfully")
 	return db, nil
 }
 
-func runMigrations(m *migrate.Migrate, direction string) error {
+func runMigrations(m *migrate.Migrate, direction string, log *slog.Logger) error {
 	switch direction {
 	case "up":
+		log.Info("Running database migrations: UP")
 		err := m.Up()
-		if err != nil && err != migrate.ErrNoChange {
+		if err != nil {
+			if err == migrate.ErrNoChange {
+				log.Info("No new migrations to apply")
+				return nil
+			}
+			log.Error("Migration UP failed", sl.Err(err))
 			return err
 		}
+		log.Info("Migrations UP applied successfully")
+
 	case "down":
+		log.Info("Running database migrations: DOWN")
 		err := m.Down()
-		if err != nil && err != migrate.ErrNoChange {
+		if err != nil {
+			if err == migrate.ErrNoChange {
+				log.Info("No migrations to revert")
+				return nil
+			}
+			log.Error("Migration DOWN failed", sl.Err(err))
 			return err
 		}
+		log.Info("Migrations DOWN applied successfully")
+
 	case "drop":
+		log.Warn("Dropping all database objects")
 		err := m.Drop()
 		if err != nil {
+			log.Error("Migration DROP failed", sl.Err(err))
 			return err
 		}
+		log.Info("Database dropped successfully")
+
 	default:
 		return fmt.Errorf("unknown migration direction: %s", direction)
 	}

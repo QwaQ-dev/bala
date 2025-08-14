@@ -37,9 +37,9 @@ func (u *UserHandler) SignIn(c *fiber.Ctx) error {
 		})
 	}
 
-	if user.Password == "" || user.Username == "" {
+	if user.Password == "" || user.Username == "" || user.Role == "" {
 		return c.Status(404).JSON(fiber.Map{
-			"error": "Username and password are required",
+			"error": "Username and password and role are required",
 		})
 	}
 
@@ -101,4 +101,17 @@ func (u *UserHandler) GetUserViaToken(c *fiber.Ctx) error {
 	return c.Status(200).JSON(fiber.Map{
 		"user": user,
 	})
+}
+
+func (h *UserHandler) GetAllUsers(c *fiber.Ctx) error {
+	const op = "handlers.checklist_handler.GetAllChecklists"
+	log := h.log.With("op", op)
+
+	users, err := h.userService.GetAllUsers()
+	if err != nil {
+		log.Error("failed to fetch users", slog.Any("err", err))
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch users"})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(users)
 }

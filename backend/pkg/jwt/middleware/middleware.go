@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/log"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -26,7 +25,6 @@ func JWTMiddleware(secretKey string) fiber.Handler {
 			return []byte(secretKey), nil
 		})
 		if err != nil {
-			log.Error("error with")
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid token"})
 		}
 
@@ -35,14 +33,33 @@ func JWTMiddleware(secretKey string) fiber.Handler {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid token claims"})
 		}
 
-		userId, ok := claims["userId"].(float64)
+		userIdFloat, ok := claims["userId"].(float64)
 		if !ok {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid userId in token"})
 		}
+		userId := int(userIdFloat)
 
-		c.Locals("userId", int(userId))
+		role, ok := claims["role"].(string)
+		if !ok {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid role in token"})
+		}
+
+		c.Locals("userId", userId)
+		c.Locals("role", role)
 
 		return c.Next()
 	}
+}
 
+func AdminOnly() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		role, ok := c.Locals("role").(string)
+		if !ok || role != "admin" {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"error": "Admin access required",
+			})
+		}
+
+		return c.Next()
+	}
 }

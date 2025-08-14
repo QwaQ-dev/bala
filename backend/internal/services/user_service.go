@@ -43,13 +43,13 @@ func (s *UserService) SignUp(user *structures.User) (string, error) {
 		return "", fmt.Errorf("User is already exists")
 	}
 
-	id, err := s.repo.CreateUser(user)
+	id, role, err := s.repo.CreateUser(user)
 	if err != nil {
 		log.Error("Error with creating user", sl.Err(err))
 		return "", err
 	}
 
-	accessToken, err := generatetoken.GenerateAccessToken(id, s.cfg.JWTSecretKey)
+	accessToken, err := generatetoken.GenerateAccessToken(id, s.cfg.JWTSecretKey, role)
 	if err != nil {
 		log.Error("Error with generating access token wile sign in", sl.Err(err))
 		return "", err
@@ -78,7 +78,7 @@ func (s *UserService) SignIn(user *structures.User) (string, error) {
 		return "", fmt.Errorf("Error with comparing passwords, error: %v", err)
 	}
 
-	accessToken, err := generatetoken.GenerateAccessToken(int(userFromDb.Id), s.cfg.JWTSecretKey)
+	accessToken, err := generatetoken.GenerateAccessToken(int(userFromDb.Id), s.cfg.JWTSecretKey, userFromDb.Role)
 	if err != nil {
 		log.Error("Error with generating access token wile sign in", sl.Err(err))
 		return "", fmt.Errorf("Error with generating access token, error: %v", err)
@@ -98,4 +98,16 @@ func (s *UserService) GetUserViaToken(id int) (*structures.User, error) {
 	}
 
 	return user, nil
+}
+
+func (s *UserService) GetAllUsers() ([]structures.User, error) {
+	const op = "service.user_service.GetAllUsers"
+
+	users, err := s.repo.SelectAllUsers()
+	if err != nil {
+		s.log.Error("failed to get all courses", slog.String("op", op), slog.Any("err", err))
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return users, nil
 }

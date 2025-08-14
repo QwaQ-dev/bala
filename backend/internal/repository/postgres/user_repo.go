@@ -8,6 +8,7 @@ import (
 
 	"github.com/QwaQ-dev/bala/internal/structures"
 	"github.com/QwaQ-dev/bala/pkg/sl"
+	"github.com/lib/pq"
 )
 
 type UserRepo struct {
@@ -22,31 +23,32 @@ func NewUserRepo(log *slog.Logger, db *sql.DB) *UserRepo {
 	}
 }
 
-func (r *UserRepo) CreateUser(user *structures.User) (int, error) {
+func (r *UserRepo) CreateUser(user *structures.User) (int, string, error) {
 	const op = "postgres.user_repo.CreateUser"
 	log := r.log.With("op", op)
 
 	var id int
+	var role string
 
-	query := "INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id"
-	err := r.db.QueryRow(query, user.Username, user.Password).Scan(&id)
+	query := "INSERT INTO users (username, password, role) VALUES ($1, $2, $3) RETURNING id, role"
+	err := r.db.QueryRow(query, user.Username, user.Password, user.Role).Scan(&id, &role)
 	if err != nil {
 		log.Error("Error with inserting user data", sl.Err(err))
-		return id, err
+		return id, role, err
 	}
 
-	return id, nil
+	return id, role, nil
 }
 
 func (r *UserRepo) GetUserByUsername(username string) (*structures.User, error) {
 	const op = "postgres.user_repo.GetUserByUsername"
 	log := r.log.With("op", op)
 
-	query := "SELECT id, username, password, isPaid, isAdmin FROM users WHERE username=$1"
+	query := "SELECT id, username, password, course_ids, role FROM users WHERE username=$1"
 
 	user := new(structures.User)
 
-	err := r.db.QueryRow(query, username).Scan(&user.Id, &user.Username, &user.Password, &user.IsPaid, &user.IsAdmin)
+	err := r.db.QueryRow(query, username).Scan(&user.Id, &user.Username, &user.Password, &user.Courses, &user.Role)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("No user with this username")
@@ -58,15 +60,60 @@ func (r *UserRepo) GetUserByUsername(username string) (*structures.User, error) 
 	return user, nil
 }
 
+func (r *UserRepo) SelectAllUsers() ([]structures.User, error) {
+	const op = "postgres.user_repo.SelectAllUsers"
+	log := r.log.With("op", op)
+
+	query := `
+		SELECT id, username, password, course_ids, role 
+		FROM users
+		ORDER BY id DESC
+	`
+
+	rows, err := r.db.Query(query)
+	if err != nil {
+		log.Error("failed to execute query", sl.Err(err))
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	defer rows.Close()
+
+	var users []structures.User
+
+	for rows.Next() {
+		var user structures.User
+
+		err := rows.Scan(
+			&user.Id,
+			&user.Username,
+			&user.Password,
+			pq.Array(&user.Courses),
+			&user.Role,
+		)
+		if err != nil {
+			log.Error("failed to scan article row", sl.Err(err))
+			continue
+		}
+
+		users = append(users, user)
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Error("rows iteration error", sl.Err(err))
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return users, nil
+}
+
 func (r *UserRepo) GetUserById(id int) (*structures.User, error) {
 	const op = "postgres.user_repo.GetUserById"
 	log := r.log.With("op", op)
 
 	user := new(structures.User)
 
-	query := "SELECT username, password, isPaid, isAdmin FROM users WHERE id=$1"
+	query := "SELECT username, password, course_ids, role FROM users WHERE id=$1"
 
-	err := r.db.QueryRow(query, id).Scan(&user.Username, &user.Password, &user.IsPaid, &user.IsAdmin)
+	err := r.db.QueryRow(query, id).Scan(&user.Username, &user.Password, &user.Courses, &user.Role)
 	if err != nil {
 		log.Error("Error with scanning user data", sl.Err(err))
 		return user, err
