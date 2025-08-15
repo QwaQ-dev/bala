@@ -113,7 +113,7 @@ func (r *UserRepo) GetUserById(id int) (*structures.User, error) {
 
 	query := "SELECT username, password, course_ids, role FROM users WHERE id=$1"
 
-	err := r.db.QueryRow(query, id).Scan(&user.Username, &user.Password, &user.Courses, &user.Role)
+	err := r.db.QueryRow(query, id).Scan(&user.Username, &user.Password, pq.Array(&user.Courses), &user.Role)
 	if err != nil {
 		log.Error("Error with scanning user data", sl.Err(err))
 		return user, err
