@@ -2,22 +2,20 @@
 
 import Link from "next/link"
 import { Button } from "./ui/button"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { User, LogOut, ChevronDown, Menu } from "lucide-react"
-import { useUser } from "@/context/UserContext";
-
-
+import { useUser } from "@/context/UserContext"
+import { clientCookies } from "@/lib/auth-cookies"
 
 export default function Header() {
-  const { user, logout } = useUser();
-  
+  const { user, logout } = useState("")
+
   const [isAdmin, setIsAdmin] = useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-
   const handleLogout = () => {
-    localStorage.removeItem("access_token")
+    // clientCookies.remove("access_token")
     logout()
     setIsDropdownOpen(false)
     window.location.href = "/"
@@ -84,19 +82,18 @@ export default function Header() {
                 {isDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
                     <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-100">
-                      <div className="font-medium">{user}</div>
+                      <div className="font-medium">{user.username}</div>
                       <div className="text-xs text-gray-500">Пользователь</div>
                     </div>
-                    {isAdmin && 
-                  
-                    <Link
-                      href="/admin"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      onClick={() => setIsDropdownOpen(false)}
-                    >
-                      Создать статью
-                    </Link>
-                    }
+                    {isAdmin && (
+                      <Link
+                        href="/admin"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        Создать статью
+                      </Link>
+                    )}
                     <div className="border-t border-gray-100">
                       <button
                         onClick={handleLogout}
@@ -122,47 +119,6 @@ export default function Header() {
             )}
           </div>
         </div>
-
-        {/* Мобильное меню */}
-        {isMobileMenuOpen && (
-          <div className="lg:hidden border-t border-gray-200 py-4">
-            <nav className="flex flex-col space-y-4">
-              <Link
-                href="/courses"
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Курсы
-              </Link>
-              <Link
-                href="http://youtube.com"
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Видео
-              </Link>
-              <Link
-                href="/checklists"
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Чек-листы
-              </Link>
-              <Link
-                href="/articles"
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Статьи
-              </Link>
-              <Link href="/consultation" className="sm:hidden" onClick={() => setIsMobileMenuOpen(false)}>
-                <Button className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg w-full">
-                  Онлайн-консультация
-                </Button>
-              </Link>
-            </nav>
-          </div>
-        )}
       </div>
 
       {/* Закрытие dropdown при клике вне его */}

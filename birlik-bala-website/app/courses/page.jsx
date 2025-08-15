@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import Action from "@/components/Action"
 import Link from "next/link"
 import CoursesClient from "@/components/CoursesClient"
+import getUserData from "@/app/api/user"
 
 // ISR - обновляем каждые 30 минут
 export const revalidate = 1800
@@ -22,91 +23,15 @@ async function getCourses() {
   } catch (error) {
     console.error("Error fetching courses:", error)
     // Возвращаем мок-данные при ошибке
-    return [
-      {
-        id: 1,
-        title: "Основы АВА-терапии",
-        description: "Введение в прикладной анализ поведения для родителей",
-        price: "Бесплатно",
-        isPaid: false,
-        isAvailable: true,
-        duration: "2 часа",
-        lessons: 8,
-        students: 1250,
-        image: "/placeholder.svg?height=200&width=300",
-        slug: "osnovy-ava-terapii",
-      },
-      {
-        id: 2,
-        title: "Полный курс по развитию речи",
-        description: "Комплексная программа развития речевых навыков у детей",
-        price: "15,000₸",
-        isPaid: true,
-        isAvailable: false,
-        duration: "8 часов",
-        lessons: 24,
-        students: 890,
-        image: "/placeholder.svg?height=200&width=300",
-        slug: "razvitie-rechi",
-      },
-      {
-        id: 3,
-        title: "Домашние упражнения",
-        description: "Практические упражнения для занятий дома",
-        price: "Бесплатно",
-        isPaid: false,
-        isAvailable: true,
-        duration: "1.5 часа",
-        lessons: 6,
-        students: 2100,
-        image: "/placeholder.svg?height=200&width=300",
-        slug: "domashnie-uprazhneniya",
-      },
-      {
-        id: 4,
-        title: "Социальная адаптация",
-        description: "Развитие социальных навыков и коммуникации",
-        price: "12,000₸",
-        isPaid: true,
-        isAvailable: false,
-        duration: "6 часов",
-        lessons: 18,
-        students: 560,
-        image: "/placeholder.svg?height=200&width=300",
-        slug: "socialnaya-adaptaciya",
-      },
-      {
-        id: 5,
-        title: "Поведенческие проблемы",
-        description: "Работа с трудным поведением ребенка",
-        price: "18,000₸",
-        isPaid: true,
-        isAvailable: false,
-        duration: "10 часов",
-        lessons: 30,
-        students: 340,
-        image: "/placeholder.svg?height=200&width=300",
-        slug: "povedencheskie-problemy",
-      },
-      {
-        id: 6,
-        title: "Первые шаги в АВА",
-        description: "Базовые принципы для начинающих родителей",
-        price: "Бесплатно",
-        isPaid: false,
-        isAvailable: true,
-        duration: "1 час",
-        lessons: 4,
-        students: 3200,
-        image: "/placeholder.svg?height=200&width=300",
-        slug: "pervye-shagi-ava",
-      },
-    ]
+    return []
   }
 }
 
+
 export default async function CoursesPage() {
   const courses = await getCourses()
+  getUserData();
+  
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -5,12 +5,12 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Eye, EyeOff, User, Lock } from "lucide-react"
-import { useUser } from "@/context/UserContext";
+import { useUser } from "@/context/UserContext"
+import { clientCookies } from "@/lib/auth-cookies"
 import Link from "next/link"
 
-
 export default function AuthPage() {
-  const {login} = useUser()
+  const { login } = useUser()
   const [isLogin, setIsLogin] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -61,32 +61,10 @@ export default function AuthPage() {
 
       const data = await response.json()
 
-      console.log(data)
+      console.log(data.Message)
 
-      if (data.access_token) {
-        // Сохраняем токен в localStorage
-        localStorage.setItem("access_token", data.access_token)
-
-        // Получаем данные пользователя отдельным запросом
-        try {
-          const userResponse = await fetch("http://localhost:8080/api/v1/auth/user/get-info", {
-            headers: {
-              Authorization: `Bearer ${data.access_token}`,
-            },
-          })
-
-          if (userResponse.ok) {
-            const userData = await userResponse.json()
-            console.log("User data:", userData.user)
-            login(userData);
-          }
-        } catch (userError) {
-          console.error("Failed to fetch user data:", userError)
-        }
-        
+      if (data.Message) {
         router.push("/courses")
-
-        
       } else {
         alert(data.error || "Произошла ошибка")
       }

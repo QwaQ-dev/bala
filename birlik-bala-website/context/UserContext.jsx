@@ -1,32 +1,44 @@
-'use client';
-import {createContext, useContext, useState, useEffect} from "react";
+// 'use client';
+// import { createContext, useContext, useState, useEffect } from "react";
 
+// const UserContext = createContext();
 
-const UserContext = createContext();
+// export const UserProvider = ({ children }) => {
+//   const [user, setUser] = useState(null);
 
-export const UserProvider = ({children}) =>{
-    const [user, setUser] = useState(null);
+//   // const data = async() =>{
 
-    useEffect(()=>{
-        const savedUser = localStorage.getItem("username");
-        if(savedUser) setUser(savedUser);
-    }, []);
+//   //   try{
+//   //     const response = await fetch("http://localhost:8080/api/v1/auth/user-info", {
+//   //       credentials: "include"
+//   //     })
+//   //     console.log(response)
+//   //   }catch(error){
+//   //     console.error(error)
+//   //   }
 
-    const login = (userData) =>{
-        setUser(userData);
-        localStorage.setItem("username", userData.user.username);
-    };
+//   // }
+//   // data()
 
-    const logout = () =>{
-        setUser(null);
-        localStorage.removeItem("username");
-    }
+//   const login = (userData) => {
+//     setUser(userData.user);
 
-    return(
-        <UserContext.Provider value = {{user, login, logout}}>
-            {children}
-        </UserContext.Provider>
-    )
-}
+//     document.cookie = `username=${encodeURIComponent(userData.user.username)}; path=/;`;
 
-export const useUser = () => useContext(UserContext);
+//     document.cookie = `access_token=${userData.access_token}; path=/;`;
+//   };
+
+//   const logout = () => {
+//     setUser(null);
+//     document.cookie = "username=; Max-Age=0; path=/";
+//     document.cookie = "access_token=; Max-Age=0; path=/";
+//   };
+
+//   return (
+//     <UserContext.Provider value={{ user, login, logout }}>
+//       {children}
+//     </UserContext.Provider>
+//   );
+// };
+
+// export const useUser = () => useContext(UserContext);

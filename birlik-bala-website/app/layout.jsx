@@ -17,10 +17,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="ru">
       <body className={inter.className}>
-        <UserProvider>
+        {/* <UserProvider> */}
           <Header/>
           {children}  
-        </UserProvider>
+        {/* </UserProvider> */}
       </body>
     </html>
   )
