@@ -56,6 +56,7 @@ func (u *UserHandler) SignIn(c *fiber.Ctx) error {
 		Name:     "access_token",
 		Value:    accessToken,
 		SameSite: "Strict",
+		HTTPOnly: true,
 		Path:     "/",
 		Expires:  time.Now().Add(14 * 24 * time.Hour),
 	})
@@ -91,6 +92,7 @@ func (u *UserHandler) SignUp(c *fiber.Ctx) error {
 		Name:     "access_token",
 		Value:    accessToken,
 		SameSite: "Strict",
+		HTTPOnly: true,
 		Path:     "/",
 		Expires:  time.Now().Add(14 * 24 * time.Hour), // срок жизни
 	})
