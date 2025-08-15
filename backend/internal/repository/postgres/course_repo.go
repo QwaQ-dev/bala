@@ -170,3 +170,55 @@ func (r *CourseRepo) SelectAllCourses() ([]structures.Course, error) {
 
 	return courses, nil
 }
+
+func (r *CourseRepo) UpdateUsersIds(userId, courseId int) error {
+	const op = "posgtes.course_repo.UpdateUsersIds"
+	log := r.log.With("op", op)
+
+	query := `
+		UPDATE users
+		SET course_ids = array_append(course_ids, $1)
+		WHERE id = $2;
+	`
+
+	result, err := r.db.Exec(query, courseId, userId)
+	if err != nil {
+		log.Error("failed to give access", sl.Err(err))
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		log.Warn("no course found with ID", slog.Int("id", courseId))
+		return fmt.Errorf("course with id=%d not found", courseId)
+	}
+
+	log.Info("access has been given to user", slog.Int("id", courseId))
+	return nil
+
+}
+func (r *CourseRepo) RemoveCourseId(userId, courseId int) error {
+	const op = "posgtes.course_repo.RemoveCourseId"
+	log := r.log.With("op", op)
+
+	query := `
+		UPDATE users
+		SET course_ids = array_remove(course_ids, $1)
+		WHERE id = $2;
+	`
+
+	result, err := r.db.Exec(query, courseId, userId)
+	if err != nil {
+		log.Error("failed to give access", sl.Err(err))
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		log.Warn("no course found with ID", slog.Int("id", courseId))
+		return fmt.Errorf("course with id=%d not found", courseId)
+	}
+
+	log.Info("access has been taken from user", slog.Int("id", courseId))
+	return nil
+}

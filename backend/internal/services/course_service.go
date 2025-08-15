@@ -7,6 +7,7 @@ import (
 	"github.com/QwaQ-dev/bala/internal/config"
 	"github.com/QwaQ-dev/bala/internal/repository/postgres"
 	"github.com/QwaQ-dev/bala/internal/structures"
+	"github.com/QwaQ-dev/bala/pkg/sl"
 )
 
 type CourseService struct {
@@ -27,32 +28,26 @@ func NewCourseService(repo *postgres.CourseRepo, log *slog.Logger, cfg *config.C
 
 func (s *CourseService) CreateCourse(course structures.Course) error {
 	const op = "service.course_service.CreateCourse"
-	s.log.Info("Creating course", slog.String("title", course.Title))
+	log := s.log.With("op", op)
+	log.Info("Creating course", slog.String("title", course.Title))
 
 	err := s.repo.InsertCourse(course)
 	if err != nil {
-		s.log.Error("failed to create course", slog.String("op", op), slog.Any("err", err))
+		log.Error("failed to create course", slog.String("op", op), slog.Any("err", err))
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	s.log.Info("Course created", slog.String("title", course.Title))
+	log.Info("Course created", slog.String("title", course.Title))
 	return nil
 }
 
 func (s *CourseService) GetCourseByID(course_id, user_id int) (structures.Course, error) {
 	const op = "service.course_service.GetCourseByID"
-
-	// user, err := s.userRepo.GetUserById(user_id)
-	// if err != nil {
-	// 	return structures.Course{}, err
-	// }
-	// if !user.IsPaid {
-	// 	return structures.Course{}, fmt.Errorf("This user has no access for course")
-	// }
+	log := s.log.With("op", op)
 
 	course, err := s.repo.SelectCourseById(course_id)
 	if err != nil {
-		s.log.Error("failed to get course by id", slog.String("op", op), slog.Int("course_id", course_id), slog.Any("err", err))
+		log.Error("failed to get course by id", slog.String("op", op), slog.Int("course_id", course_id), slog.Any("err", err))
 		return course, fmt.Errorf("%s: %w", op, err)
 	}
 	return course, nil
@@ -60,9 +55,11 @@ func (s *CourseService) GetCourseByID(course_id, user_id int) (structures.Course
 
 func (s *CourseService) UpdateCourse(course *structures.Course) error {
 	const op = "service.course_service.UpdateCourse"
+	log := s.log.With("op", op)
+
 	err := s.repo.UpdateCourse(course)
 	if err != nil {
-		s.log.Error("failed to update course", slog.String("op", op), slog.Any("err", err))
+		log.Error("failed to update course", slog.Any("err", err))
 		return fmt.Errorf("%s: %w", op, err)
 	}
 	return nil
@@ -70,9 +67,11 @@ func (s *CourseService) UpdateCourse(course *structures.Course) error {
 
 func (s *CourseService) DeleteCourse(id int) error {
 	const op = "service.course_service.DeleteCourse"
+	log := s.log.With("op", op)
+
 	err := s.repo.DeleteCourse(id)
 	if err != nil {
-		s.log.Error("failed to delete course", slog.String("op", op), slog.Int("id", id), slog.Any("err", err))
+		log.Error("failed to delete course", slog.Int("id", id), slog.Any("err", err))
 		return fmt.Errorf("%s: %w", op, err)
 	}
 	return nil
@@ -80,12 +79,13 @@ func (s *CourseService) DeleteCourse(id int) error {
 
 func (s *CourseService) AddVideoToCourse(courseID int, path string) error {
 	const op = "service.course_service.AddVideoToCourse"
+	log := s.log.With("op", op)
 
-	s.log.Info("adding video to course", slog.Int("course_id", courseID), slog.String("path", path))
+	log.Info("adding video to course", slog.Int("course_id", courseID), slog.String("path", path))
 
 	err := s.repo.AddVideoToCourse(courseID, path)
 	if err != nil {
-		s.log.Error("failed to add video to course", slog.String("op", op), slog.Any("err", err))
+		log.Error("failed to add video to course", slog.Any("err", err))
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
@@ -94,12 +94,39 @@ func (s *CourseService) AddVideoToCourse(courseID int, path string) error {
 
 func (s *CourseService) GetAllCourses() ([]structures.Course, error) {
 	const op = "service.course_service.GetAllCourses"
+	log := s.log.With("op", op)
 
 	courses, err := s.repo.SelectAllCourses()
 	if err != nil {
-		s.log.Error("failed to get all courses", slog.String("op", op), slog.Any("err", err))
+		log.Error("failed to get all courses", slog.Any("err", err))
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
 	return courses, nil
+}
+
+func (s *CourseService) GiveAccess(userId, courseId int) error {
+	const op = "service.course_service.GiveAccess"
+	log := s.log.With("op", op)
+
+	err := s.repo.UpdateUsersIds(userId, courseId)
+	if err != nil {
+		log.Error("Error with updating course id", sl.Err(err))
+		return err
+	}
+
+	return nil
+}
+
+func (s *CourseService) TakeAwayAccess(userId, courseId int) error {
+	const op = "service.course_service.TakeAwayAccess"
+	log := s.log.With("op", op)
+
+	err := s.repo.RemoveCourseId(userId, courseId)
+	if err != nil {
+		log.Error("Error with taking away access", sl.Err(err))
+		return err
+	}
+
+	return nil
 }

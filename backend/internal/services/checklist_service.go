@@ -25,24 +25,27 @@ func NewChecklistService(repo *postgres.ChecklistRepo, log *slog.Logger, cfg *co
 
 func (s *ChecklistService) CreateChecklist(c structures.Checklist) error {
 	const op = "service.checklist.CreateChecklist"
-	s.log.Info("Creating checklist", slog.String("title", c.Title))
+	log := s.log.With("op", op)
+
+	log.Info("Creating checklist", slog.String("title", c.Title))
 
 	err := s.repo.InsertChecklist(c)
 	if err != nil {
-		s.log.Error("failed to create checklist", slog.String("op", op), slog.Any("err", err))
+		log.Error("failed to create checklist", slog.Any("err", err))
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	s.log.Info("Checklist created", slog.String("slug", c.Slug))
+	log.Info("Checklist created", slog.String("slug", c.Slug))
 	return nil
 }
 
 func (s *ChecklistService) GetAllChecklists() ([]structures.Checklist, error) {
 	const op = "service.checklist.GetAllChecklists"
+	log := s.log.With("op", op)
 
 	checklists, err := s.repo.SelectAllChecklists()
 	if err != nil {
-		s.log.Error("failed to get all checklists", slog.String("op", op), slog.Any("err", err))
+		log.Error("failed to get all checklists", slog.Any("err", err))
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
@@ -51,10 +54,11 @@ func (s *ChecklistService) GetAllChecklists() ([]structures.Checklist, error) {
 
 func (s *ChecklistService) GetChecklistByID(id int64) (structures.Checklist, error) {
 	const op = "service.checklist.GetChecklistByID"
+	log := s.log.With("op", op)
 
 	checklist, err := s.repo.SelectChecklistByID(id)
 	if err != nil {
-		s.log.Error("failed to get checklist by id", slog.String("op", op), slog.Int64("id", id), slog.Any("err", err))
+		log.Error("failed to get checklist by id", slog.Int64("id", id), slog.Any("err", err))
 		return checklist, fmt.Errorf("%s: %w", op, err)
 	}
 
@@ -63,10 +67,11 @@ func (s *ChecklistService) GetChecklistByID(id int64) (structures.Checklist, err
 
 func (s *ChecklistService) UpdateChecklist(c *structures.Checklist) error {
 	const op = "service.checklist.UpdateChecklist"
+	log := s.log.With("op", op)
 
 	err := s.repo.UpdateChecklist(c)
 	if err != nil {
-		s.log.Error("failed to update checklist", slog.String("op", op), slog.Int64("id", c.Id), slog.Any("err", err))
+		log.Error("failed to update checklist", slog.Int64("id", c.Id), slog.Any("err", err))
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
@@ -76,10 +81,11 @@ func (s *ChecklistService) UpdateChecklist(c *structures.Checklist) error {
 
 func (s *ChecklistService) DeleteChecklist(id int64) error {
 	const op = "service.checklist.DeleteChecklist"
+	log := s.log.With("op", op)
 
 	err := s.repo.DeleteChecklist(id)
 	if err != nil {
-		s.log.Error("failed to delete checklist", slog.String("op", op), slog.Int64("id", id), slog.Any("err", err))
+		log.Error("failed to delete checklist", slog.Int64("id", id), slog.Any("err", err))
 		return fmt.Errorf("%s: %w", op, err)
 	}
 

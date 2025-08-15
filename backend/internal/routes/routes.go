@@ -62,6 +62,8 @@ func InitRoutes(
 	courses.Get("/get/:id", courseHandler.GetCourseByID)
 	adminCourses.Delete("/:id", courseHandler.DeleteCourse)
 	adminCourses.Post("/add-video", courseHandler.UploadVideo)
+	adminCourses.Post("/give-access", courseHandler.GiveAccess)
+	adminCourses.Post("/take-away-access", courseHandler.TakeAwayAccess)
 
 	log.Debug("All routes were initialized")
 }

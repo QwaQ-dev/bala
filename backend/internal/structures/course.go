@@ -14,3 +14,7 @@ type Video struct {
 	Path     string `json:"path"`
 	CourseID int    `json:"courseId"`
 }
+
+type CourseAccessRequest struct {
+	CourseID int `json:"course_id"`
+}

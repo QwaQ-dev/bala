@@ -102,10 +102,11 @@ func (s *UserService) GetUserViaToken(id int) (*structures.User, error) {
 
 func (s *UserService) GetAllUsers() ([]structures.User, error) {
 	const op = "service.user_service.GetAllUsers"
+	log := s.log.With("op", op)
 
 	users, err := s.repo.SelectAllUsers()
 	if err != nil {
-		s.log.Error("failed to get all courses", slog.String("op", op), slog.Any("err", err))
+		log.Error("failed to get all courses", slog.Any("err", err))
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
