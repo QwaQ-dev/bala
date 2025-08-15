@@ -1,30 +1,21 @@
 package middleware
 
 import (
-	"strings"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 func JWTMiddleware(secretKey string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		authHeader := c.Get("Authorization")
-		if authHeader == "" {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Missing auth header"})
+		cookie := c.Cookies("access_token")
+		if cookie == "" {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Missing token cookie"})
 		}
 
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid auth format"})
-		}
-
-		tokenStr := parts[1]
-
-		token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
+		token, err := jwt.Parse(cookie, func(t *jwt.Token) (interface{}, error) {
 			return []byte(secretKey), nil
 		})
-		if err != nil {
+		if err != nil || !token.Valid {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid token"})
 		}
 
@@ -37,14 +28,13 @@ func JWTMiddleware(secretKey string) fiber.Handler {
 		if !ok {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid userId in token"})
 		}
-		userId := int(userIdFloat)
 
 		role, ok := claims["role"].(string)
 		if !ok {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid role in token"})
 		}
 
-		c.Locals("userId", userId)
+		c.Locals("userId", int(userIdFloat))
 		c.Locals("role", role)
 
 		return c.Next()

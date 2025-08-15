@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"log/slog"
+	"time"
 
 	"github.com/QwaQ-dev/bala/internal/config"
 	"github.com/QwaQ-dev/bala/internal/services"
@@ -51,9 +52,17 @@ func (u *UserHandler) SignIn(c *fiber.Ctx) error {
 		})
 	}
 
+	c.Cookie(&fiber.Cookie{
+		Name:     "access_token",
+		Value:    accessToken,
+		SameSite: "Strict",
+		Path:     "/",
+		Expires:  time.Now().Add(14 * 24 * time.Hour),
+	})
+
 	log.Info("User has signed in", slog.String("username", user.Username))
 	return c.Status(200).JSON(fiber.Map{
-		"access_token": accessToken,
+		"Message": "sign in success",
 	})
 }
 
@@ -78,9 +87,17 @@ func (u *UserHandler) SignUp(c *fiber.Ctx) error {
 		})
 	}
 
+	c.Cookie(&fiber.Cookie{
+		Name:     "access_token",
+		Value:    accessToken,
+		SameSite: "Strict",
+		Path:     "/",
+		Expires:  time.Now().Add(14 * 24 * time.Hour), // срок жизни
+	})
+
 	log.Info("User has signed up", slog.String("username", user.Username))
 	return c.Status(200).JSON(fiber.Map{
-		"access_token": accessToken,
+		"Message": "sign up success",
 	})
 }
 

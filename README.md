@@ -11,7 +11,8 @@ api/v1/auth/user-info
 ```bash
 {
     "username": "",
-    "password": ""
+    "password": "",
+    "role": ""
 }
 ```
 
