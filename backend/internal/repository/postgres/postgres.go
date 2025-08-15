@@ -55,8 +55,6 @@ func InitDatabase(cfg config.Database, log *slog.Logger) (*sql.DB, error) {
 		return nil, err
 	}
 
-	runMigrations(m, "down", log)
-
 	runMigrations(m, "up", log)
 
 	log.Info("Database connected successfully")
