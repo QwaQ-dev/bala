@@ -48,7 +48,7 @@ func (r *UserRepo) GetUserByUsername(username string) (*structures.User, error) 
 
 	user := new(structures.User)
 
-	err := r.db.QueryRow(query, username).Scan(&user.Id, &user.Username, &user.Password, &user.Courses, &user.Role)
+	err := r.db.QueryRow(query, username).Scan(&user.Id, &user.Username, &user.Password, pq.Array(&user.Courses), &user.Role)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("No user with this username")
