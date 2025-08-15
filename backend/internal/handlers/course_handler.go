@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"log/slog"
+	"os"
 	"strconv"
 	"time"
 
@@ -43,10 +44,18 @@ func (h *CourseHandler) CreateCourse(c *fiber.Ctx) error {
 	}
 
 	file, err := c.FormFile("img")
+
 	var imgPath string
+
 	if err == nil && file != nil {
+		uploadDir := "./uploads/photos"
+		if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
+			log.Error("failed to create uploads dir", sl.Err(err))
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create uploads dir"})
+		}
+
 		filename := fmt.Sprintf("%d_%s", time.Now().UnixNano(), file.Filename)
-		savePath := "./uploads/photos/" + filename
+		savePath := uploadDir + "/" + filename
 		if err := c.SaveFile(file, savePath); err != nil {
 			log.Error("failed to save photo", sl.Err(err))
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save photo"})
@@ -196,11 +205,17 @@ func (h *CourseHandler) UploadVideo(c *fiber.Ctx) error {
 		log.Error("invalid video file", sl.Err(err))
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid video file"})
 	}
+	uploadDir := "./uploads/videos"
+	if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
+		log.Error("failed to create uploads dir", sl.Err(err))
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create uploads dir"})
+	}
 
-	savePath := "./uploads/videos/" + file.Filename
+	filename := fmt.Sprintf("%d_%s", time.Now().UnixNano(), file.Filename)
+	savePath := uploadDir + "/" + filename
 	if err := c.SaveFile(file, savePath); err != nil {
-		log.Error("failde to save video", sl.Err(err))
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save video"})
+		log.Error("failed to save photo", sl.Err(err))
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save photo"})
 	}
 
 	relativePath := "/uploads/videos/" + file.Filename
