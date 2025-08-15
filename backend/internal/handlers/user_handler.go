@@ -94,13 +94,24 @@ func (u *UserHandler) SignUp(c *fiber.Ctx) error {
 		SameSite: "Strict",
 		HTTPOnly: true,
 		Path:     "/",
-		Expires:  time.Now().Add(14 * 24 * time.Hour), // срок жизни
+		Expires:  time.Now().Add(14 * 24 * time.Hour),
 	})
 
 	log.Info("User has signed up", slog.String("username", user.Username))
 	return c.Status(200).JSON(fiber.Map{
 		"Message": "sign up success",
 	})
+}
+
+func (h *UserHandler) Logout(c *fiber.Ctx) error {
+	c.Cookie(&fiber.Cookie{
+		Name:     "access_token",
+		Value:    "",
+		HTTPOnly: true,
+		Expires:  time.Now().Add(-time.Hour),
+		Path:     "/",
+	})
+	return c.JSON(fiber.Map{"message": "Logged out"})
 }
 
 func (u *UserHandler) GetUserViaToken(c *fiber.Ctx) error {

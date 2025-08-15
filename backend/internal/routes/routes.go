@@ -42,6 +42,7 @@ func InitRoutes(
 	user.Post("/sign-up", userHandler.SignUp)
 	admin.Get("/users", userHandler.GetAllUsers)
 	authorizedGroup.Get("/user-info", userHandler.GetUserViaToken)
+	authorizedGroup.Delete("/logout", userHandler.Logout)
 
 	adminChecklists.Post("/create", checklistHandler.CreateChecklist)
 	adminChecklists.Put("/update", checklistHandler.UpdateChecklist)
