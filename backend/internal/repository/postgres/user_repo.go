@@ -8,7 +8,6 @@ import (
 
 	"github.com/QwaQ-dev/bala/internal/structures"
 	"github.com/QwaQ-dev/bala/pkg/sl"
-	"github.com/lib/pq"
 )
 
 type UserRepo struct {
@@ -48,7 +47,7 @@ func (r *UserRepo) GetUserByUsername(username string) (*structures.User, error) 
 
 	user := new(structures.User)
 
-	err := r.db.QueryRow(query, username).Scan(&user.Id, &user.Username, &user.Password, pq.Array(&user.Courses), &user.Role)
+	err := r.db.QueryRow(query, username).Scan(&user.Id, &user.Username, &user.Password, &user.CourseIDs, &user.Role)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("No user with this username")
@@ -86,7 +85,7 @@ func (r *UserRepo) SelectAllUsers() ([]structures.User, error) {
 			&user.Id,
 			&user.Username,
 			&user.Password,
-			pq.Array(&user.Courses),
+			&user.CourseIDs,
 			&user.Role,
 		)
 		if err != nil {
@@ -113,7 +112,7 @@ func (r *UserRepo) GetUserById(id int) (*structures.User, error) {
 
 	query := "SELECT username, password, course_ids, role FROM users WHERE id=$1"
 
-	err := r.db.QueryRow(query, id).Scan(&user.Username, &user.Password, pq.Array(&user.Courses), &user.Role)
+	err := r.db.QueryRow(query, id).Scan(&user.Username, &user.Password, &user.CourseIDs, &user.Role)
 	if err != nil {
 		log.Error("Error with scanning user data", sl.Err(err))
 		return user, err

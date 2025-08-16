@@ -24,7 +24,10 @@ const (
 )
 
 func main() {
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		BodyLimit: 1024 * 1024 * 1024,
+	})
+
 	cfg := config.MustLoad()
 	log := setupLogger(cfg.Env)
 

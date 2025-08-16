@@ -41,32 +41,34 @@ func (s *CourseService) CreateCourse(course structures.Course) error {
 	return nil
 }
 
-func (s *CourseService) GetCourseByID(course_id, user_id int) (structures.Course, error) {
+func (s *CourseService) GetCourseByID(courseID, userID int) (structures.Course, error) {
 	const op = "service.course_service.GetCourseByID"
 	log := s.log.With("op", op)
 
-	userCourses, err := s.userRepo.GetUserById(user_id)
+	user, err := s.userRepo.GetUserById(userID)
 	if err != nil {
-		log.Error("failed to get user by id", slog.Int("user_id", user_id), slog.Any("err", err))
+		log.Error("failed to get user by id", slog.Int("user_id", userID), slog.Any("err", err))
 		return structures.Course{}, fmt.Errorf("%s: %w", op, err)
 	}
 
+	// user.CourseIDs должен быть pq.Int64Array
 	hasAccess := false
-	for _, id := range userCourses.Courses {
-		if id == course_id {
+	for _, id := range user.CourseIDs {
+		if int(id) == courseID {
 			hasAccess = true
 			break
 		}
 	}
+
 	if !hasAccess {
-		log.Error("user has no access to course", slog.Int("user_id", user_id), slog.Int("course_id", course_id))
-		return structures.Course{}, fmt.Errorf("This user has no access for course")
+		log.Warn("user has no access to course", slog.Int("user_id", userID), slog.Int("course_id", courseID))
+		return structures.Course{}, fmt.Errorf("user has no access to this course")
 	}
 
-	course, err := s.repo.SelectCourseById(course_id)
+	course, err := s.repo.SelectCourseById(courseID)
 	if err != nil {
-		log.Error("failed to get course by id", slog.Int("course_id", course_id), slog.Any("err", err))
-		return course, fmt.Errorf("%s: %w", op, err)
+		log.Error("failed to get course by id", slog.Int("course_id", courseID), slog.Any("err", err))
+		return structures.Course{}, fmt.Errorf("%s: %w", op, err)
 	}
 
 	return course, nil

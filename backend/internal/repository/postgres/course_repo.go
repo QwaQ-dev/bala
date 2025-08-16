@@ -65,35 +65,52 @@ func (r *CourseRepo) DeleteCourse(id int) error {
 	return nil
 }
 
-func (r *CourseRepo) SelectCourseById(id int) (structures.Course, error) {
-	const op = "postgres.course_repo.SelectCourseById"
-	log := r.log.With("op", op)
+func (r *CourseRepo) SelectCourseById(courseID int) (structures.Course, error) {
+	query := `
+        SELECT 
+		c.id, c.title, c.description, c.cost, c.img,
+		v.id AS video_id, v.path AS video_path
+        FROM courses c
+        LEFT JOIN videos v ON v.course_id = c.id
+        WHERE c.id = $1;
+    `
 
-	var course structures.Course
-	query := `SELECT id, title, description, cost, img FROM courses WHERE id=$1`
-	err := r.db.QueryRow(query, id).Scan(&course.Id, &course.Title, &course.Description, &course.Cost, &course.Img)
+	rows, err := r.db.Query(query, courseID)
 	if err != nil {
-		log.Error("failed to query course", sl.Err(err))
-		return course, err
-	}
-
-	videosQuery := `SELECT id, path FROM videos WHERE course_id=$1`
-	rows, err := r.db.Query(videosQuery, id)
-	if err != nil {
-		log.Error("failed to query videos", sl.Err(err))
-		return course, err
+		return structures.Course{}, err
 	}
 	defer rows.Close()
 
+	var course structures.Course
+	videos := []structures.Video{}
+
 	for rows.Next() {
-		var video structures.Video
-		if err := rows.Scan(&video.Id, &video.Path); err != nil {
-			log.Warn("failed to scan video", sl.Err(err))
-			continue
+		var (
+			videoID   sql.NullInt64
+			videoPath sql.NullString
+		)
+
+		if err := rows.Scan(
+			&course.Id,
+			&course.Title,
+			&course.Description,
+			&course.Cost,
+			&course.Img,
+			&videoID,
+			&videoPath,
+		); err != nil {
+			return structures.Course{}, err
 		}
-		course.Videos = append(course.Videos, video)
+
+		if videoID.Valid && videoPath.Valid {
+			videos = append(videos, structures.Video{
+				Id:   int(videoID.Int64),
+				Path: videoPath.String,
+			})
+		}
 	}
 
+	course.Videos = videos
 	return course, nil
 }
 
@@ -152,7 +169,6 @@ func (r *CourseRepo) SelectAllCourses() ([]structures.Course, error) {
 			&course.Title,
 			&course.Description,
 			&course.Cost,
-			&course.Videos,
 			&course.Img,
 		)
 		if err != nil {

@@ -218,7 +218,7 @@ func (h *CourseHandler) UploadVideo(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save photo"})
 	}
 
-	relativePath := "/uploads/videos/" + file.Filename
+	relativePath := "/uploads/videos/" + filename
 	if err := h.courseService.AddVideoToCourse(courseID, relativePath); err != nil {
 		log.Error("failed to save path to DB", sl.Err(err))
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save path to DB"})
@@ -244,8 +244,6 @@ func (h *CourseHandler) GiveAccess(c *fiber.Ctx) error {
 	const op = "handlers.checklist_handler.GiveAccess"
 	log := h.log.With("op", op)
 
-	userId := c.Locals("userId").(int)
-
 	var req structures.CourseAccessRequest
 
 	if err := c.BodyParser(&req); err != nil {
@@ -254,7 +252,7 @@ func (h *CourseHandler) GiveAccess(c *fiber.Ctx) error {
 			"error": "invalid request body",
 		})
 	}
-	err := h.courseService.TakeAwayAccess(userId, req.CourseID)
+	err := h.courseService.GiveAccess(req.UserID, req.CourseID)
 	if err != nil {
 		log.Error("Error with access", sl.Err(err))
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -271,8 +269,6 @@ func (h *CourseHandler) TakeAwayAccess(c *fiber.Ctx) error {
 	const op = "handlers.checklist_handler.TakeAwayAccess"
 	log := h.log.With("op", op)
 
-	userId := c.Locals("userId").(int)
-
 	var req structures.CourseAccessRequest
 
 	if err := c.BodyParser(&req); err != nil {
@@ -282,7 +278,7 @@ func (h *CourseHandler) TakeAwayAccess(c *fiber.Ctx) error {
 		})
 	}
 
-	err := h.courseService.TakeAwayAccess(userId, req.CourseID)
+	err := h.courseService.TakeAwayAccess(req.UserID, req.CourseID)
 	if err != nil {
 		log.Error("Error with access", sl.Err(err))
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

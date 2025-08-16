@@ -38,7 +38,7 @@ func (u *UserHandler) SignIn(c *fiber.Ctx) error {
 		})
 	}
 
-	if user.Password == "" || user.Username == "" || user.Role == "" {
+	if user.Password == "" || user.Username == "" {
 		return c.Status(404).JSON(fiber.Map{
 			"error": "Username and password and role are required",
 		})
