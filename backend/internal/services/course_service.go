@@ -150,3 +150,29 @@ func (s *CourseService) TakeAwayAccess(userId, courseId int) error {
 
 	return nil
 }
+
+func (s *CourseService) GetAllCoursesWithAccess(userID int) ([]structures.CourseWithAccess, error) {
+	courses, err := s.repo.SelectAllCourses()
+	if err != nil {
+		return nil, err
+	}
+	user, err := s.userRepo.GetUserById(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	courseMap := make(map[int]bool)
+	for _, id := range user.CourseIDs {
+		courseMap[int(id)] = true
+	}
+
+	var result []structures.CourseWithAccess
+	for _, course := range courses {
+		result = append(result, structures.CourseWithAccess{
+			Course:    course,
+			HasAccess: courseMap[course.Id],
+		})
+	}
+
+	return result, nil
+}

@@ -18,3 +18,8 @@ type CourseAccessRequest struct {
 	UserID   int `json:"user_id"`
 	CourseID int `json:"course_id"`
 }
+
+type CourseWithAccess struct {
+	Course
+	HasAccess bool `json:"has_access"`
+}

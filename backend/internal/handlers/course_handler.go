@@ -308,3 +308,14 @@ func (h *CourseHandler) TakeAwayAccess(c *fiber.Ctx) error {
 		"Message": "Access has been taken away",
 	})
 }
+
+func (h *CourseHandler) GetAllCoursesWithAccess(c *fiber.Ctx) error {
+	userID, _ := c.Locals("userId").(int)
+
+	courses, err := h.courseService.GetAllCoursesWithAccess(userID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch courses"})
+	}
+
+	return c.JSON(courses)
+}
