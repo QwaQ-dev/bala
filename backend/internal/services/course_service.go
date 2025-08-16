@@ -51,7 +51,6 @@ func (s *CourseService) GetCourseByID(courseID, userID int) (structures.Course, 
 		return structures.Course{}, fmt.Errorf("%s: %w", op, err)
 	}
 
-	// user.CourseIDs должен быть pq.Int64Array
 	hasAccess := false
 	for _, id := range user.CourseIDs {
 		if int(id) == courseID {

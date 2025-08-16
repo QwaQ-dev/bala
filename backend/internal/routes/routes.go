@@ -61,7 +61,7 @@ func InitRoutes(
 	courses.Get("/get", courseHandler.GetAllCourses)
 	courses.Get("/get/:id", courseHandler.GetCourseByID)
 	adminCourses.Delete("/:id", courseHandler.DeleteCourse)
-	adminCourses.Post("/add-video", courseHandler.UploadVideo)
+	adminCourses.Post("/add-video", courseHandler.UploadVideos)
 	adminCourses.Post("/give-access", courseHandler.GiveAccess)
 	adminCourses.Post("/take-away-access", courseHandler.TakeAwayAccess)
 
