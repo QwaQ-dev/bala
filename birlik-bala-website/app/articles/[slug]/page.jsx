@@ -1,58 +1,61 @@
-import { Button } from "@/components/ui/button"
-import { ArrowLeft, Clock, User, Calendar } from "lucide-react"
-import Link from "next/link"
 
-export const revalidate = 3600
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Clock, User, Calendar } from "lucide-react";
+import Link from "next/link";
+
+export const revalidate = 3600;
 
 async function getArticle(slug) {
+  try {
+    const res = await fetch(`http://localhost:3000/api/articles/${slug}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include", // For OVT (access_token)
+    });
 
+    if (!res.ok) {
+      console.error("[getArticle] Ошибка:", res.status, await res.text());
+      return null;
+    }
 
-  return {
-    id: 1,
-    title: "Что делать, если ребенок не говорит в 3 года",
-    content: `
-      <h2>Введение</h2>
-      <p>Развитие речи у детей - это сложный процесс, который может происходить в разном темпе. Если ваш ребенок в 3 года еще не говорит или говорит очень мало, это может вызывать беспокойство.</p>
-      
-      <h2>Основные причины задержки речи</h2>
-      <ul>
-        <li>Индивидуальные особенности развития</li>
-        <li>Недостаток стимуляции речевого развития</li>
-        <li>Проблемы со слухом</li>
-        <li>Неврологические особенности</li>
-      </ul>
-      
-      <h2>Что можно делать дома</h2>
-      <p>Существует множество способов стимулировать речевое развитие ребенка в домашних условиях:</p>
-      
-      <h3>1. Постоянно разговаривайте с ребенком</h3>
-      <p>Комментируйте все, что вы делаете. Описывайте предметы, действия, эмоции.</p>
-      
-      <h3>2. Читайте книги</h3>
-      <p>Ежедневное чтение развивает словарный запас и понимание речи.</p>
-      
-      <h3>3. Пойте песни и рассказывайте стихи</h3>
-      <p>Ритм и мелодия помогают запоминать слова и развивают речевой слух.</p>
-      
-      <h2>Когда обращаться к специалисту</h2>
-      <p>Если к 3 годам ребенок:</p>
-      <ul>
-        <li>Не произносит простые слова</li>
-        <li>Не понимает простые инструкции</li>
-        <li>Не проявляет интереса к общению</li>
-      </ul>
-      <p>Рекомендуется обратиться к логопеду или специалисту по развитию речи.</p>
-    `,
-    category: "АВА-терапия",
-    author: "Айгуль Сарсенова",
-    date: "2024-01-15",
-    readTime: "5 мин",
-    slug: "rebenok-ne-govorit-v-3-goda",
+    const article = await res.json();
+
+    // Format data to match ArticlePage expectations and JSON
+    return {
+      id: article.id,
+      title: article.title || "Без названия",
+      content: article.content || "", // Backend returns plain text
+      category: article.category || "Без категории",
+      author: article.author || "Неизвестный автор",
+      date: article.date || new Date().toISOString().split("T")[0], // Fallback if date is absent
+      readTime: article.readTime ? `${article.readTime} мин` : "5 мин",
+      slug: article.id || article.id.toString(),
+    };
+  } catch (error) {
+    console.error("[getArticle] Ошибка:", error.message);
+    return null;
   }
 }
 
 export default async function ArticlePage({ params }) {
-  const article = await getArticle(params.slug)
+  const article = await getArticle(params.slug);
+
+  if (!article) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <h3 className="text-2xl font-bold text-gray-900 mb-4">Статья не найдена</h3>
+          <Link href="/articles">
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+              Назад к статьям
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -97,5 +100,5 @@ export default async function ArticlePage({ params }) {
         </div>
       </div>
     </div>
-  )
+  );
 }

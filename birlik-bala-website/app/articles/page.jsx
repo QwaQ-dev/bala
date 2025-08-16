@@ -9,7 +9,7 @@ export const revalidate = 1800;
 
 async function getArticles() {
   try {
-    const res = await fetch("http://localhost:8080/api/v1/articles", {
+    const res = await fetch("http://localhost:8080/api/v1/article/get", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -22,8 +22,9 @@ async function getArticles() {
     }
 
     const articles = await res.json();
+    console.log(articles)
 
-    // Форматируем данные под ваш JSON
+
     return articles.map((article) => ({
       id: article.id,
       title: article.title || "Без названия",
@@ -57,6 +58,8 @@ export default async function ArticlesPage() {
             <Button className="bg-blue-600 text-white">
               Все статьи ({articles.length})
             </Button>
+
+
             <Button
               className={
                 articles.filter((a) => a.category === "АФК").length
