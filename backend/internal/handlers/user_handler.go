@@ -55,8 +55,8 @@ func (u *UserHandler) SignIn(c *fiber.Ctx) error {
 	c.Cookie(&fiber.Cookie{
 		Name:     "access_token",
 		Value:    accessToken,
-		SameSite: "Strict",
-		HTTPOnly: true,
+		SameSite: "None",
+		HTTPOnly: false,
 		Secure:   false,
 		Path:     "/",
 		Expires:  time.Now().Add(14 * 24 * time.Hour),
@@ -92,8 +92,8 @@ func (u *UserHandler) SignUp(c *fiber.Ctx) error {
 	c.Cookie(&fiber.Cookie{
 		Name:     "access_token",
 		Value:    accessToken,
-		SameSite: "Strict",
-		HTTPOnly: true,
+		SameSite: "None",
+		HTTPOnly: false,
 		Secure:   false,
 		Path:     "/",
 		Expires:  time.Now().Add(14 * 24 * time.Hour),
@@ -109,7 +109,7 @@ func (h *UserHandler) Logout(c *fiber.Ctx) error {
 	c.Cookie(&fiber.Cookie{
 		Name:     "access_token",
 		Value:    "",
-		HTTPOnly: true,
+		HTTPOnly: false,
 		Expires:  time.Now().Add(-time.Hour),
 		Path:     "/",
 	})
