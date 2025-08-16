@@ -1,34 +1,57 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "./ui/card"
 import { Button } from "./ui/button"
-import { Play, Lock, Clock, Users } from "lucide-react"
+import { Play, Lock } from "lucide-react"
 import { useRouter } from "next/navigation"
 
-export default function CoursesClient({ courses }) {
-  const [filter, setFilter] = useState("all") // all, available, unavailable
+export default function CoursesClient() {
+  const [courses, setCourses] = useState([])
+  const [filter, setFilter] = useState("all")
+  const [error, setError] = useState(null)
   const router = useRouter()
 
+  useEffect(() => {
+    async function fetchCourses() {
+      try {
+        const res = await fetch("/api/courses", {
+          method: "GET",
+          credentials: "include",
+        })
+        if (!res.ok) {
+          const errorText = await res.text()
+          throw new Error(`Failed to fetch courses: ${res.status} - ${errorText}`)
+        }
+        const data = await res.json()
+        console.log(data)
+        if (!Array.isArray(data)) {
+          throw new Error("Invalid data format received from server")
+        }
+        setCourses(data)
+      } catch (err) {
+        setError(err.message)
+      }
+    }
+    fetchCourses()
+  }, [])
+
   const filteredCourses = courses.filter((course) => {
-    if (filter === "available") return course.isAvailable
-    if (filter === "unavailable") return !course.isAvailable
+    if (filter === "available") return course.has_access
+    if (filter === "unavailable") return !course.has_access
     return true
   })
 
   const handleCourseAction = (course) => {
-    if (course.isAvailable) {
-      // Переход к доступному курсу через Next.js router
-      router.push(`/courses/${course.slug}`)
+    if (course.has_access) {
+      router.push(`/courses/${course.id}`)
     } else {
-      // Покупка недоступного курса
-      alert(`Переход к оплате курса "${course.title}" за ${course.price}`)
+      alert(`Переход к оплате курса "${course.title}" за ${course.cost}₸`)
     }
   }
 
   return (
     <>
-      {/* Фильтры */}
       <div className="flex justify-center mb-8">
         <div className="flex space-x-4 bg-white rounded-lg p-2 shadow-sm">
           <Button
@@ -43,30 +66,35 @@ export default function CoursesClient({ courses }) {
             onClick={() => setFilter("available")}
             className={filter === "available" ? "bg-green-600 text-white" : ""}
           >
-            Доступные ({courses.filter((c) => c.isAvailable).length})
+            Доступные ({courses.filter((c) => c.has_access).length})
           </Button>
           <Button
             variant={filter === "unavailable" ? "default" : "ghost"}
             onClick={() => setFilter("unavailable")}
             className={filter === "unavailable" ? "bg-red-600 text-white" : ""}
           >
-            Недоступные ({courses.filter((c) => !c.isAvailable).length})
+            Недоступные ({courses.filter((c) => !c.has_access).length})
           </Button>
         </div>
       </div>
 
-      {/* Список курсов */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {filteredCourses.map((course) => (
           <Card
             key={course.id}
             className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col"
-            style={{ height: "520px" }} // Фиксированная высота для всех карточек
+            style={{ height: "420px" }}
           >
-            {/* Изображение курса */}
-            <div className="relative h-48 bg-gradient-to-br from-blue-100 to-blue-200 flex-shrink-0">
+            <div className="relative h-48 bg-gray-100 flex-shrink-0">
+              {course.img && (
+                <img
+                  src={course.img}
+                  alt={course.title}
+                  className="object-cover w-full h-full"
+                />
+              )}
               <div className="absolute inset-0 flex items-center justify-center">
-                {course.isAvailable ? (
+                {course.has_access ? (
                   <div className="w-16 h-16 bg-white bg-opacity-90 rounded-full flex items-center justify-center shadow-lg">
                     <Play className="w-6 h-6 text-green-600 ml-1" />
                   </div>
@@ -77,63 +105,36 @@ export default function CoursesClient({ courses }) {
                 )}
               </div>
 
-              {/* Бейдж цены */}
               <div className="absolute top-4 right-4">
                 <span
                   className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    course.isAvailable ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                    course.has_access ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
                   }`}
                 >
-                  {course.isAvailable ? "Доступен" : course.price}
+                  {course.has_access ? "Доступен" : `${course.cost}₸`}
                 </span>
               </div>
-
-              {/* Статус доступности */}
-              {course.isAvailable && (
-                <div className="absolute top-4 left-4">
-                  <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">Доступен</span>
-                </div>
-              )}
             </div>
 
             <CardContent className="flex flex-col flex-1 p-6">
-              {/* Заголовок - фиксированная высота */}
-              <div className="h-14 mb-3">
-                <h3 className="text-xl font-bold text-gray-900 line-clamp-2 leading-tight">{course.title}</h3>
-              </div>
+              <h3 className="text-xl font-bold text-gray-900 line-clamp-2 leading-tight mb-3">
+                {course.title}
+              </h3>
 
-              {/* Описание - фиксированная высота */}
-              <div className="h-16 mb-4">
-                <p className="text-gray-600 text-sm line-clamp-3 leading-relaxed">{course.description}</p>
-              </div>
+              <p className="text-gray-600 text-sm line-clamp-3 leading-relaxed mb-6">
+                {course.description}
+              </p>
 
-              {/* Статистика курса */}
-              <div className="flex items-center justify-between text-sm text-gray-500 mb-6 flex-shrink-0">
-                <div className="flex items-center space-x-1">
-                  <Clock className="w-4 h-4" />
-                  <span>{course.duration}</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Play className="w-4 h-4" />
-                  <span>{course.lessons} уроков</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Users className="w-4 h-4" />
-                  <span>{course.students}</span>
-                </div>
-              </div>
-
-              {/* Кнопка действия - всегда внизу */}
               <div className="mt-auto">
                 <Button
                   onClick={() => handleCourseAction(course)}
                   className={`w-full flex items-center justify-center space-x-2 ${
-                    course.isAvailable
+                    course.has_access
                       ? "bg-green-600 hover:bg-green-700 text-white"
                       : "bg-red-600 hover:bg-red-700 text-white"
                   }`}
                 >
-                  {course.isAvailable ? (
+                  {course.has_access ? (
                     <>
                       <Play className="w-4 h-4" />
                       <span>Начать курс</span>
@@ -141,7 +142,7 @@ export default function CoursesClient({ courses }) {
                   ) : (
                     <>
                       <Lock className="w-4 h-4" />
-                      <span>Купить за {course.price}</span>
+                      <span>Купить за {course.cost}₸</span>
                     </>
                   )}
                 </Button>

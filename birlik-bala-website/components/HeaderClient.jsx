@@ -1,37 +1,64 @@
-"use client"
+// app/components/HeaderClient.tsx
+"use client";
 
-import Link from "next/link"
-import { Button } from "./ui/button"
-import { useEffect, useState } from "react"
-import { User, LogOut, ChevronDown, Menu } from "lucide-react"
-import { useUser } from "@/context/UserContext"
-import { clientCookies } from "@/lib/auth-cookies"
+import Link from "next/link";
+import { useState, useEffect } from "react";
+import { Button } from "./ui/button";
+import { User, LogOut, ChevronDown, Menu } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-export default function Header() {
+export default function HeaderClient({ userData }) {
+  const router = useRouter();
+  // Безопасная инициализация состояния
+  const [username, setUsername] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  
-  const handleLogout = () => {
-    // clientCookies.remove("access_token")
-    logout()
-    setIsDropdownOpen(false)
-    window.location.href = "/"
-  }
+  // Обновляем состояние при изменении userData
+  useEffect(() => {
+    setUsername(userData?.user?.username || "");
+    setIsAdmin(userData?.user?.role === "admin" || false);
+  }, [userData]);
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("/api/auth/logout", {
+        method: "DELETE", 
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        console.error("[HeaderClient] Ошибка логаута:", await response.text());
+        alert("Не удалось выйти из системы");
+        return;
+      }
+
+      // Сбрасываем состояние и перенаправляем
+      setUsername("");
+      setIsAdmin(false);
+      setIsDropdownOpen(false);
+      router.push("/");
+    } catch (error) {
+      console.error("[HeaderClient] Ошибка при запросе логаута:", error.message);
+      alert("Произошла ошибка при выходе");
+      router.push("/");
+    }
+  };
 
   return (
     <header className="bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
-          {/* Левая часть - Логотип */}
           <div className="flex items-center flex-shrink-0">
             <Link href="/" className="text-2xl font-bold text-gray-900">
               BIRLIK BALA
             </Link>
           </div>
 
-          {/* Центральная часть - Навигация */}
           <nav className="hidden lg:flex items-center space-x-8 flex-1 justify-center">
             <Link href="/courses" className="text-gray-600 hover:text-gray-900 transition-colors">
               Курсы
@@ -47,9 +74,7 @@ export default function Header() {
             </Link>
           </nav>
 
-          {/* Правая часть - Кнопки и профиль */}
           <div className="flex items-center space-x-4 flex-shrink-0">
-            {/* Мобильное меню */}
             <button
               className="lg:hidden p-2 text-gray-600 hover:text-gray-900"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -57,15 +82,13 @@ export default function Header() {
               <Menu className="w-6 h-6" />
             </button>
 
-            {/* Кнопка консультации */}
             <Link href="/consultation" className="hidden sm:block">
               <Button className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg whitespace-nowrap">
                 Онлайн-консультация
               </Button>
             </Link>
 
-            {user ? (
-              // Авторизированный пользователь
+            {username ? (
               <div className="relative">
                 <button
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -74,15 +97,15 @@ export default function Header() {
                   <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                     <User className="w-4 h-4 text-blue-600" />
                   </div>
-                  <span className="font-medium hidden sm:block">{user.username}</span>
+                  <span className="font-medium hidden sm:block">{username}</span>
                   <ChevronDown className="w-4 h-4" />
                 </button>
 
                 {isDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
                     <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-100">
-                      <div className="font-medium">{user.username}</div>
                       <div className="text-xs text-gray-500">Пользователь</div>
+                      <div>{username}</div>
                     </div>
                     {isAdmin && (
                       <Link
@@ -106,7 +129,6 @@ export default function Header() {
                 )}
               </div>
             ) : (
-              // Неавторизированный пользователь
               <Link href="/auth">
                 <Button
                   variant="outline"
@@ -120,9 +142,12 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Закрытие dropdown при клике вне его */}
-      {isDropdownOpen && <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)}></div>}
-      {isMobileMenuOpen && <div className="fixed inset-0 z-30" onClick={() => setIsMobileMenuOpen(false)}></div>}
+      {isDropdownOpen && (
+        <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)}></div>
+      )}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-30" onClick={() => setIsMobileMenuOpen(false)}></div>
+      )}
     </header>
-  )
+  );
 }

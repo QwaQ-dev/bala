@@ -1,102 +1,131 @@
-"use client"
+// app/auth/page.tsx
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Eye, EyeOff, User, Lock } from "lucide-react"
-import { useUser } from "@/context/UserContext"
-import { clientCookies } from "@/lib/auth-cookies"
-import Link from "next/link"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Eye, EyeOff, User, Lock } from "lucide-react";
+import Link from "next/link";
 
 export default function AuthPage() {
-  const { login } = useUser()
-  const [isLogin, setIsLogin] = useState(true)
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [errors, setErrors] = useState({})
-  const router = useRouter()
+  const [isLogin, setIsLogin] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [serverError, setServerError] = useState("");
+  const router = useRouter();
 
   const [formData, setFormData] = useState({
     username: "",
     password: "",
-  })
+  });
+
+  // Проверяем, авторизован ли пользователь
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const response = await fetch("/api/auth/user", {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        });
+
+        if (response.ok) {
+          console.log("[AuthPage] Пользователь уже авторизован, перенаправление на /courses");
+          router.push("/courses");
+        }
+      } catch (error) {
+        console.log("[AuthPage] Нет авторизации:", error.message);
+      }
+    }
+    checkAuth();
+  }, [router]);
 
   const validateForm = () => {
-    const newErrors = {}
+    const newErrors = {};
 
     if (!formData.username.trim()) {
-      newErrors.username = "Имя пользователя обязательно"
+      newErrors.username = "Имя пользователя обязательно";
     }
 
     if (!formData.password) {
-      newErrors.password = "Пароль обязателен"
+      newErrors.password = "Пароль обязателен";
     } else if (formData.password.length < 6) {
-      newErrors.password = "Пароль должен быть не менее 6 символов"
+      newErrors.password = "Пароль должен быть не менее 6 символов";
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!validateForm()) {
-      return
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
+    setServerError("");
 
     try {
-      const endpoint = isLogin
-        ? "http://localhost:8080/api/v1/user/sign-in"
-        : "http://localhost:8080/api/v1/user/sign-up"
+      const endpoint = isLogin ? "/api/auth/sign-in" : "/api/auth/sign-up";
 
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(formData),
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
+      console.log("[AuthPage] Ответ сервера:", data);
 
-      console.log(data.Message)
+      if (response.ok && data.Message) {
+        router.push("/courses");
+        router.refresh(); // 🔥 обновит серверные компоненты и подгрузит актуальные куки
 
-      if (data.Message) {
-        router.push("/courses")
       } else {
-        alert(data.error || "Произошла ошибка")
+        let errorMessage = "Произошла ошибка";
+        if (typeof data.error === "string") {
+          errorMessage = data.error;
+        } else if (data.error?.message) {
+          errorMessage = data.error.message;
+        } else if (Array.isArray(data.error)) {
+          errorMessage = data.error.join(", ");
+        }
+        setServerError(errorMessage);
       }
     } catch (error) {
-      console.error("Auth error:", error)
-      alert("Ошибка соединения с сервером")
+      console.error("[AuthPage] Ошибка соединения:", error.message);
+      setServerError("Ошибка соединения с сервером");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const updateField = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-    // Очищаем ошибку при изменении поля
+    setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }))
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
-  }
+    setServerError("");
+  };
 
   const switchMode = () => {
-    setIsLogin(!isLogin)
-    setErrors({})
+    setIsLogin(!isLogin);
+    setErrors({});
+    setServerError("");
     setFormData({
       username: "",
       password: "",
-    })
-  }
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full">
-        {/* Заголовок */}
         <div className="text-center mb-8">
           <Link href="/" className="text-3xl font-bold text-gray-900">
             BIRLIK BALA
@@ -106,8 +135,13 @@ export default function AuthPage() {
 
         <Card className="p-6">
           <CardContent>
+            {serverError && (
+              <div className="mb-6 p-3 bg-red-50 rounded-lg">
+                <p className="text-sm text-red-800">{serverError}</p>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Username */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Имя пользователя <span className="text-red-500">*</span>
@@ -127,7 +161,6 @@ export default function AuthPage() {
                 {errors.username && <p className="text-red-500 text-xs mt-1">{errors.username}</p>}
               </div>
 
-              {/* Пароль */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Пароль <span className="text-red-500">*</span>
@@ -148,18 +181,15 @@ export default function AuthPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4 text-gray-400" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-gray-400" />
-                    )}
+                    {showPassword ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
                   </button>
                 </div>
                 {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
-                {!isLogin && <p className="text-xs text-gray-500 mt-1">Пароль должен содержать минимум 6 символов</p>}
+                {!isLogin && (
+                  <p className="text-xs text-gray-500 mt-1">Пароль должен содержать минимум 6 символов</p>
+                )}
               </div>
 
-              {/* Кнопка отправки */}
               <Button
                 type="submit"
                 disabled={isLoading}
@@ -176,14 +206,12 @@ export default function AuthPage() {
               </Button>
             </form>
 
-            {/* Переключение между входом и регистрацией */}
             <div className="mt-6 text-center">
               <button onClick={switchMode} className="text-blue-600 hover:text-blue-700 text-sm">
                 {isLogin ? "Нет аккаунта? Зарегистрируйтесь" : "Уже есть аккаунт? Войдите"}
               </button>
             </div>
 
-            {/* Дополнительная информация */}
             {!isLogin && (
               <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                 <p className="text-xs text-blue-800">
@@ -194,7 +222,6 @@ export default function AuthPage() {
           </CardContent>
         </Card>
 
-        {/* Ссылка на главную */}
         <div className="text-center mt-6">
           <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">
             ← Вернуться на главную
@@ -202,5 +229,5 @@ export default function AuthPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

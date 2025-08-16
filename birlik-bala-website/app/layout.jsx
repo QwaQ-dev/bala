@@ -1,6 +1,6 @@
 import { Inter } from "next/font/google"
 import "@/styles/globals.css"
-import Header from "@/components/Header"
+import HeaderServer from "@/components/HeaderServer"
 import {UserProvider} from "@/context/UserContext"
 
 
@@ -18,7 +18,7 @@ export default function RootLayout({ children }) {
     <html lang="ru">
       <body className={inter.className}>
         {/* <UserProvider> */}
-          <Header/>
+          <HeaderServer/>
           {children}  
         {/* </UserProvider> */}
       </body>
