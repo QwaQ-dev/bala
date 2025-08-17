@@ -1,116 +1,187 @@
-"use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Plus, Trash2 } from "lucide-react"
-import Link from "next/link"
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { toast } from "sonner";
 
 export default function NewCoursePage() {
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
   const [course, setCourse] = useState({
     title: "",
     description: "",
-    price: "",
-    image: "",
-    videos: [],
-  })
+    cost: "",
+    img: null,
+    videos: [], // { id, file, name }
+  });
+
+  const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB
+  const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100 MB
 
   const addVideo = () => {
     setCourse({
       ...course,
-      videos: [
-        ...course.videos,
-        {
-          id: Date.now().toString(),
-          title: "",
-          description: "",
-          duration: 0,
-          videoUrl: "",
-          order: course.videos.length,
-        },
-      ],
-    })
-  }
+      videos: [...course.videos, { id: Date.now().toString(), file: null, name: null }],
+    });
+  };
 
   const removeVideo = (videoId) => {
     setCourse({
       ...course,
       videos: course.videos.filter((video) => video.id !== videoId),
-    })
-  }
+    });
+  };
 
-  const updateVideo = (videoId, field, value) => {
+  const handleFileChange = (videoId, file) => {
+    if (file && file.size > MAX_VIDEO_SIZE) {
+      toast.error(`Файл видео не должен превышать ${MAX_VIDEO_SIZE / 1024 / 1024} МБ`);
+      return;
+    }
     setCourse({
       ...course,
-      videos: course.videos.map((video) => (video.id === videoId ? { ...video, [field]: value } : video)),
-    })
-  }
+      videos: course.videos.map((video) =>
+        video.id === videoId ? { ...video, file, name: file ? file.name : null } : video
+      ),
+    });
+  };
+
+  const handleImageChange = (file) => {
+    if (file && file.size > MAX_IMAGE_SIZE) {
+      toast.error(`Файл изображения не должен превышать ${MAX_IMAGE_SIZE / 1024 / 1024} МБ`);
+      return;
+    }
+    setCourse({ ...course, img: file });
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
+    // Validate inputs
     if (!course.title.trim()) {
-      alert("Введите название курса")
-      return
+      toast.error("Введите название курса");
+      return;
     }
-
     if (!course.description.trim()) {
-      alert("Введите описание курса")
-      return
+      toast.error("Введите описание курса");
+      return;
+    }
+    if (course.videos.some((video) => !video.file)) {
+      toast.error("Выберите файлы для всех видео");
+      return;
     }
 
-    if (course.videos.length === 0) {
-      alert("Добавьте хотя бы одно видео")
-      return
-    }
-
-    // Проверяем что все видео заполнены
-    const emptyVideos = course.videos.filter((video) => !video.title.trim() || !video.description.trim())
-    if (emptyVideos.length > 0) {
-      alert("Заполните все поля для видео уроков")
-      return
-    }
-
-    setLoading(true)
-
+    setLoading(true);
     try {
-      const response = await fetch("/api/admin/courses", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(course),
-      })
+      // Create course
+      const formData = new FormData();
+      formData.append("title", course.title);
+      formData.append("description", course.description);
+      if (course.cost) formData.append("cost", course.cost);
+      if (course.img) formData.append("img", course.img);
 
-      if (response.ok) {
-        router.push("/admin")
-      } else {
-        alert("Ошибка при создании курса")
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30-second timeout
+      const createResponse = await fetch("/api/admin/courses/create", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      console.log("[NewCoursePage] Create course response status:", createResponse.status);
+      const contentType = createResponse.headers.get("content-type");
+      let createResult;
+      const responseText = await createResponse.text();
+      try {
+        createResult = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error("[NewCoursePage] JSON parse error:", parseError.message, responseText);
+        throw new Error(`Неверный формат ответа: ${responseText.slice(0, 100)}...`);
       }
+
+      if (!createResponse.ok) {
+        console.error("[NewCoursePage] Failed to create course:", createResponse.status, createResult);
+        toast.error(`Ошибка при создании курса: ${createResult.error || createResult.message || "Неизвестная ошибка"}`);
+        setLoading(false);
+        return;
+      }
+
+      const courseId = createResult.course_id || createResult.id;
+      if (!courseId && course.videos.length > 0) {
+        console.warn("[NewCoursePage] Course ID missing, skipping video upload:", createResult);
+        toast.warning("Курс создан, но видео не загружены: ID курса не возвращён сервером");
+        router.push("/admin");
+        return;
+      }
+
+      // Upload videos if any
+      if (course.videos.length > 0 && courseId) {
+        const videoFormData = new FormData();
+        videoFormData.append("course_id", courseId);
+        course.videos.forEach((video, index) => {
+          videoFormData.append(`videos[${index}]`, video.file);
+        });
+
+        const videoController = new AbortController();
+        const videoTimeoutId = setTimeout(() => videoController.abort(), 60000); // 60-second timeout
+        const videoResponse = await fetch("/api/admin/courses/add-video", {
+          method: "POST",
+          credentials: "include",
+          body: videoFormData,
+          signal: videoController.signal,
+        });
+        clearTimeout(videoTimeoutId);
+
+        console.log("[NewCoursePage] Video upload response status:", videoResponse.status);
+        const videoContentType = videoResponse.headers.get("content-type");
+        let videoResult;
+        const videoResponseText = await videoResponse.text();
+        try {
+          videoResult = JSON.parse(videoResponseText);
+        } catch (parseError) {
+          console.error("[NewCoursePage] Video JSON parse error:", parseError.message, videoResponseText);
+          throw new Error(`Неверный формат ответа: ${videoResponseText.slice(0, 100)}...`);
+        }
+
+        if (!videoResponse.ok) {
+          console.error("[NewCoursePage] Failed to upload videos:", videoResponse.status, videoResult);
+          toast.warning(`Курс создан, но видео не загружены: ${videoResult.error || videoResult.message || "Неизвестная ошибка"}`);
+        }
+      }
+
+      toast.success("Курс успешно создан");
+      router.push("/admin");
     } catch (error) {
-      console.error("Failed to create course:", error)
-      alert("Ошибка при создании курса")
+      console.error("[NewCoursePage] Error:", error.message);
+      toast.error(`Ошибка: ${error.message || "Не удалось выполнить запрос"}`);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleCancel = () => {
-    if (course.title || course.description || course.videos.length > 0) {
-      if (confirm("Вы уверены, что хотите отменить создание курса? Все данные будут потеряны.")) {
-        router.push("/admin")
+    if (
+      course.title ||
+      course.description ||
+      course.cost ||
+      course.img ||
+      course.videos.some((video) => video.file)
+    ) {
+      if (confirm("Вы уверены, что хотите отменить создание курса? Все изменения будут потеряны.")) {
+        router.push("/admin");
       }
     } else {
-      router.push("/admin")
+      router.push("/admin");
     }
-  }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -123,10 +194,9 @@ export default function NewCoursePage() {
         </Link>
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Создать новый курс</h1>
-          <p className="text-gray-600">Заполните информацию о курсе и добавьте видео уроки</p>
+          <p className="text-gray-600">Добавьте информацию о курсе и видео уроки</p>
         </div>
       </div>
-
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Basic Info */}
         <Card>
@@ -144,7 +214,6 @@ export default function NewCoursePage() {
                 required
               />
             </div>
-
             <div>
               <Label htmlFor="description">Описание *</Label>
               <Textarea
@@ -156,36 +225,37 @@ export default function NewCoursePage() {
                 required
               />
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="price">Цена</Label>
+                <Label htmlFor="cost">Цена (KZT)</Label>
                 <Input
-                    id="price"
-                    value={course.price}
-                    onChange={(e) => setCourse({ ...course, price: e.target.value })}
-                    placeholder="10,000 (kzt)"
-                    />
-              </div>
-
-              <div>
-                <Label htmlFor="image">URL изображения</Label>
-                <Input
-                  id="image"
-                  value={course.image}
-                  onChange={(e) => setCourse({ ...course, image: e.target.value })}
-                  placeholder="https://example.com/image.jpg"
+                  id="cost"
+                  type="number"
+                  value={course.cost}
+                  onChange={(e) => setCourse({ ...course, cost: e.target.value })}
+                  placeholder="10000"
                 />
+              </div>
+              <div>
+                <Label htmlFor="img">Изображение</Label>
+                <Input
+                  id="img"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageChange(e.target.files[0])}
+                />
+                {course.img && (
+                  <p className="text-sm text-gray-500 mt-1">{course.img.name} ({(course.img.size / 1024 / 1024).toFixed(2)} МБ)</p>
+                )}
               </div>
             </div>
           </CardContent>
         </Card>
-
         {/* Videos */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Видео уроки *</CardTitle>
+              <CardTitle>Видео уроки</CardTitle>
               <Button type="button" onClick={addVideo} variant="outline" size="sm">
                 <Plus className="w-4 h-4 mr-2" />
                 Добавить видео
@@ -218,50 +288,16 @@ export default function NewCoursePage() {
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label>Название урока *</Label>
-                          <Input
-                            value={video.title}
-                            onChange={(e) => updateVideo(video.id, "title", e.target.value)}
-                            placeholder="Название урока"
-                            required
-                          />
-                        </div>
-
-                        <div>
-                          <Label>Длительность (минуты)</Label>
-                          <Input
-                            type="number"
-                            value={video.duration / 60 || ""}
-                            onChange={(e) =>
-                              updateVideo(video.id, "duration", Number.parseInt(e.target.value || 0) * 60)
-                            }
-                            placeholder="30"
-                            min="1"
-                          />
-                        </div>
-
-                        <div className="md:col-span-2">
-                          <Label>Описание урока *</Label>
-                          <Textarea
-                            value={video.description}
-                            onChange={(e) => updateVideo(video.id, "description", e.target.value)}
-                            placeholder="Краткое описание урока"
-                            rows={2}
-                            required
-                          />
-                        </div>
-
-                        <div className="md:col-span-2">
-                          <Label>URL видео</Label>
-                          <Input
-                            value={video.videoUrl}
-                            onChange={(e) => updateVideo(video.id, "videoUrl", e.target.value)}
-                            placeholder="https://example.com/video.mp4"
-                          />
-                        </div>
+                      <div>
+                        <Label>Файл видео</Label>
+                        <Input
+                          type="file"
+                          accept="video/mp4"
+                          onChange={(e) => handleFileChange(video.id, e.target.files[0])}
+                        />
+                        {video.file && (
+                          <p className="text-sm text-gray-500 mt-1">{video.file.name} ({(video.file.size / 1024 / 1024).toFixed(2)} МБ)</p>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -270,7 +306,6 @@ export default function NewCoursePage() {
             )}
           </CardContent>
         </Card>
-
         {/* Submit */}
         <div className="flex items-center gap-4">
           <Button type="submit" disabled={loading} className="min-w-32">
@@ -282,5 +317,5 @@ export default function NewCoursePage() {
         </div>
       </form>
     </div>
-  )
+  );
 }

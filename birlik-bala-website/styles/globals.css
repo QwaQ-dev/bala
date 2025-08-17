@@ -1,3 +1,48 @@
+/* app/globals.css */
+.ProseMirror {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  min-height: 200px;
+}
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #9ca3af;
+  pointer-events: none;
+  height: 0;
+}
+.ProseMirror h2 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0.83em 0;
+}
+.ProseMirror ul {
+  list-style-type: disc;
+  margin-left: 1.5rem;
+}
+.ProseMirror ol {
+  list-style-type: decimal;
+  margin-left: 1.5rem;
+}
+.ProseMirror strong {
+  font-weight: bold;
+}
+.ProseMirror em {
+  font-style: italic;
+}
+.ProseMirror a {
+  color: #1a73e8;
+  text-decoration: underline;
+}
+select[multiple] {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  height: 8rem; /* Matches h-32 in Tailwind */
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

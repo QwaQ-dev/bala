@@ -1,4 +1,3 @@
-// app/middleware.js
 import { NextResponse } from "next/server";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8080";
@@ -13,7 +12,7 @@ export async function middleware(request) {
   const protectedPaths = ["/courses", "/admin", "/profile", "/articles"];
   const isProtectedPath = protectedPaths.some((path) => pathname.startsWith(path));
   const isAdminPath = pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
-  const isApiPath = pathname.startsWith("/api/courses") || pathname.startsWith("/api/articles");
+  const isApiPath = pathname.startsWith("/api/courses") || pathname.startsWith("/api/articles") || pathname.startsWith("/api/admin");
 
   async function checkUser(token) {
     try {
