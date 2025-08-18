@@ -52,10 +52,15 @@ func (s *CourseService) GetCourseByID(courseID, userID int) (structures.Course, 
 	}
 
 	hasAccess := false
-	for _, id := range user.CourseIDs {
-		if int(id) == courseID {
-			hasAccess = true
-			break
+
+	if user.Role == "admin" {
+		hasAccess = true
+	} else {
+		for _, id := range user.CourseIDs {
+			if int(id) == courseID {
+				hasAccess = true
+				break
+			}
 		}
 	}
 
@@ -129,10 +134,31 @@ func (s *CourseService) GiveAccess(userId, courseId int) error {
 	const op = "service.course_service.GiveAccess"
 	log := s.log.With("op", op)
 
-	err := s.repo.UpdateUsersIds(userId, courseId)
+	user, err := s.userRepo.GetUserById(userId)
 	if err != nil {
-		log.Error("Error with updating course id", sl.Err(err))
-		return err
+		log.Error("failed to get user by id", slog.Int("user_id", userId), slog.Any("err", err))
+		return fmt.Errorf("%s: %w", err)
+	}
+
+	hasAccess := false
+
+	if user.Role == "admin" {
+		hasAccess = true
+	} else {
+		for _, id := range user.CourseIDs {
+			if int(id) == courseId {
+				hasAccess = true
+				break
+			}
+		}
+	}
+
+	if !hasAccess {
+		err = s.repo.UpdateUsersIds(userId, courseId)
+		if err != nil {
+			log.Error("Error with updating course id", sl.Err(err))
+			return err
+		}
 	}
 
 	return nil
