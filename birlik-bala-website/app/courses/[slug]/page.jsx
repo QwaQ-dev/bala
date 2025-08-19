@@ -111,23 +111,17 @@ export default function CoursePage({ params }) {
                 <div>
                   <div className="aspect-video bg-black rounded-t-lg overflow-hidden">
                     <video
-                      src={currentVideo.videoUrl || "/placeholder.mp4"}
+                      src={`http://localhost:8080${currentVideo.path}` || "/placeholder.mp4"}
                       controls
                       className="w-full h-full object-contain"
                     >
-                      <source src={currentVideo.videoUrl || "/placeholder.mp4"} type="video/mp4" />
+                      <source src={`http://localhost:8080${currentVideo.path}` || "/placeholder.mp4"} type="video/mp4" />
                       Ваш браузер не поддерживает воспроизведение видео.
                     </video>
                   </div>
                   <div className="p-6">
                     <h2 className="text-xl font-semibold mb-2">{currentVideo.title}</h2>
                     <p className="text-gray-600 mb-4">{currentVideo.description}</p>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-1 text-sm text-gray-500">
-                        <Clock className="w-4 h-4" />
-                        {formatDuration(currentVideo.duration)}
-                      </div>
-                    </div>
                   </div>
                 </div>
               ) : (
@@ -161,12 +155,6 @@ export default function CoursePage({ params }) {
               </CardHeader>
               <CardContent className="pt-0">
                 <CardDescription className="text-xs mb-2">{video.description}</CardDescription>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1 text-xs text-gray-500">
-                    <Clock className="w-3 h-3" />
-                    {formatDuration(video.duration)}
-                  </div>
-                </div>
               </CardContent>
             </Card>
           ))}
