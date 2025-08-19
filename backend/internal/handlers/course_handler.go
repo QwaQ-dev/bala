@@ -72,12 +72,13 @@ func (h *CourseHandler) CreateCourse(c *fiber.Ctx) error {
 		Img:         imgPath,
 	}
 
-	if err := h.courseService.CreateCourse(course); err != nil {
+	courseID, err := h.courseService.CreateCourse(course)
+	if err != nil {
 		log.Error("failed to create course", sl.Err(err))
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create course"})
 	}
 
-	return c.Status(201).JSON(fiber.Map{"message": "course created"})
+	return c.Status(201).JSON(fiber.Map{"course_id": courseID})
 }
 
 func (h *CourseHandler) GetCourseByID(c *fiber.Ctx) error {
@@ -310,7 +311,7 @@ func (h *CourseHandler) TakeAwayAccess(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"Message": "Access has been taken away",
+		"message": "Access has been taken away",
 	})
 }
 

@@ -18,14 +18,14 @@ func NewCourseRepo(log *slog.Logger, db *sql.DB) *CourseRepo {
 	return &CourseRepo{log: log, db: db}
 }
 
-func (r *CourseRepo) InsertCourse(course structures.Course) error {
+func (r *CourseRepo) InsertCourse(course structures.Course) (int, error) {
 	const op = "postgres.course_repo.InsertCourse"
 	log := r.log.With("op", op)
 
 	tx, err := r.db.Begin()
 	if err != nil {
 		log.Error("failed to begin tx", sl.Err(err))
-		return err
+		return 0, err
 	}
 	defer tx.Rollback()
 
@@ -34,15 +34,15 @@ func (r *CourseRepo) InsertCourse(course structures.Course) error {
 	err = tx.QueryRow(query, course.Title, course.Description, course.Cost, course.Img).Scan(&courseID)
 	if err != nil {
 		log.Error("failed to insert course", sl.Err(err))
-		return err
+		return courseID, err
 	}
 
 	if err := tx.Commit(); err != nil {
 		log.Error("failed to commit tx", sl.Err(err))
-		return err
+		return courseID, err
 	}
 
-	return nil
+	return courseID, nil
 }
 
 func (r *CourseRepo) DeleteCourse(id int) error {

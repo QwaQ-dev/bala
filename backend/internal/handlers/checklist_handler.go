@@ -6,6 +6,7 @@ import (
 
 	"github.com/QwaQ-dev/bala/internal/services"
 	"github.com/QwaQ-dev/bala/internal/structures"
+	"github.com/QwaQ-dev/bala/pkg/sl"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -47,9 +48,11 @@ func (h *ChecklistHandler) GetAllChecklists(c *fiber.Ctx) error {
 
 	checklists, err := h.checklistService.GetAllChecklists()
 	if err != nil {
-		log.Error("failed to fetch checklists", slog.Any("err", err))
+		log.Error("failed to fetch checklists", sl.Err(err))
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch checklists"})
 	}
+
+	log.Info("checklists", checklists)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"checklists": checklists,

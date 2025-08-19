@@ -26,19 +26,19 @@ func NewCourseService(repo *postgres.CourseRepo, log *slog.Logger, cfg *config.C
 	}
 }
 
-func (s *CourseService) CreateCourse(course structures.Course) error {
+func (s *CourseService) CreateCourse(course structures.Course) (int, error) {
 	const op = "service.course_service.CreateCourse"
 	log := s.log.With("op", op)
 	log.Info("Creating course", slog.String("title", course.Title))
 
-	err := s.repo.InsertCourse(course)
+	courseID, err := s.repo.InsertCourse(course)
 	if err != nil {
 		log.Error("failed to create course", slog.String("op", op), slog.Any("err", err))
-		return fmt.Errorf("%s: %w", op, err)
+		return courseID, fmt.Errorf("%s: %w", op, err)
 	}
 
 	log.Info("Course created", slog.String("title", course.Title))
-	return nil
+	return courseID, nil
 }
 
 func (s *CourseService) GetCourseByID(courseID, userID int) (structures.Course, error) {
