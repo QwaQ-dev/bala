@@ -18,7 +18,7 @@ export async function GET(request) {
 
     clearTimeout(timeoutId);
     console.log("[v0] Backend response status:", response.status);
-    const responseText = await response.text();
+    const responseText = await response.json();
     console.log("[v0] Backend response body:", responseText);
 
     if (!response.ok) {
@@ -35,7 +35,7 @@ export async function GET(request) {
 
     let data;
     try {
-      data = JSON.parse(responseText);
+      data = responseText.articles
     } catch (parseError) {
       console.error("[v0] Ошибка парсинга JSON:", parseError.message);
       return new Response(

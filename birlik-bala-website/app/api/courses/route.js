@@ -22,7 +22,7 @@ export async function GET(request) {
 
     clearTimeout(timeoutId);
     console.log("[v0] Backend response status:", response.status);
-    const responseText = await response.text(); // Получаем полный текст ответа
+    const responseText = await response.json(); // Получаем полный текст ответа
     console.log("[v0] Backend response body:", responseText);
 
     if (!response.ok) {
@@ -36,7 +36,7 @@ export async function GET(request) {
 
     let data;
     try {
-      data = JSON.parse(responseText); // Пробуем парсить JSON
+      data = responseText.courses
     } catch (parseError) {
       console.error("[v0] JSON parse error:", parseError.message);
       return new Response(JSON.stringify({

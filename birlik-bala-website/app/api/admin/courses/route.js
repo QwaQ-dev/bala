@@ -1,4 +1,3 @@
-
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8080";
 
 export async function POST(request) {
@@ -18,7 +17,7 @@ export async function POST(request) {
     console.log("[Admin Course Create API] FormData entries:", [...formData.entries()]);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30-second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
     const response = await fetch(`${BACKEND_URL}/api/v1/admin/course/create`, {
       method: "POST",
       headers,
@@ -29,14 +28,15 @@ export async function POST(request) {
     clearTimeout(timeoutId);
 
     console.log("[Admin Course Create API] Backend response status:", response.status);
+    console.log("[Admin Course Create API] Backend response headers:", [...response.headers.entries()]);
     const responseText = await response.text();
     console.log("[Admin Course Create API] Backend response body:", responseText);
 
     let data;
     try {
-      data = JSON.parse(responseText);
+      data = responseText ? JSON.parse(responseText) : {};
     } catch (parseError) {
-      console.error("[Admin Course Create API] Ошибка парсинга JSON:", parseError.message);
+      console.error("[Admin Course Create API] Ошибка парсинга JSON:", parseError.message, responseText);
       return new Response(
         JSON.stringify({
           error: "Неверный формат ответа от бэкенда",
@@ -55,7 +55,7 @@ export async function POST(request) {
         JSON.stringify({
           error: "Не удалось создать курс",
           status: response.status,
-          details: data.error || responseText,
+          details: data.error || responseText || "Неизвестная ошибка",
         }),
         {
           status: response.status,
@@ -64,7 +64,6 @@ export async function POST(request) {
       );
     }
 
-    // Warn if course ID is missing but allow success
     if (!data.id) {
       console.warn("[Admin Course Create API] Missing course ID in response:", data);
       data.warning = "ID курса не возвращён сервером, видео не будут загружены";
@@ -73,7 +72,7 @@ export async function POST(request) {
     return new Response(
       JSON.stringify(data),
       {
-        status: 200,
+        status: response.status,
         headers: { "Content-Type": "application/json" },
       }
     );
@@ -102,7 +101,7 @@ export async function POST(request) {
       );
     }
     return new Response(
-      JSON.stringify({ error: err.message }),
+      JSON.stringify({ error: err.message || "Внутренняя ошибка сервера" }),
       {
         status: 500,
         headers: { "Content-Type": "application/json" },
@@ -110,7 +109,6 @@ export async function POST(request) {
     );
   }
 }
-
 
 export async function GET(request) {
   console.log("[Admin Courses API] GET called at", new Date().toISOString());
@@ -126,7 +124,7 @@ export async function GET(request) {
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30-second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
     const response = await fetch(`${BACKEND_URL}/api/v1/auth/course/get-with-access`, {
       method: "GET",
       headers,
@@ -134,32 +132,41 @@ export async function GET(request) {
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
+    console.log(`${response} AWODIJAWDKWAJFOIAWJFIOHAWFOIHAWFOIAOWF`)
 
     console.log("[Admin Courses API] Backend response status:", response.status);
     console.log("[Admin Courses API] Backend response headers:", [...response.headers.entries()]);
     const contentType = response.headers.get("content-type");
-    const responseText = await response.text();
+    const responseText = await response.json();
+    console.log(responseText.courses)
     console.log("[Admin Courses API] Backend response body:", responseText);
 
-    let data = {};
+    let data;
     if (response.status >= 200 && response.status < 300) {
       if (contentType?.includes("application/json")) {
         try {
-          data = JSON.parse(responseText);
+          data = responseText.courses;
+          console.log(data)
+          if (!Array.isArray(data)) {
+            console.log("[Admin Courses API] Expected courses array, got:", data);
+            alert(data)
+            data = { courses: [] };
+          }
         } catch (parseError) {
-          console.error("[Admin Courses API] Ошибка парсинга JSON:", parseError.message, responseText);
-          data = { message: responseText || "Курсы получены", courses: [] };
+          console.error("[Admin Courses API] JSON parse error:", parseError.message, responseText);
+          data = { courses: [] };
         }
       } else {
-        console.log("[Admin Courses API] Non-JSON success response:", responseText);
-        data = { message: responseText || "Курсы получены", courses: [] };
+        console.warn("[Admin Courses API] Non-JSON response:", responseText);
+        data = { courses: [] };
       }
     } else {
+      let errorData;
       if (contentType?.includes("application/json")) {
         try {
-          data = JSON.parse(responseText);
+          errorData = JSON.parse(responseText);
         } catch (parseError) {
-          console.error("[Admin Courses API] Ошибка парсинга JSON для ответа об ошибке:", parseError.message, responseText);
+          console.error("[Admin Courses API] JSON parse error for error response:", parseError.message, responseText);
           return new Response(
             JSON.stringify({
               error: "Ошибка сервера",
@@ -186,12 +193,12 @@ export async function GET(request) {
           }
         );
       }
-      console.error("[Admin Courses API] Backend error details:", data);
+      console.error("[Admin Courses API] Backend error details:", errorData);
       return new Response(
         JSON.stringify({
           error: "Не удалось получить курсы",
           status: response.status,
-          details: data.error || responseText,
+          details: errorData.error || responseText,
         }),
         {
           status: response.status,
@@ -203,7 +210,7 @@ export async function GET(request) {
     return new Response(
       JSON.stringify(data),
       {
-        status: response.status, // Pass through backend status (200 or 201)
+        status: 200,
         headers: { "Content-Type": "application/json" },
       }
     );

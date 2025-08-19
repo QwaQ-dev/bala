@@ -12,15 +12,14 @@ export default function CoursePage({ params }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    console.log("[CoursePage] Params slug:", params.slug);
-    if (!params.slug || params.slug === "undefined") {
-      console.error("[CoursePage] Invalid params.slug:", params.slug);
+    if (!params?.slug || params.slug === "undefined") {
+      console.log("[CoursePage] Invalid params.slug:", params.slug);
       setError("Неверный slug курса");
       setLoading(false);
       return;
     }
     loadCourse();
-  }, [params.slug]);
+  }, [params?.slug]);
 
   const loadCourse = async () => {
     setLoading(true);
@@ -40,47 +39,28 @@ export default function CoursePage({ params }) {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
-      console.log("[CoursePage] Fetch course response status:", response.status);
-      console.log("[CoursePage] Fetch course response headers:", [...response.headers.entries()]);
+
       const responseText = await response.text();
-      console.log("[CoursePage] Fetch course response body:", responseText);
+      if (!response.ok) throw new Error(`HTTP error: ${response.status} - ${responseText}`);
 
-      if (!response.ok) {
-        console.error("[CoursePage] Failed to fetch course:", response.status, responseText);
-        throw new Error(`HTTP error: ${response.status} - ${responseText}`);
-      }
-
-      let courseData;
-      try {
-        courseData = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error("[CoursePage] JSON parse error:", parseError.message, responseText);
-        throw new Error("Invalid response format from server");
-      }
-
+      const courseData = JSON.parse(responseText);
       if (!courseData.id || !Array.isArray(courseData.videos)) {
-        console.error("[CoursePage] Invalid course data:", courseData);
         throw new Error("Invalid course data format");
       }
 
       setCourse(courseData);
       setCurrentVideo(courseData.videos[0]);
     } catch (error) {
-      console.error("[CoursePage] Failed to load course:", error.message, error.stack);
+      console.error("[CoursePage] Failed to load course:", error);
       setError(error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const selectVideo = (video) => {
-    setCurrentVideo(video);
-  };
+  const selectVideo = (video) => setCurrentVideo(video);
 
-  const formatDuration = (seconds) => {
-    const minutes = Math.floor(seconds / 60);
-    return `${minutes} мин`;
-  };
+  const formatDuration = (seconds) => `${Math.floor(seconds / 60)} мин`;
 
   if (loading) {
     return (
@@ -106,9 +86,7 @@ export default function CoursePage({ params }) {
       <div className="container mx-auto px-4 py-8">
         <div className="text-center p-4 bg-red-100 border border-red-400 text-red-700 rounded flex flex-col items-center gap-2">
           <AlertTriangle className="w-8 h-8" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            {error || "Курс не найден"}
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{error || "Курс не найден"}</h1>
           <p className="text-gray-600 mb-4">Проверьте правильность ссылки или попробуйте снова</p>
           <Button variant="outline" onClick={loadCourse}>
             Повторить
@@ -131,21 +109,15 @@ export default function CoursePage({ params }) {
             <CardContent className="p-0">
               {currentVideo ? (
                 <div>
-                  <div className="aspect-video bg-black rounded-t-lg flex items-center justify-center relative overflow-hidden">
-                    <img
-                      src={currentVideo.videoUrl || "/placeholder.svg"}
-                      alt={currentVideo.title}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                      <Button
-                        size="lg"
-                        className="rounded-full w-16 h-16"
-                        onClick={() => selectVideo(currentVideo)}
-                      >
-                        <Play className="w-6 h-6 ml-1" />
-                      </Button>
-                    </div>
+                  <div className="aspect-video bg-black rounded-t-lg overflow-hidden">
+                    <video
+                      src={currentVideo.videoUrl || "/placeholder.mp4"}
+                      controls
+                      className="w-full h-full object-contain"
+                    >
+                      <source src={currentVideo.videoUrl || "/placeholder.mp4"} type="video/mp4" />
+                      Ваш браузер не поддерживает воспроизведение видео.
+                    </video>
                   </div>
                   <div className="p-6">
                     <h2 className="text-xl font-semibold mb-2">{currentVideo.title}</h2>

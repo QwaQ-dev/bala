@@ -127,7 +127,7 @@ export default function NewCoursePage() {
         const videoFormData = new FormData();
         videoFormData.append("course_id", courseId);
         course.videos.forEach((video, index) => {
-          videoFormData.append(`videos[${index}]`, video.file);
+          videoFormData.append(`videos`, video.file);
         });
 
         const videoController = new AbortController();
@@ -139,6 +139,7 @@ export default function NewCoursePage() {
           signal: videoController.signal,
         });
         clearTimeout(videoTimeoutId);
+        console.log(videoResponse)
 
         console.log("[NewCoursePage] Video upload response status:", videoResponse.status);
         const videoContentType = videoResponse.headers.get("content-type");

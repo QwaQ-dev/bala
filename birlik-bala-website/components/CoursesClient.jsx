@@ -23,8 +23,9 @@ export default function CoursesClient() {
           const errorText = await res.text()
           throw new Error(`Failed to fetch courses: ${res.status} - ${errorText}`)
         }
+        console.log(res)
         const data = await res.json()
-        console.log(data)
+        console.log(data.received)
         if (!Array.isArray(data)) {
           throw new Error("Invalid data format received from server")
         }

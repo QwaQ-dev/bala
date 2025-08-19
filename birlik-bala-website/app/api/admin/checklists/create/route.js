@@ -1,19 +1,13 @@
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8080";
 
-export async function DELETE(request, { params }) {
-  const { id } = params;
-  console.log("[Admin Article Delete API] Called for id:", id, "at", new Date().toISOString());
+export async function POST(request) {
+  console.log("[Admin Checklist Create API] Called at", new Date().toISOString());
   try {
-    if (!id || isNaN(parseInt(id))) {
-      console.error("[Admin Article Delete API] Invalid article ID:", id);
-      return new Response(
-        JSON.stringify({ error: "Неверный ID статьи" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
+    const body = await request.json();
+    console.log("[Admin Checklist Create API] Request body:", body);
 
     const cookieHeader = request.headers.get("cookie") || "";
-    console.log("[Admin Article Delete API] Cookies:", cookieHeader || "none");
+    console.log("[Admin Checklist Create API] Cookies:", cookieHeader || "none");
     const token = request.cookies.get("access_token")?.value;
     const headers = {
       "Content-Type": "application/json",
@@ -25,24 +19,25 @@ export async function DELETE(request, { params }) {
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
-    const response = await fetch(`${BACKEND_URL}/api/v1/admin/article/${id}`, {
-      method: "DELETE",
+    const response = await fetch(`${BACKEND_URL}/api/v1/admin/checklist/create`, {
+      method: "POST",
       headers,
       credentials: "include",
+      body: JSON.stringify(body),
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
 
-    console.log("[Admin Article Delete API] Backend response status:", response.status);
-    console.log("[Admin Article Delete API] Backend response headers:", [...response.headers.entries()]);
+    console.log("[Admin Checklist Create API] Backend response status:", response.status);
+    console.log("[Admin Checklist Create API] Backend response headers:", [...response.headers.entries()]);
     const responseText = await response.text();
-    console.log("[Admin Article Delete API] Backend response body:", responseText);
+    console.log("[Admin Checklist Create API] Backend response body:", responseText);
 
     let data;
     try {
       data = responseText ? JSON.parse(responseText) : {};
     } catch (parseError) {
-      console.error("[Admin Article Delete API] JSON parse error:", parseError.message, responseText);
+      console.error("[Admin Checklist Create API] JSON parse error:", parseError.message, responseText);
       return new Response(
         JSON.stringify({
           error: "Неверный формат ответа от бэкенда",
@@ -52,11 +47,11 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    if (!response.ok || !response.status === 200) {
-      console.error("[Admin Article Delete API] Backend error details:", data);
+    if (!response.ok) {
+      console.error("[Admin Checklist Create API] Backend error details:", data);
       return new Response(
         JSON.stringify({
-          error: "Не удалось удалить статью",
+          error: "Не удалось создать чеклист",
           status: response.status,
           details: data.error || responseText || "Неизвестная ошибка",
         }),
@@ -64,12 +59,17 @@ export async function DELETE(request, { params }) {
       );
     }
 
+    if (!data.id) {
+      console.warn("[Admin Checklist Create API] No checklist ID in response:", data);
+      data = { ...data, warning: "ID чеклиста не возвращён сервером" };
+    }
+
     return new Response(
-      JSON.stringify({ message: "Статья успешно удалена" }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
+      JSON.stringify(data),
+      { status: response.status, headers: { "Content-Type": "application/json" } }
     );
   } catch (err) {
-    console.error("[Admin Article Delete API] Request error:", { name: err.name, message: err.message });
+    console.error("[Admin Checklist Create API] Request error:", { name: err.name, message: err.message });
     if (err.name === "AbortError") {
       return new Response(
         JSON.stringify({ error: `Таймаут подключения к ${BACKEND_URL}` }),

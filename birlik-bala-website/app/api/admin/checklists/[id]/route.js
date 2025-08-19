@@ -2,18 +2,18 @@ const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8080";
 
 export async function DELETE(request, { params }) {
   const { id } = params;
-  console.log("[Admin Article Delete API] Called for id:", id, "at", new Date().toISOString());
+  console.log("[Admin Checklist Delete API] Called for id:", id, "at", new Date().toISOString());
   try {
     if (!id || isNaN(parseInt(id))) {
-      console.error("[Admin Article Delete API] Invalid article ID:", id);
+      console.error("[Admin Checklist Delete API] Invalid checklist ID:", id);
       return new Response(
-        JSON.stringify({ error: "Неверный ID статьи" }),
+        JSON.stringify({ error: "Неверный ID чеклиста" }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
     const cookieHeader = request.headers.get("cookie") || "";
-    console.log("[Admin Article Delete API] Cookies:", cookieHeader || "none");
+    console.log("[Admin Checklist Delete API] Cookies:", cookieHeader || "none");
     const token = request.cookies.get("access_token")?.value;
     const headers = {
       "Content-Type": "application/json",
@@ -25,7 +25,7 @@ export async function DELETE(request, { params }) {
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
-    const response = await fetch(`${BACKEND_URL}/api/v1/admin/article/${id}`, {
+    const response = await fetch(`${BACKEND_URL}/api/v1/admin/checklist/${id}`, {
       method: "DELETE",
       headers,
       credentials: "include",
@@ -33,16 +33,16 @@ export async function DELETE(request, { params }) {
     });
     clearTimeout(timeoutId);
 
-    console.log("[Admin Article Delete API] Backend response status:", response.status);
-    console.log("[Admin Article Delete API] Backend response headers:", [...response.headers.entries()]);
+    console.log("[Admin Checklist Delete API] Backend response status:", response.status);
+    console.log("[Admin Checklist Delete API] Backend response headers:", [...response.headers.entries()]);
     const responseText = await response.text();
-    console.log("[Admin Article Delete API] Backend response body:", responseText);
+    console.log("[Admin Checklist Delete API] Backend response body:", responseText);
 
     let data;
     try {
       data = responseText ? JSON.parse(responseText) : {};
     } catch (parseError) {
-      console.error("[Admin Article Delete API] JSON parse error:", parseError.message, responseText);
+      console.error("[Admin Checklist Delete API] JSON parse error:", parseError.message, responseText);
       return new Response(
         JSON.stringify({
           error: "Неверный формат ответа от бэкенда",
@@ -52,11 +52,11 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    if (!response.ok || !response.status === 200) {
-      console.error("[Admin Article Delete API] Backend error details:", data);
+    if (!response.ok) {
+      console.error("[Admin Checklist Delete API] Backend error details:", data);
       return new Response(
         JSON.stringify({
-          error: "Не удалось удалить статью",
+          error: "Не удалось удалить чеклист",
           status: response.status,
           details: data.error || responseText || "Неизвестная ошибка",
         }),
@@ -65,11 +65,11 @@ export async function DELETE(request, { params }) {
     }
 
     return new Response(
-      JSON.stringify({ message: "Статья успешно удалена" }),
+      JSON.stringify({ message: "Чеклист успешно удалён" }),
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
   } catch (err) {
-    console.error("[Admin Article Delete API] Request error:", { name: err.name, message: err.message });
+    console.error("[Admin Checklist Delete API] Request error:", { name: err.name, message: err.message });
     if (err.name === "AbortError") {
       return new Response(
         JSON.stringify({ error: `Таймаут подключения к ${BACKEND_URL}` }),
