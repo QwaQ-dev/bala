@@ -36,7 +36,9 @@ func (h *ArticleHandler) CreateArticle(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create article"})
 	}
 
-	return c.SendStatus(fiber.StatusCreated)
+	return c.Status(201).JSON(fiber.Map{
+		"message": "Article created",
+	})
 }
 
 func (h *ArticleHandler) GetAllArticles(c *fiber.Ctx) error {
@@ -49,7 +51,9 @@ func (h *ArticleHandler) GetAllArticles(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Could not fetch articles"})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(articles)
+	return c.Status(200).JSON(fiber.Map{
+		"articles": articles,
+	})
 }
 
 func (h *ArticleHandler) GetOneArticle(c *fiber.Ctx) error {
@@ -69,7 +73,9 @@ func (h *ArticleHandler) GetOneArticle(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Article not found"})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(article)
+	return c.Status(200).JSON(fiber.Map{
+		"article": article,
+	})
 }
 
 func (h *ArticleHandler) UpdateArticle(c *fiber.Ctx) error {
@@ -91,7 +97,9 @@ func (h *ArticleHandler) UpdateArticle(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to update article"})
 	}
 
-	return c.SendStatus(fiber.StatusOK)
+	return c.Status(200).JSON(fiber.Map{
+		"message": "Article has been updated",
+	})
 }
 
 func (h *ArticleHandler) DeleteArticle(c *fiber.Ctx) error {
@@ -110,5 +118,7 @@ func (h *ArticleHandler) DeleteArticle(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to delete article"})
 	}
 
-	return c.SendStatus(fiber.StatusOK)
+	return c.Status(200).JSON(fiber.Map{
+		"message": "Article has been deleted",
+	})
 }

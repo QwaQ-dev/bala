@@ -36,7 +36,9 @@ func (h *ChecklistHandler) CreateChecklist(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create checklist"})
 	}
 
-	return c.SendStatus(fiber.StatusCreated)
+	return c.Status(200).JSON(fiber.Map{
+		"message": "Article created",
+	})
 }
 
 func (h *ChecklistHandler) GetAllChecklists(c *fiber.Ctx) error {
@@ -49,7 +51,9 @@ func (h *ChecklistHandler) GetAllChecklists(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch checklists"})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(checklists)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"checklists": checklists,
+	})
 }
 
 func (h *ChecklistHandler) GetOneChecklist(c *fiber.Ctx) error {
@@ -69,7 +73,9 @@ func (h *ChecklistHandler) GetOneChecklist(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Checklist not found"})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(checklist)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"checklist": checklist,
+	})
 }
 
 func (h *ChecklistHandler) UpdateChecklist(c *fiber.Ctx) error {
@@ -91,7 +97,9 @@ func (h *ChecklistHandler) UpdateChecklist(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to update checklist"})
 	}
 
-	return c.SendStatus(fiber.StatusOK)
+	return c.Status(200).JSON(fiber.Map{
+		"message": "Checklist has been updated",
+	})
 }
 
 func (h *ChecklistHandler) DeleteChecklist(c *fiber.Ctx) error {
@@ -110,5 +118,7 @@ func (h *ChecklistHandler) DeleteChecklist(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to delete checklist"})
 	}
 
-	return c.SendStatus(fiber.StatusOK)
+	return c.Status(200).JSON(fiber.Map{
+		"message": "Checklist has been deleted",
+	})
 }

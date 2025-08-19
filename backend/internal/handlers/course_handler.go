@@ -104,7 +104,9 @@ func (h *CourseHandler) GetCourseByID(c *fiber.Ctx) error {
 		}
 	}
 
-	return c.JSON(course)
+	return c.Status(200).JSON(fiber.Map{
+		"course": course,
+	})
 }
 
 func (h *CourseHandler) UpdateCourse(c *fiber.Ctx) error {
@@ -256,7 +258,9 @@ func (h *CourseHandler) GetAllCourses(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch courses"})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(courses)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"courses": courses,
+	})
 }
 
 func (h *CourseHandler) GiveAccess(c *fiber.Ctx) error {
@@ -318,5 +322,7 @@ func (h *CourseHandler) GetAllCoursesWithAccess(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch courses"})
 	}
 
-	return c.JSON(courses)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"courses": courses,
+	})
 }
