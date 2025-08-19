@@ -118,7 +118,8 @@ FORM-DATA: UPDATE
 
 POST: ADD-VIDEO
     "course_id": ,
-    "videos": files[].
+    "videos": file,
+    "title": "",
 
 POST: TAKE-AWAY-ACCESS
     "course_id": ,
@@ -126,7 +127,6 @@ POST: TAKE-AWAY-ACCESS
 POST: GIVE-ACCESS
     "course_id": ,
     "user_id": ,
-    "title": ""
 ```
 
 Backend start:
