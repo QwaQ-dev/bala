@@ -19,6 +19,8 @@ services:
         condition: service_healthy
     networks:
       - prod_network
+    volumes:
+      - ./backend/cmd/uploads:/app/uploads
 
   db:
     image: postgres:latest
@@ -53,6 +55,7 @@ services:
 
 volumes:
   pgdata:
+  uploads:
 
 networks: 
   prod_network:
