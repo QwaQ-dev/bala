@@ -36,8 +36,8 @@ func (h *ChecklistHandler) CreateChecklist(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create checklist"})
 	}
 
-	return c.Status(200).JSON(fiber.Map{
-		"message": "Article created",
+	return c.Status(201).JSON(fiber.Map{
+		"message": "Checklist created",
 	})
 }
 

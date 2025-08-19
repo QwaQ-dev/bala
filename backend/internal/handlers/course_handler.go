@@ -77,7 +77,7 @@ func (h *CourseHandler) CreateCourse(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create course"})
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": "course created"})
+	return c.Status(201).JSON(fiber.Map{"message": "course created"})
 }
 
 func (h *CourseHandler) GetCourseByID(c *fiber.Ctx) error {
