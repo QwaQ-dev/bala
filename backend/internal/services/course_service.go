@@ -137,7 +137,7 @@ func (s *CourseService) GiveAccess(userId, courseId int) error {
 	user, err := s.userRepo.GetUserById(userId)
 	if err != nil {
 		log.Error("failed to get user by id", slog.Int("user_id", userId), slog.Any("err", err))
-		return fmt.Errorf("%s: %w", err)
+		return fmt.Errorf("%v", err)
 	}
 
 	hasAccess := false

@@ -93,7 +93,7 @@ func (r *ArticleRepo) SelectArticleById(id int) (structures.Article, error) {
 	log := r.log.With("op", op)
 
 	var artical structures.Article
-	query := "SELECT id, title, content, category, author, readTime, slug FROM articles WHERE id=$1"
+	query := "SELECT id, title, content, category, author, read_time, slug FROM articles WHERE id=$1"
 
 	err := r.db.QueryRow(query, id).Scan(&artical.Id, &artical.Title, &artical.Content, &artical.Category, &artical.Author, &artical.ReadTime, &artical.Slug)
 	if err != nil {
