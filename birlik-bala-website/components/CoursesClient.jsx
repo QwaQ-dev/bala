@@ -88,7 +88,7 @@ export default function CoursesClient() {
             <div className="relative h-48 bg-gray-100 flex-shrink-0">
               {course.img && (
                 <img
-                  src={course.img}
+                  src={`http://localhost:8080${course.img}`}                    
                   alt={course.title}
                   className="object-cover w-full h-full"
                 />

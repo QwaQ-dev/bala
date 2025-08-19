@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -38,7 +39,13 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	app.Static("/uploads", "./uploads")
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Error("cannot get working directory", sl.Err(err))
+		os.Exit(1)
+	}
+	uploadsPath := filepath.Join(cwd, "uploads")
+	app.Static("/uploads", uploadsPath)
 
 	log.Info("Starting bala backend", slog.String("env", cfg.Env))
 	db, err := postgres.InitDatabase(cfg.Database, log)

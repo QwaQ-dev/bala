@@ -196,7 +196,7 @@ func (s *CourseService) GetAllCoursesWithAccess(userID int) ([]structures.Course
 	for _, course := range courses {
 		result = append(result, structures.CourseWithAccess{
 			Course:    course,
-			HasAccess: courseMap[course.Id],
+			HasAccess: user.Role == "admin" || courseMap[int(course.Id)],
 		})
 	}
 

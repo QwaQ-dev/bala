@@ -189,6 +189,7 @@ func (h *CourseHandler) DeleteCourse(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{"message": "course deleted"})
 }
+
 func (h *CourseHandler) UploadVideos(c *fiber.Ctx) error {
 	const op = "handlers.course_handler.UploadVideos"
 	log := h.log.With("op", op)

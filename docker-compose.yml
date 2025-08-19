@@ -1,7 +1,8 @@
+
 services:
   backend:
     build: 
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
@@ -14,11 +15,19 @@ services:
       - DATABASE_PASSWORD=postgres
       - DATABASE_NAME=bala
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    networks:
+      - prod_network
 
   db:
     image: postgres:latest
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bala"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -27,6 +36,24 @@ services:
       - pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    networks:
+      - prod_network
+
+  frontend:
+    build:
+      context: ./birlik-bala-website
+      dockerfile: Dockerfile
+    env_file:
+      - birlik-bala-website/.env
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    networks:
+      - prod_network
 
 volumes:
   pgdata:
+
+networks: 
+  prod_network:
+    driver: bridge

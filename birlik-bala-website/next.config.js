@@ -10,6 +10,7 @@ const nextConfig = {
     domains: ["birlik-bala-website"],
     unoptimized: true,
   },
+  output: 'standalone',
 }
 
 module.exports = nextConfig
