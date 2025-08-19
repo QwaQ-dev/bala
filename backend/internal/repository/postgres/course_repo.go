@@ -69,7 +69,7 @@ func (r *CourseRepo) SelectCourseById(courseID int) (structures.Course, error) {
 	query := `
         SELECT 
 		c.id, c.title, c.description, c.cost, c.img,
-		v.id AS video_id, v.path AS video_path
+		v.id AS video_id, v.path AS video_path v.title AS video_title
         FROM courses c
         LEFT JOIN videos v ON v.course_id = c.id
         WHERE c.id = $1;
@@ -86,8 +86,9 @@ func (r *CourseRepo) SelectCourseById(courseID int) (structures.Course, error) {
 
 	for rows.Next() {
 		var (
-			videoID   sql.NullInt64
-			videoPath sql.NullString
+			videoID    sql.NullInt64
+			videoPath  sql.NullString
+			videoTitle string
 		)
 
 		if err := rows.Scan(
@@ -98,14 +99,16 @@ func (r *CourseRepo) SelectCourseById(courseID int) (structures.Course, error) {
 			&course.Img,
 			&videoID,
 			&videoPath,
+			&videoTitle,
 		); err != nil {
 			return structures.Course{}, err
 		}
 
 		if videoID.Valid && videoPath.Valid {
 			videos = append(videos, structures.Video{
-				Id:   int(videoID.Int64),
-				Path: videoPath.String,
+				Id:    int(videoID.Int64),
+				Path:  videoPath.String,
+				Title: videoTitle,
 			})
 		}
 	}

@@ -10,8 +10,9 @@ type Course struct {
 }
 
 type Video struct {
-	Id   int    `json:"id"`
-	Path string `json:"path"`
+	Id    int    `json:"id"`
+	Path  string `json:"path"`
+	Title string `json:"title"`
 }
 
 type CourseAccessRequest struct {
