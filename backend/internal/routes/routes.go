@@ -45,7 +45,7 @@ func InitRoutes(
 	authorizedGroup.Delete("/logout", userHandler.Logout)
 
 	adminChecklists.Post("/create", checklistHandler.CreateChecklist)
-	adminChecklists.Put("/update", checklistHandler.UpdateChecklist)
+	adminChecklists.Put("/update/:id", checklistHandler.UpdateChecklist)
 	checklists.Get("/get", checklistHandler.GetAllChecklists)
 	checklists.Get("/get/:id", checklistHandler.GetOneChecklist)
 	adminChecklists.Delete("/:id", checklistHandler.DeleteChecklist)

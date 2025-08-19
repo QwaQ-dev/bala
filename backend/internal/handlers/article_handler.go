@@ -82,17 +82,19 @@ func (h *ArticleHandler) UpdateArticle(c *fiber.Ctx) error {
 	const op = "handlers.article_handler.UpdateArticle"
 	log := h.log.With("op", op)
 
+	id, _ := strconv.Atoi(c.Params("id"))
+
 	var article structures.Article
 	if err := c.BodyParser(&article); err != nil {
 		log.Error("failed to parse article body", slog.Any("err", err))
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 	}
 
-	if article.Id == 0 {
+	if id == 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "ID is required for update"})
 	}
 
-	if err := h.articleService.UpdateArticle(&article); err != nil {
+	if err := h.articleService.UpdateArticle(&article, id); err != nil {
 		log.Error("failed to update article", slog.Any("err", err))
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to update article"})
 	}

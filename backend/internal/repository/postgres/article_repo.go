@@ -130,7 +130,7 @@ func (r *ArticleRepo) DeleteArticle(id int) error {
 	return nil
 }
 
-func (r *ArticleRepo) UpdateArticle(a *structures.Article) error {
+func (r *ArticleRepo) UpdateArticle(a *structures.Article, id int) error {
 	const op = "postgres.article_repo.UpdateArticle"
 	log := r.log.With("op", op)
 
@@ -152,7 +152,7 @@ func (r *ArticleRepo) UpdateArticle(a *structures.Article) error {
 		a.Author,
 		a.ReadTime,
 		a.Slug,
-		a.Id,
+		id,
 	)
 
 	if err != nil {

@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/log"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -45,7 +44,6 @@ func JWTMiddleware(secretKey string) fiber.Handler {
 func AdminOnly() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		role, ok := c.Locals("role").(string)
-		log.Info("role", role)
 		if !ok || role != "admin" {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"error": "Admin access required",

@@ -63,11 +63,11 @@ func (s *ArticleService) GetArticleByID(id int) (structures.Article, error) {
 	return article, nil
 }
 
-func (s *ArticleService) UpdateArticle(article *structures.Article) error {
+func (s *ArticleService) UpdateArticle(article *structures.Article, id int) error {
 	const op = "service.article_service.UpdateArticle"
 	log := s.log.With("op", op)
 
-	err := s.repo.UpdateArticle(article)
+	err := s.repo.UpdateArticle(article, id)
 	if err != nil {
 		log.Error("failed to update article", slog.Any("err", err))
 		return fmt.Errorf("%s: %w", op, err)
