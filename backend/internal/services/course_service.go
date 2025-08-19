@@ -102,13 +102,13 @@ func (s *CourseService) DeleteCourse(id int) error {
 	return nil
 }
 
-func (s *CourseService) AddVideoToCourse(courseID int, path string) error {
+func (s *CourseService) AddVideoToCourse(courseID int, path string, title string) error {
 	const op = "service.course_service.AddVideoToCourse"
 	log := s.log.With("op", op)
 
 	log.Info("adding video to course", slog.Int("course_id", courseID), slog.String("path", path))
 
-	err := s.repo.AddVideoToCourse(courseID, path)
+	err := s.repo.AddVideoToCourse(courseID, path, title)
 	if err != nil {
 		log.Error("failed to add video to course", slog.Any("err", err))
 		return fmt.Errorf("%s: %w", op, err)

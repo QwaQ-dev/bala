@@ -203,6 +203,12 @@ func (h *CourseHandler) UploadVideos(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid course_id"})
 	}
 
+	videoTitle := c.FormValue("title")
+	if err != nil {
+		log.Error("ivalid video title", sl.Err(err))
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "ivalid video title"})
+	}
+
 	form, err := c.MultipartForm()
 	if err != nil {
 		log.Error("failed to parse multipart form", sl.Err(err))
@@ -231,7 +237,7 @@ func (h *CourseHandler) UploadVideos(c *fiber.Ctx) error {
 		}
 
 		relativePath := "/uploads/videos/" + filename
-		if err := h.courseService.AddVideoToCourse(courseID, relativePath); err != nil {
+		if err := h.courseService.AddVideoToCourse(courseID, relativePath, videoTitle); err != nil {
 			log.Error("failed to save path to DB", sl.Err(err))
 			continue
 		}

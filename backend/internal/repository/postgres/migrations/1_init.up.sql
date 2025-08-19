@@ -101,6 +101,7 @@ CREATE SEQUENCE IF NOT EXISTS public.videos_id_seq
 CREATE TABLE IF NOT EXISTS public.videos (
     id integer NOT NULL DEFAULT nextval('public.videos_id_seq'::regclass),
     path text NOT NULL,
+    title text NOT NULL,
     course_id integer,
     CONSTRAINT videos_pkey PRIMARY KEY (id),
     CONSTRAINT videos_course_id_fkey FOREIGN KEY (course_id) REFERENCES public.courses(id) ON DELETE CASCADE
