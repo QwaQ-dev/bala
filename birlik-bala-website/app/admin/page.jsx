@@ -61,6 +61,7 @@ export default function AdminPage() {
         method: "DELETE",
         credentials: "include",
       });
+      console.log(response)
       if (!response.ok) {
         console.error("[AdminPage] Failed to delete course:", response.status);
         toast.error("Не удалось удалить курс");
@@ -81,6 +82,7 @@ export default function AdminPage() {
         method: "DELETE",
         credentials: "include",
       });
+      console.log(response)
       if (!response.ok) {
         console.error("[AdminPage] Failed to delete article:", response.status);
         toast.error("Не удалось удалить статью");
@@ -107,7 +109,10 @@ export default function AdminPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Админ-панель</h1>
+      <div className="flex flex-row justify-between mb-10">
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">Админ-панель</h1>
+        <Button onClick={() => router.push("/admin/users")} >Пользователи</Button>
+      </div>
       
       {/* Courses Section */}
       <Card className="mb-12">

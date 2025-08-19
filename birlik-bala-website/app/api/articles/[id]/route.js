@@ -2,8 +2,8 @@
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8080";
 
 export async function GET(request, { params }) {
-  const { slug } = params;
-  console.log("[Article API] Called for slug:", slug, "at", new Date().toISOString());
+  const { id } = params;
+  console.log("[Article API] Called for id:", id, "at", new Date().toISOString());
 
   try {
     const cookieHeader = request.headers.get("cookie") || "";
@@ -23,7 +23,7 @@ export async function GET(request, { params }) {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/v1/article/get/${slug}`, {
+    const response = await fetch(`${BACKEND_URL}/api/v1/article/get/${id}`, {
       method: "GET",
       headers,
       credentials: "include",

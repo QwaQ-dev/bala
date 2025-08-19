@@ -11,31 +11,6 @@ export default function Footer() {
             </p>
           </div>
 
-          <div>
-            <h4 className="text-lg font-semibold mb-4">Курсы</h4>
-            <ul className="space-y-2 text-green-200 text-sm">
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Курсы для родителей
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Методология АВА
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Индивидуальные занятия
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  Групповые программы
-                </a>
-              </li>
-            </ul>
-          </div>
 
           <div>
             <h4 className="text-lg font-semibold mb-4">Контакты</h4>

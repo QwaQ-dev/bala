@@ -28,7 +28,7 @@ async function getArticles() {
     return articles.map((article) => ({
       id: article.id,
       title: article.title || "Без названия",
-      description: article.content || "", // Используем content как description
+      description: article.description || extractDescription(article.content), // Fallback description
       category: article.category || "Без категории",
       author: article.author || "Неизвестный автор",
       readTime: article.readTime ? `${article.readTime} мин` : "5 мин",
@@ -52,43 +52,6 @@ export default async function ArticlesPage() {
           <p className="text-lg text-gray-600">Экспертные советы и практические рекомендации для развития детей</p>
         </div>
 
-        {/* Фильтры */}
-        <div className="flex justify-center mb-8">
-          <div className="flex space-x-4 bg-white rounded-lg p-2 shadow-sm">
-            <Button className="bg-blue-600 text-white">
-              Все статьи ({articles.length})
-            </Button>
-
-
-            <Button
-              className={
-                articles.filter((a) => a.category === "АФК").length
-                  ? "bg-green-600 text-white"
-                  : "text-gray-600"
-              }
-            >
-              АФК ({articles.filter((a) => a.category === "АФК").length})
-            </Button>
-            <Button
-              className={
-                articles.filter((a) => a.category === "АВА-терапия").length
-                  ? "bg-orange-600 text-white"
-                  : "text-gray-600"
-              }
-            >
-              АВА-терапия ({articles.filter((a) => a.category === "АВА-терапия").length})
-            </Button>
-            <Button
-              className={
-                articles.filter((a) => a.category === "Развитие").length
-                  ? "bg-purple-600 text-white"
-                  : "text-gray-600"
-              }
-            >
-              Развитие ({articles.filter((a) => a.category === "Развитие").length})
-            </Button>
-          </div>
-        </div>
 
         {/* Сетка статей */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -121,7 +84,7 @@ export default async function ArticlesPage() {
                   <span>{article.readTime}</span>
                 </div>
                 <div className="mt-auto">
-                  <Link href={`/articles/${article.slug}`}>
+                  <Link href={`/articles/${article.id}`}>
                     <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
                       Читать статью
                     </Button>
@@ -148,4 +111,10 @@ export default async function ArticlesPage() {
       </div>
     </div>
   );
+}
+
+function extractDescription(html) {
+  if (!html) return "Описание отсутствует";
+  const text = html.replace(/<[^>]+>/g, "").trim();
+  return text.length > 150 ? text.slice(0, 150) + "..." : text || "Описание отсутствует";
 }

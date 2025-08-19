@@ -4,8 +4,6 @@ import Link from "next/link"
 import { Button } from "./ui/button"
 import { useEffect, useState } from "react"
 import { User, LogOut, ChevronDown, Menu } from "lucide-react"
-import { useUser } from "@/context/UserContext"
-import { clientCookies } from "@/lib/auth-cookies"
 
 export default function Header() {
 

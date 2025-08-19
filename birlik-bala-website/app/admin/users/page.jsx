@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -15,7 +14,6 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [selectedCourse, setSelectedCourse] = useState({});
   const [courseLoadError, setCourseLoadError] = useState(null);
-  const [hasDuplicates, setHasDuplicates] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -24,7 +22,7 @@ export default function AdminUsersPage() {
   const loadData = async () => {
     setLoading(true);
     setCourseLoadError(null);
-    setHasDuplicates(false);
+
     try {
       await loadCourses();
       await loadUsers();
@@ -86,7 +84,6 @@ export default function AdminUsersPage() {
           let courseIds = Array.isArray(user.CourseIDs) ? [...new Set(user.CourseIDs)] : [];
           if (Array.isArray(user.CourseIDs) && user.CourseIDs.length !== courseIds.length) {
             console.warn(`[AdminUsersPage] User ${user.id} (${user.username}) has duplicate CourseIDs:`, user.CourseIDs);
-            setHasDuplicates(true);
           }
           const validCourses = await Promise.all(
             courseIds.map(async (courseId) => {
@@ -140,23 +137,45 @@ export default function AdminUsersPage() {
   const giveAccess = async (user_id, course_id) => {
     const course = courses.find((c) => c.id === parseInt(course_id));
     if (!course || course.isMissing) {
+      console.error("[AdminUsersPage] Invalid course:", course_id);
       alert("Курс не существует");
       return;
     }
     try {
+      console.log("[AdminUsersPage] Giving access:", { user_id, course_id });
       const response = await fetch("/api/admin/courses/give-access", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ user_id, course_id }),
       });
+      console.log("[AdminUsersPage] Give access response status:", response.status);
+      const responseText = await response.text();
+      console.log("[AdminUsersPage] Give access response body:", responseText);
+
       if (!response.ok) {
-        const errorData = await response.json();
+        let errorData;
+        try {
+          errorData = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error("[AdminUsersPage] Failed to parse error response:", parseError.message, responseText);
+          alert("Ошибка при предоставлении доступа: Неверный формат ответа");
+          return;
+        }
         console.error("[AdminUsersPage] Failed to give access:", response.status, errorData);
         alert(`Ошибка при предоставлении доступа: ${errorData.error || "Неизвестная ошибка"}`);
         return;
       }
-      const data = await response.json();
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error("[AdminUsersPage] Failed to parse success response:", parseError.message, responseText);
+        alert("Ошибка: Неверный формат ответа от сервера");
+        return;
+      }
+
       alert(data.message || "Доступ предоставлен");
       setUsers(
         users.map((user) =>
@@ -165,7 +184,7 @@ export default function AdminUsersPage() {
             : user
         )
       );
-      await loadCourses();
+      await loadUsers(); // Refresh users to confirm backend state
     } catch (error) {
       console.error("[AdminUsersPage] Failed to give access:", error.message);
       alert("Ошибка при предоставлении доступа: " + error.message);
@@ -217,26 +236,10 @@ export default function AdminUsersPage() {
           user.id === user_id ? { ...user, courses: user.courses.filter((c) => c.id !== course_id) } : user
         )
       );
-      await loadCourses();
+      await loadUsers();
     } catch (error) {
       console.error("[AdminUsersPage] Failed to take away access:", error.message);
       alert("Ошибка при отзыве доступа: " + error.message);
-    }
-  };
-
-  const cleanAllInvalidCourses = async () => {
-    if (!confirm("Удалить все недействительные курсы для всех пользователей?")) return;
-    try {
-      for (const user of users) {
-        for (const course of user.courses.filter((c) => c.isMissing)) {
-          await takeAwayAccess(user.id, course.id);
-        }
-      }
-      await loadData();
-      alert("Недействительные курсы удалены");
-    } catch (error) {
-      console.error("[AdminUsersPage] Failed to clean invalid courses:", error.message);
-      alert("Ошибка при очистке недействительных курсов: " + error.message);
     }
   };
 
@@ -266,13 +269,6 @@ export default function AdminUsersPage() {
           <Button variant="outline" onClick={loadData} disabled={loading}>
             {loading ? "Обновление..." : "Обновить данные"}
           </Button>
-          <Button
-            variant="destructive"
-            onClick={cleanAllInvalidCourses}
-            disabled={!users.some((user) => user.courses?.some((c) => c.isMissing))}
-          >
-            Очистить недействительные курсы
-          </Button>
           <Link href="/admin">
             <Button variant="outline" className="flex items-center gap-2 bg-transparent">
               <Users className="w-4 h-4" />
@@ -289,20 +285,6 @@ export default function AdminUsersPage() {
           <Button variant="outline" size="sm" onClick={loadCourses}>
             Повторить загрузку
           </Button>
-        </div>
-      )}
-
-      {hasDuplicates && (
-        <div className="mb-8 p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5" />
-          <p>Обнаружены дубликаты курсов у пользователей. Используйте "Очистить недействительные курсы" для исправления.</p>
-        </div>
-      )}
-
-      {users.some((user) => user.courses?.some((c) => c.isMissing)) && (
-        <div className="mb-8 p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5" />
-          <p>Некоторые курсы не найдены. Используйте "Очистить недействительные курсы" или проверьте базу данных.</p>
         </div>
       )}
 
@@ -339,7 +321,6 @@ export default function AdminUsersPage() {
             <Card key={user.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <CardTitle className="text-lg leading-tight">{user.username}</CardTitle>
-                <p className="text-sm text-gray-500">{user.email || "Нет email"}</p>
                 <Badge variant="outline">{user.role}</Badge>
               </CardHeader>
               <CardContent>

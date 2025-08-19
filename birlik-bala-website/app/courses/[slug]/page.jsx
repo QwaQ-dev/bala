@@ -1,136 +1,86 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Play, Lock, CheckCircle, Clock } from "lucide-react"
-
-async function fetchCourse(courseId) {
-  //simulirujem, ubrat nah
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-
-  return {
-    id: courseId,
-    title: "Основы АБА развития",
-    description: "Полный курс по изучению прикладного анализа поведения (АБА) с нуля",
-    videos: [
-      {
-        id: "1",
-        title: "Введение в АБА",
-        description: "Основные принципы прикладного анализа поведения",
-        duration: 1200,
-        videoUrl: "/placeholder.svg?height=400&width=600",
-        isWatched: false,
-        isLocked: false,
-      },
-      {
-        id: "2",
-        title: "Позитивное подкрепление",
-        description: "Как использовать подкрепление для формирования поведения",
-        duration: 1800,
-        videoUrl: "https://www.youtube.com/watch?v=R4ScLbxfdLI&ab_channel=%D0%A0%D0%B8%D1%81%D0%B0%D0%B7%D0%B0%D0%A2%D0%B2%D0%BE%D1%80%D1%87%D0%B5%D1%81%D1%82%D0%B2%D0%BE",
-        isWatched: false,
-        isLocked: true,
-      },
-      {
-        id: "3",
-        title: "Функциональный анализ",
-        description: "Определение причин поведения",
-        duration: 2400,
-        videoUrl: "https://www.youtube.com/watch?v=R4ScLbxfdLI&ab_channel=%D0%A0%D0%B8%D1%81%D0%B0%D0%B7%D0%B0%D0%A2%D0%B2%D0%BE%D1%80%D1%87%D0%B5%D1%81%D1%82%D0%B2%D0%BE",
-        isWatched: false,
-        isLocked: true,
-      },
-      {
-        id: "4",
-        title: "Обучающие стратегии",
-        description: "Методы преподавания с использованием АБА",
-        duration: 3000,
-        videoUrl: "https://www.youtube.com/watch?v=R4ScLbxfdLI&ab_channel=%D0%A0%D0%B8%D1%81%D0%B0%D0%B7%D0%B0%D0%A2%D0%B2%D0%BE%D1%80%D1%87%D0%B5%D1%81%D1%82%D0%B2%D0%BE",
-        isWatched: false,
-        isLocked: true,
-      },
-    ],
-  }
-}
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Clock, AlertTriangle } from "lucide-react";
 
 export default function CoursePage({ params }) {
-  const [course, setCourse] = useState(null)
-  const [currentVideo, setCurrentVideo] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [watchedVideos, setWatchedVideos] = useState(new Set())
+  const [course, setCourse] = useState(null);
+  const [currentVideo, setCurrentVideo] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    loadCourse()
-  }, [params.id])
+    console.log("[CoursePage] Params slug:", params.slug);
+    if (!params.slug || params.slug === "undefined") {
+      console.error("[CoursePage] Invalid params.slug:", params.slug);
+      setError("Неверный slug курса");
+      setLoading(false);
+      return;
+    }
+    loadCourse();
+  }, [params.slug]);
 
   const loadCourse = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const courseData = await fetchCourse(params.id)
+      const token = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("access_token="))
+        ?.split("=")[1];
+      console.log("[CoursePage] Access token:", token || "none");
 
-      const updatedVideos = courseData.videos.map((video, index) => ({
-        ...video,
-        isLocked: index > 0 && !watchedVideos.has(courseData.videos[index - 1].id),
-        isWatched: watchedVideos.has(video.id),
-      }))
+      const response = await fetch(`/api/courses/${params.slug}`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      console.log("[CoursePage] Fetch course response status:", response.status);
+      console.log("[CoursePage] Fetch course response headers:", [...response.headers.entries()]);
+      const responseText = await response.text();
+      console.log("[CoursePage] Fetch course response body:", responseText);
 
-      setCourse({ ...courseData, videos: updatedVideos })
-      setCurrentVideo(updatedVideos[0])
-    } catch (error) {
-      console.error("Failed to load course:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const markVideoAsWatched = async (videoId) => {
-    if (!course) return
-
-    const newWatchedVideos = new Set(watchedVideos)
-    newWatchedVideos.add(videoId)
-    setWatchedVideos(newWatchedVideos)
-
-    const updatedVideos = course.videos.map((video, index) => {
-      const isWatched = newWatchedVideos.has(video.id)
-      const isLocked = index > 0 && !newWatchedVideos.has(course.videos[index - 1].id)
-
-      return {
-        ...video,
-        isWatched,
-        isLocked,
+      if (!response.ok) {
+        console.error("[CoursePage] Failed to fetch course:", response.status, responseText);
+        throw new Error(`HTTP error: ${response.status} - ${responseText}`);
       }
-    })
 
-    setCourse({ ...course, videos: updatedVideos })
+      let courseData;
+      try {
+        courseData = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error("[CoursePage] JSON parse error:", parseError.message, responseText);
+        throw new Error("Invalid response format from server");
+      }
 
-    try {
-      await fetch(`/api/course/${course.id}/progress`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoId, completed: true }),
-      })
+      if (!courseData.id || !Array.isArray(courseData.videos)) {
+        console.error("[CoursePage] Invalid course data:", courseData);
+        throw new Error("Invalid course data format");
+      }
+
+      setCourse(courseData);
+      setCurrentVideo(courseData.videos[0]);
     } catch (error) {
-      console.error("Failed to save progress:", error)
+      console.error("[CoursePage] Failed to load course:", error.message, error.stack);
+      setError(error.message);
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   const selectVideo = (video) => {
-    if (!video.isLocked) {
-      setCurrentVideo(video)
-    }
-  }
+    setCurrentVideo(video);
+  };
 
   const formatDuration = (seconds) => {
-    const minutes = Math.floor(seconds / 60)
-    return `${minutes} мин`
-  }
-
-  const getProgress = () => {
-    if (!course) return 0
-    return (watchedVideos.size / course.videos.length) * 100
-  }
+    const minutes = Math.floor(seconds / 60);
+    return `${minutes} мин`;
+  };
 
   if (loading) {
     return (
@@ -148,36 +98,31 @@ export default function CoursePage({ params }) {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
-  if (!course) {
+  if (error || !course) {
     return (
       <div className="container mx-auto px-4 py-8">
-
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Курс не найден</h1>
-          <p className="text-gray-600">Проверьте правильность ссылки</p>
+        <div className="text-center p-4 bg-red-100 border border-red-400 text-red-700 rounded flex flex-col items-center gap-2">
+          <AlertTriangle className="w-8 h-8" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            {error || "Курс не найден"}
+          </h1>
+          <p className="text-gray-600 mb-4">Проверьте правильность ссылки или попробуйте снова</p>
+          <Button variant="outline" onClick={loadCourse}>
+            Повторить
+          </Button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">{course.title}</h1>
         <p className="text-gray-600 mb-4">{course.description}</p>
-
-        <div className="flex items-center gap-4 mb-4">
-          <Badge variant="secondary">
-            {watchedVideos.size} из {course.videos.length} уроков пройдено
-          </Badge>
-          <span className="text-sm text-gray-500">Прогресс: {Math.round(getProgress())}%</span>
-        </div>
-
-        <Progress value={getProgress()} className="w-full max-w-md" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -196,31 +141,20 @@ export default function CoursePage({ params }) {
                       <Button
                         size="lg"
                         className="rounded-full w-16 h-16"
-                        onClick={() => markVideoAsWatched(currentVideo.id)}
+                        onClick={() => selectVideo(currentVideo)}
                       >
                         <Play className="w-6 h-6 ml-1" />
                       </Button>
                     </div>
                   </div>
-
                   <div className="p-6">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h2 className="text-xl font-semibold">{currentVideo.title}</h2>
-                      {currentVideo.isWatched && <CheckCircle className="w-5 h-5 text-green-500" />}
-                    </div>
+                    <h2 className="text-xl font-semibold mb-2">{currentVideo.title}</h2>
                     <p className="text-gray-600 mb-4">{currentVideo.description}</p>
-
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-1 text-sm text-gray-500">
                         <Clock className="w-4 h-4" />
                         {formatDuration(currentVideo.duration)}
                       </div>
-
-                      {!currentVideo.isWatched && (
-                        <Button onClick={() => markVideoAsWatched(currentVideo.id)} className="ml-auto">
-                          Отметить как просмотренное
-                        </Button>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -235,13 +169,12 @@ export default function CoursePage({ params }) {
 
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Уроки курса</h3>
-
           {course.videos.map((video, index) => (
             <Card
               key={video.id}
               className={`cursor-pointer transition-all hover:shadow-md ${
                 currentVideo?.id === video.id ? "ring-2 ring-blue-500" : ""
-              } ${video.isLocked ? "opacity-60" : ""}`}
+              }`}
               onClick={() => selectVideo(video)}
             >
               <CardHeader className="pb-2">
@@ -249,36 +182,18 @@ export default function CoursePage({ params }) {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-sm font-medium text-gray-500">Урок {index + 1}</span>
-                      {video.isWatched && <CheckCircle className="w-4 h-4 text-green-500" />}
-                      {video.isLocked && <Lock className="w-4 h-4 text-gray-400" />}
                     </div>
                     <CardTitle className="text-sm leading-tight">{video.title}</CardTitle>
                   </div>
                 </div>
               </CardHeader>
-
               <CardContent className="pt-0">
                 <CardDescription className="text-xs mb-2">{video.description}</CardDescription>
-
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1 text-xs text-gray-500">
                     <Clock className="w-3 h-3" />
                     {formatDuration(video.duration)}
                   </div>
-
-                  {video.isLocked ? (
-                    <Badge variant="secondary" className="text-xs">
-                      Заблокировано
-                    </Badge>
-                  ) : video.isWatched ? (
-                    <Badge variant="default" className="text-xs bg-green-500">
-                      Просмотрено
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-xs">
-                      Доступно
-                    </Badge>
-                  )}
                 </div>
               </CardContent>
             </Card>
@@ -286,5 +201,5 @@ export default function CoursePage({ params }) {
         </div>
       </div>
     </div>
-  )
+  );
 }
