@@ -82,7 +82,12 @@ func (h *ArticleHandler) UpdateArticle(c *fiber.Ctx) error {
 	const op = "handlers.article_handler.UpdateArticle"
 	log := h.log.With("op", op)
 
-	id, _ := strconv.Atoi(c.Params("id"))
+	idStr := c.Params("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		log.Error("invalid article id", slog.String("id", idStr))
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid ID"})
+	}
 
 	var article structures.Article
 	if err := c.BodyParser(&article); err != nil {
