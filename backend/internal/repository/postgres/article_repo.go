@@ -15,11 +15,10 @@ type ArticleRepo struct {
 }
 
 func NewArticleRepo(log *slog.Logger, db *sql.DB) *ArticleRepo {
-	return &ArticleRepo{
-		log: log,
-		db:  db,
-	}
+	return &ArticleRepo{log: log, db: db}
 }
+
+// -------------------- Insert --------------------
 func (r *ArticleRepo) InsertArticle(article structures.Article) (int, error) {
 	const op = "postgres.article_repo.InsertArticle"
 	log := r.log.With("op", op)
@@ -40,15 +39,15 @@ func (r *ArticleRepo) InsertArticle(article structures.Article) (int, error) {
 		article.Slug,
 	).Scan(&id)
 	if err != nil {
-		log.Error("Error with inserting article data", sl.Err(err))
+		log.Error("failed to insert article", sl.Err(err))
 		return 0, err
 	}
 
-	log.Debug("Article has been added", slog.Int("id", id))
-
+	log.Debug("article inserted", slog.Int("id", id))
 	return id, nil
 }
 
+// -------------------- Select --------------------
 func (r *ArticleRepo) SelectAllArticles() ([]structures.Article, error) {
 	const op = "postgres.article_repo.SelectAllArticles"
 	log := r.log.With("op", op)
@@ -85,6 +84,14 @@ func (r *ArticleRepo) SelectAllArticles() ([]structures.Article, error) {
 			continue
 		}
 
+		// подтягиваем файлы
+		files, err := r.SelectArticleFiles(article.Id)
+		if err != nil {
+			log.Error("failed to fetch article files", sl.Err(err))
+			continue
+		}
+		article.Files = files
+
 		articles = append(articles, article)
 	}
 
@@ -100,44 +107,38 @@ func (r *ArticleRepo) SelectArticleById(id int) (structures.Article, error) {
 	const op = "postgres.article_repo.SelectArticleById"
 	log := r.log.With("op", op)
 
-	var artical structures.Article
-	query := "SELECT id, title, content, category, author, read_time, slug FROM articles WHERE id=$1"
+	var article structures.Article
+	query := `
+		SELECT id, title, content, category, author, read_time, slug
+		FROM articles
+		WHERE id = $1
+	`
 
-	err := r.db.QueryRow(query, id).Scan(&artical.Id, &artical.Title, &artical.Content, &artical.Category, &artical.Author, &artical.ReadTime, &artical.Slug)
+	err := r.db.QueryRow(query, id).Scan(
+		&article.Id,
+		&article.Title,
+		&article.Content,
+		&article.Category,
+		&article.Author,
+		&article.ReadTime,
+		&article.Slug,
+	)
 	if err != nil {
-		log.Error("Error with query", sl.Err(err))
-		return artical, err
+		log.Error("failed to query article", sl.Err(err))
+		return article, err
 	}
 
-	return artical, nil
+	files, err := r.SelectArticleFiles(article.Id)
+	if err != nil {
+		log.Error("failed to fetch article files", sl.Err(err))
+		return article, err
+	}
+	article.Files = files
+
+	return article, nil
 }
 
-func (r *ArticleRepo) DeleteArticle(id int) error {
-	const op = "postgres.article_repo.DeleteArtical"
-	log := r.log.With("op", op)
-
-	query := "DELETE FROM articles WHERE id = $1"
-
-	result, err := r.db.Exec(query, id)
-	if err != nil {
-		log.Error("Error with deleting artical by id", sl.Err(err))
-		return fmt.Errorf("Error with deleting artical by id: %w", err)
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if rowsAffected == 0 {
-		log.Info("No artical found with ID", slog.Int("id", id))
-	} else {
-		log.Info("artical with ID deleted", slog.Int("id", id))
-	}
-
-	return nil
-}
-
+// -------------------- Update --------------------
 func (r *ArticleRepo) UpdateArticle(a *structures.Article, id int) error {
 	const op = "postgres.article_repo.UpdateArticle"
 	log := r.log.With("op", op)
@@ -162,7 +163,6 @@ func (r *ArticleRepo) UpdateArticle(a *structures.Article, id int) error {
 		a.Slug,
 		id,
 	)
-
 	if err != nil {
 		log.Error("failed to update article", sl.Err(err))
 		return fmt.Errorf("%s: %w", op, err)
@@ -175,14 +175,41 @@ func (r *ArticleRepo) UpdateArticle(a *structures.Article, id int) error {
 	}
 
 	if rowsAffected == 0 {
-		log.Info("no article found with ID")
-		return fmt.Errorf("%s: no article with id=%d", op, a.Id)
+		return fmt.Errorf("%s: no article with id=%d", op, id)
 	}
 
-	log.Info("article updated")
+	log.Info("article updated", slog.Int("id", id))
 	return nil
 }
 
+// -------------------- Delete --------------------
+func (r *ArticleRepo) DeleteArticle(id int) error {
+	const op = "postgres.article_repo.DeleteArticle"
+	log := r.log.With("op", op)
+
+	query := "DELETE FROM articles WHERE id = $1"
+
+	result, err := r.db.Exec(query, id)
+	if err != nil {
+		log.Error("failed to delete article", sl.Err(err))
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		log.Info("no article found with ID", slog.Int("id", id))
+	} else {
+		log.Info("article deleted", slog.Int("id", id))
+	}
+
+	return nil
+}
+
+// -------------------- Files --------------------
 func (r *ArticleRepo) InsertArticleFile(articleID int, path, fileType string) error {
 	const op = "postgres.article_repo.InsertArticleFile"
 	query := `INSERT INTO article_files (article_id, path, type) VALUES ($1, $2, $3)`
@@ -192,4 +219,30 @@ func (r *ArticleRepo) InsertArticleFile(articleID int, path, fileType string) er
 		return fmt.Errorf("%s: %w", op, err)
 	}
 	return nil
+}
+
+func (r *ArticleRepo) SelectArticleFiles(articleID int) ([]structures.ArticleFile, error) {
+	const op = "postgres.article_repo.SelectArticleFiles"
+	log := r.log.With("op", op)
+
+	query := `SELECT id, path, type FROM article_files WHERE article_id = $1`
+
+	rows, err := r.db.Query(query, articleID)
+	if err != nil {
+		log.Error("failed to fetch article files", sl.Err(err))
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	defer rows.Close()
+
+	var files []structures.ArticleFile
+	for rows.Next() {
+		var f structures.ArticleFile
+		if err := rows.Scan(&f.Id); err != nil {
+			log.Error("failed to scan file row", sl.Err(err))
+			continue
+		}
+		files = append(files, f)
+	}
+
+	return files, nil
 }
