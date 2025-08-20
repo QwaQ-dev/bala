@@ -44,6 +44,10 @@ func (u *UserHandler) SignIn(c *fiber.Ctx) error {
 		})
 	}
 
+	if user.Role == "" {
+		user.Role = "user"
+	}
+
 	accessToken, err := u.userService.SignIn(user)
 	if err != nil {
 		log.Error("Error with creating user", sl.Err(err))
