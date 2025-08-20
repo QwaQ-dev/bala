@@ -24,7 +24,6 @@ async function getChecklists() {
 
     console.log(checklists.checklists)
     if (checklists.checklists === null){
-      console.log
       checklists = {}
     }
     console.log("[getChecklists] Checklists:", checklists);

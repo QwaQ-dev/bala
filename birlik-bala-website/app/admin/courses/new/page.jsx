@@ -1,4 +1,3 @@
-
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -19,24 +18,24 @@ export default function NewCoursePage() {
     description: "",
     cost: "",
     img: null,
-    videos: [], // { id, file, name }
+    videos: [], // { id, file, name, title }
   });
 
   const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB
   const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100 MB
 
   const addVideo = () => {
-    setCourse({
-      ...course,
-      videos: [...course.videos, { id: Date.now().toString(), file: null, name: null }],
-    });
+    setCourse((prev) => ({
+      ...prev,
+      videos: [...prev.videos, { id: crypto.randomUUID(), file: null, name: null, title: "" }],
+    }));
   };
 
   const removeVideo = (videoId) => {
-    setCourse({
-      ...course,
-      videos: course.videos.filter((video) => video.id !== videoId),
-    });
+    setCourse((prev) => ({
+      ...prev,
+      videos: prev.videos.filter((video) => video.id !== videoId),
+    }));
   };
 
   const handleFileChange = (videoId, file) => {
@@ -44,12 +43,21 @@ export default function NewCoursePage() {
       toast.error(`Файл видео не должен превышать ${MAX_VIDEO_SIZE / 1024 / 1024} МБ`);
       return;
     }
-    setCourse({
-      ...course,
-      videos: course.videos.map((video) =>
+    setCourse((prev) => ({
+      ...prev,
+      videos: prev.videos.map((video) =>
         video.id === videoId ? { ...video, file, name: file ? file.name : null } : video
       ),
-    });
+    }));
+  };
+
+  const handleTitleChange = (videoId, title) => {
+    setCourse((prev) => ({
+      ...prev,
+      videos: prev.videos.map((video) =>
+        video.id === videoId ? { ...video, title } : video
+      ),
+    }));
   };
 
   const handleImageChange = (file) => {
@@ -57,13 +65,12 @@ export default function NewCoursePage() {
       toast.error(`Файл изображения не должен превышать ${MAX_IMAGE_SIZE / 1024 / 1024} МБ`);
       return;
     }
-    setCourse({ ...course, img: file });
+    setCourse((prev) => ({ ...prev, img: file }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate inputs
     if (!course.title.trim()) {
       toast.error("Введите название курса");
       return;
@@ -72,14 +79,13 @@ export default function NewCoursePage() {
       toast.error("Введите описание курса");
       return;
     }
-    if (course.videos.some((video) => !video.file)) {
-      toast.error("Выберите файлы для всех видео");
+    if (course.videos.some((video) => !video.file || !video.title.trim())) {
+      toast.error("У всех видео должны быть название и файл");
       return;
     }
 
     setLoading(true);
     try {
-      // Create course
       const formData = new FormData();
       formData.append("title", course.title);
       formData.append("description", course.description);
@@ -87,7 +93,7 @@ export default function NewCoursePage() {
       if (course.img) formData.append("img", course.img);
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30-second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
       const createResponse = await fetch("/api/admin/courses/create", {
         method: "POST",
         credentials: "include",
@@ -96,19 +102,15 @@ export default function NewCoursePage() {
       });
       clearTimeout(timeoutId);
 
-      console.log("[NewCoursePage] Create course response status:", createResponse.status);
-      const contentType = createResponse.headers.get("content-type");
-      let createResult;
       const responseText = await createResponse.text();
+      let createResult;
       try {
         createResult = JSON.parse(responseText);
       } catch (parseError) {
-        console.error("[NewCoursePage] JSON parse error:", parseError.message, responseText);
         throw new Error(`Неверный формат ответа: ${responseText.slice(0, 100)}...`);
       }
 
       if (!createResponse.ok) {
-        console.error("[NewCoursePage] Failed to create course:", createResponse.status, createResult);
         toast.error(`Ошибка при создании курса: ${createResult.error || createResult.message || "Неизвестная ошибка"}`);
         setLoading(false);
         return;
@@ -116,22 +118,23 @@ export default function NewCoursePage() {
 
       const courseId = createResult.course_id || createResult.id;
       if (!courseId && course.videos.length > 0) {
-        console.warn("[NewCoursePage] Course ID missing, skipping video upload:", createResult);
         toast.warning("Курс создан, но видео не загружены: ID курса не возвращён сервером");
         router.push("/admin");
         return;
       }
 
-      // Upload videos if any
       if (course.videos.length > 0 && courseId) {
         const videoFormData = new FormData();
         videoFormData.append("course_id", courseId);
-        course.videos.forEach((video, index) => {
-          videoFormData.append(`videos`, video.file);
+        course.videos.forEach((video) => {
+          videoFormData.append("videos", video.file);
+        });
+        course.videos.forEach((video) => {
+          videoFormData.append("titles", video.title);
         });
 
         const videoController = new AbortController();
-        const videoTimeoutId = setTimeout(() => videoController.abort(), 60000); // 60-second timeout
+        const videoTimeoutId = setTimeout(() => videoController.abort(), 60000);
         const videoResponse = await fetch("/api/admin/courses/add-video", {
           method: "POST",
           credentials: "include",
@@ -139,21 +142,16 @@ export default function NewCoursePage() {
           signal: videoController.signal,
         });
         clearTimeout(videoTimeoutId);
-        console.log(videoResponse)
 
-        console.log("[NewCoursePage] Video upload response status:", videoResponse.status);
-        const videoContentType = videoResponse.headers.get("content-type");
-        let videoResult;
         const videoResponseText = await videoResponse.text();
+        let videoResult;
         try {
           videoResult = JSON.parse(videoResponseText);
         } catch (parseError) {
-          console.error("[NewCoursePage] Video JSON parse error:", parseError.message, videoResponseText);
           throw new Error(`Неверный формат ответа: ${videoResponseText.slice(0, 100)}...`);
         }
 
         if (!videoResponse.ok) {
-          console.error("[NewCoursePage] Failed to upload videos:", videoResponse.status, videoResult);
           toast.warning(`Курс создан, но видео не загружены: ${videoResult.error || videoResult.message || "Неизвестная ошибка"}`);
         }
       }
@@ -161,7 +159,6 @@ export default function NewCoursePage() {
       toast.success("Курс успешно создан");
       router.push("/admin");
     } catch (error) {
-      console.error("[NewCoursePage] Error:", error.message);
       toast.error(`Ошибка: ${error.message || "Не удалось выполнить запрос"}`);
     } finally {
       setLoading(false);
@@ -174,7 +171,7 @@ export default function NewCoursePage() {
       course.description ||
       course.cost ||
       course.img ||
-      course.videos.some((video) => video.file)
+      course.videos.some((video) => video.file || video.title)
     ) {
       if (confirm("Вы уверены, что хотите отменить создание курса? Все изменения будут потеряны.")) {
         router.push("/admin");
@@ -199,7 +196,7 @@ export default function NewCoursePage() {
         </div>
       </div>
       <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Basic Info */}
+        {/* Основная информация */}
         <Card>
           <CardHeader>
             <CardTitle>Основная информация</CardTitle>
@@ -252,7 +249,8 @@ export default function NewCoursePage() {
             </div>
           </CardContent>
         </Card>
-        {/* Videos */}
+
+        {/* Видео уроки */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -289,16 +287,29 @@ export default function NewCoursePage() {
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
-                      <div>
-                        <Label>Файл видео</Label>
-                        <Input
-                          type="file"
-                          accept="video/mp4"
-                          onChange={(e) => handleFileChange(video.id, e.target.files[0])}
-                        />
-                        {video.file && (
-                          <p className="text-sm text-gray-500 mt-1">{video.file.name} ({(video.file.size / 1024 / 1024).toFixed(2)} МБ)</p>
-                        )}
+                      <div className="space-y-2">
+                        <div>
+                          <Label>Название урока *</Label>
+                          <Input
+                            type="text"
+                            value={video.title}
+                            onChange={(e) => handleTitleChange(video.id, e.target.value)}
+                            placeholder="Введите название урока"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label>Файл видео *</Label>
+                          <Input
+                            type="file"
+                            accept="video/mp4"
+                            onChange={(e) => handleFileChange(video.id, e.target.files[0])}
+                            required
+                          />
+                          {video.file && (
+                            <p className="text-sm text-gray-500 mt-1">{video.file.name} ({(video.file.size / 1024 / 1024).toFixed(2)} МБ)</p>
+                          )}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -307,7 +318,8 @@ export default function NewCoursePage() {
             )}
           </CardContent>
         </Card>
-        {/* Submit */}
+
+        {/* Кнопки */}
         <div className="flex items-center gap-4">
           <Button type="submit" disabled={loading} className="min-w-32">
             {loading ? "Создание..." : "Создать курс"}

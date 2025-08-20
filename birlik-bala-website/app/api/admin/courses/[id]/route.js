@@ -143,12 +143,13 @@ export async function DELETE(request, { params }) {
     clearTimeout(timeoutId);
 
     console.log("[Admin Course Delete API] Backend response status:", response.status);
-    const responseText = await response.text();
+    const responseText = await response.json();
+    console.log(responseText)
     console.log("[Admin Course Delete API] Backend response body:", responseText);
 
     let data;
     try {
-      data = JSON.parse(responseText);
+      data = responseText.course
     } catch (parseError) {
       console.error("[Admin Course Delete API] Ошибка парсинга JSON:", parseError.message);
       return new Response(

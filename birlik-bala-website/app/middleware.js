@@ -1,83 +1,72 @@
+// middleware.js
 import { NextResponse } from "next/server";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8080";
 
-export async function middleware(request) {
-  const { pathname } = request.nextUrl;
-  console.log(`[Middleware] Проверка пути: ${pathname}`);
+export async function middleware(req) {
+  const { pathname } = req.nextUrl;
+  console.log("Middleware triggered for:", req.nextUrl.pathname);
+  const token = req.cookies.get("access_token")?.value ?? null;
 
-  const token = request.cookies.get("access_token")?.value;
-  console.log("[Middleware] Токен:", token ? "найден" : "не найден");
-
-  const protectedPaths = ["/courses", "/admin", "/profile", "/articles"];
-  const isProtectedPath = protectedPaths.some((path) => pathname.startsWith(path));
-  const isAdminPath = pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
-  const isApiPath = pathname.startsWith("/api/courses") || pathname.startsWith("/api/articles") || pathname.startsWith("/api/admin");
+  const protectedPages = ["/courses", "/profile", "/articles"];
+  const adminPages = ["/admin"];
+  const protectedApis = ["/api/courses", "/api/articles", "/api/admin"];
 
   async function checkUser(token) {
+    if (!token) return { isAuthenticated: false, isAdmin: false };
     try {
-      const response = await fetch(`${BACKEND_URL}/api/v1/auth/user`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        signal: AbortSignal.timeout(5000),
+      const res = await fetch(`${BACKEND_URL}/api/v1/auth/user-info`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-
-      console.log("[Middleware] Статус ответа бэкенда:", response.status);
-
-      if (response.status === 401) {
-        console.log("[Middleware] Пользователь не авторизован (401)");
-        return { isAuthenticated: false, isAdmin: false };
-      }
-
-      if (!response.ok) {
-        console.error("[Middleware] Ошибка бэкенда:", response.status);
-        return { isAuthenticated: false, isAdmin: false };
-      }
-
-      const data = await response.json();
-      return { isAuthenticated: true, isAdmin: data.user?.role === "admin" };
-    } catch (error) {
-      console.error("[Middleware] Ошибка запроса к бэкенду:", error.message);
+      if (!res.ok) return { isAuthenticated: false, isAdmin: false };
+      const data = await res.json();
+      return { isAuthenticated: true, isAdmin: data.user?.role === "user" };
+    } catch {
       return { isAuthenticated: false, isAdmin: false };
     }
   }
 
-  if (isProtectedPath || isAdminPath || isApiPath) {
-    if (!token) {
-      console.log("[Middleware] Нет токена, перенаправление на /auth");
-      return NextResponse.redirect(new URL("/auth", request.url));
-    }
+  const { isAuthenticated, isAdmin } = await checkUser(token);
 
-    const { isAuthenticated, isAdmin } = await checkUser(token);
-    if (!isAuthenticated) {
-      console.log("[Middleware] Пользователь не авторизован, перенаправление на /auth");
-      const response = NextResponse.redirect(new URL("/auth", request.url));
-      response.cookies.set("access_token", "", {
-        path: "/",
-        expires: new Date(0),
-        httpOnly: true,
-      });
-      return response;
-    }
-
-    if (isAdminPath && !isAdmin) {
-      console.log("[Middleware] Пользователь не админ, перенаправление на /courses");
-      return NextResponse.redirect(new URL("/courses", request.url));
-    }
+  // --- API защита ---
+  if (protectedApis.some(p => pathname.startsWith(p))) {
+    if (!isAuthenticated) return new NextResponse(JSON.stringify({ error: "Не авторизован" }), { status: 401 });
+    if (pathname.startsWith("/api/admin") && !isAdmin)
+      return new NextResponse(JSON.stringify({ error: "Нет прав администратора" }), { status: 403 });
+    return NextResponse.next();
   }
 
-  if (token && pathname === "/auth") {
-    console.log("[Middleware] Токен присутствует, перенаправление на /courses");
-    return NextResponse.redirect(new URL("/courses", request.url));
+  // --- Страницы ---
+  const redirectWithMessage = (url, message) => {
+    const res = NextResponse.redirect(new URL(url, req.url));
+    res.cookies.set("auth_message", message, { path: "/", maxAge: 5 });
+    res.headers.set("Cache-Control", "no-store");
+    return res;
+  };
+
+  // Админка
+  if (adminPages.some(p => pathname.startsWith(p)) && !isAdmin) {
+    return redirectWithMessage("/courses", "У вас нет доступа в админку");
   }
 
-  console.log("[Middleware] Доступ разрешён");
+  // Пользовательские страницы
+  if (protectedPages.some(p => pathname.startsWith(p)) && !isAuthenticated) {
+    const res = redirectWithMessage("/auth", "Пожалуйста, авторизуйтесь для доступа");
+    res.cookies.set("access_token", "", { path: "/", expires: new Date(0) });
+    return res;
+  }
+
+  // Авторизованные не могут заходить на /auth
+  if (isAuthenticated && pathname === "/auth") {
+    return redirectWithMessage("/courses", "Вы уже авторизованы");
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/courses/:path*", "/admin/:path*", "/profile/:path*", "/articles/:path*", "/auth", "/api/admin/:path*", "/api/courses/:path*", "/api/articles/:path*"],
+  matcher: [
+    "/courses/:path*", "/profile/:path*", "/articles/:path*", "/admin/:path*", "/auth",
+    "/api/courses/:path*", "/api/articles/:path*", "/api/admin/:path*",
+  ],
 };

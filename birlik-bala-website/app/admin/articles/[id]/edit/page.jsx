@@ -1,12 +1,13 @@
-
 "use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+
+import { useState, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useEditor, EditorContent } from "@tiptap/react";
@@ -79,9 +80,11 @@ const MenuBar = ({ editor }) => {
   );
 };
 
-export default function NewArticlePage() {
+export default function EditArticlePage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const { id } = useParams();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [article, setArticle] = useState({
     title: "",
     content: "",
@@ -102,10 +105,10 @@ export default function NewArticlePage() {
       }),
       TiptapLink.configure({ openOnClick: false }),
     ],
-    content: article.content,
+    content: "",
     onUpdate: ({ editor }) => {
-      console.log("[NewArticlePage] Editor updated, content:", editor.getHTML());
-      setArticle({ ...article, content: editor.getHTML() });
+      console.log("[EditArticlePage] Editor updated, content:", editor.getHTML());
+      setArticle((prev) => ({ ...prev, content: editor.getHTML() }));
     },
     immediatelyRender: false,
   });
@@ -126,101 +129,161 @@ export default function NewArticlePage() {
     );
   };
 
+  useEffect(() => {
+    const fetchArticle = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const token = document.cookie
+          .split("; ")
+          .find((row) => row.startsWith("access_token="))
+          ?.split("=")[1];
+        console.log("[EditArticlePage] Access token:", token || "none");
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        const response = await fetch(`/api/articles/${id}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          credentials: "include",
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        console.log("[EditArticlePage] Fetch article response status:", response.status);
+        const data = await response.json();
+        console.log("[EditArticlePage] Fetch article response body:", data);
+
+        
+        if (!response.ok) {
+          console.error("[EditArticlePage] Failed to fetch article:", response.status, data);
+          throw new Error(data.error || `HTTP ошибка: ${response.status}`);
+        }
+
+        setArticle({
+          title: data.article.title || "",
+          content: data.article.content || "",
+          category: Array.isArray(data.article.category) ? data.article.category : [],
+          author: data.article.author || "",
+          readTime: data.article.readTime ? String(data.article.readTime) : "",
+          slug: data.article.slug || "",
+        });
+
+        if (editor && data.article.content) {
+          editor.commands.setContent(data.article.content);
+        }
+      } catch (error) {
+        console.error("[EditArticlePage] Fetch error:", error.message);
+        setError(error.message);
+        toast.error(`Ошибка при загрузке статьи: ${error.message}`);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchArticle();
+  }, [id, editor]);
+
   const handleCategoryChange = (e) => {
-    const selected = Array.from(e.target.selectedOptions).map(
-      (option) => option.value,
-    );
+    const selected = Array.from(e.target.selectedOptions).map((option) => option.value);
+    console.log("[EditArticlePage] Selected categories:", selected);
     setArticle({ ...article, category: selected });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
 
-    // Enhanced validation
     if (!article.title.trim() || article.title.length < 3) {
       toast.error("Название статьи должно быть не короче 3 символов");
+      setLoading(false);
       return;
     }
     if (!article.content.trim() || article.content === "<p></p>") {
       toast.error("Введите содержание статьи");
+      setLoading(false);
       return;
     }
     if (article.category.length === 0) {
       toast.error("Выберите хотя бы одну категорию");
+      setLoading(false);
       return;
     }
     if (!article.author.trim() || article.author.length < 2) {
       toast.error("Имя автора должно быть не короче 2 символов");
+      setLoading(false);
       return;
     }
     const readTimeNum = parseInt(article.readTime);
     if (!article.readTime || isNaN(readTimeNum) || readTimeNum <= 0) {
       toast.error("Введите корректное время чтения (в минутах, больше 0)");
+      setLoading(false);
       return;
     }
     if (!article.slug.trim() || article.slug.length < 3) {
       toast.error("Slug должен быть не короче 3 символов");
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
     try {
-      const formData = new FormData();
-      formData.append("title", article.title);
-      formData.append("content", article.content);
-      // Send each category as a separate field
-      article.category.forEach((cat) => formData.append("category[]", cat));
-      formData.append("author", article.author);
-      formData.append("readTime", article.readTime);
-      formData.append("slug", article.slug);
+      const jsonData = {
+        title: article.title,
+        content: article.content,
+        category: Array.isArray(article.category) 
+                  ? article.category.join(",") 
+                  : article.category,
+        author: article.author,
+        readTime: readTimeNum,
+        slug: article.slug,
+      };
+
+      
 
       const token = document.cookie
         .split("; ")
         .find((row) => row.startsWith("access_token="))
         ?.split("=")[1];
-      console.log("[NewArticlePage] Access token:", token || "none");
-      console.log("[NewArticlePage] FormData entries:", [...formData.entries()]);
+      console.log("[EditArticlePage] Access token for update:", token || "none");
+      console.log("[EditArticlePage] JSON data:", jsonData);
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
-      const response = await fetch("/api/admin/articles/create", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      console.log("JSON.stringify(jsonData):", JSON.stringify(jsonData));
+
+      const response = await fetch(`/api/admin/articles/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         credentials: "include",
-        body: formData,
+        body: JSON.stringify(jsonData),
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
+      console.log(response)
 
-      console.log("[NewArticlePage] Create article response status:", response.status);
-      const contentType = response.headers.get("content-type");
-      let result;
-      const responseText = await response.text();
-      console.log("[NewArticlePage] Create article response body:", responseText);
-
-      if (contentType && contentType.includes("application/json")) {
-        try {
-          result = JSON.parse(responseText);
-        } catch (parseError) {
-          console.error("[NewArticlePage] JSON parse error:", parseError.message, responseText);
-          throw new Error(`Неверный формат ответа: ${responseText.slice(0, 100)}...`);
-        }
-      } else {
-        console.error("[NewArticlePage] Non-JSON response:", responseText);
-        throw new Error(`Неверный формат ответа: ${responseText.slice(0, 100)}...`);
-      }
+      console.log("[EditArticlePage] Update article response status:", response.status);
+      const result = await response.json();
+      console.log("[EditArticlePage] Update article response body:", result);
 
       if (!response.ok) {
-        console.error("[NewArticlePage] Failed to create article:", response.status, result);
-        toast.error(`Ошибка при создании статьи: ${result.error || result.message || "Неизвестная ошибка"}`);
+        console.error("[EditArticlePage] Failed to update article:", response.status, result);
+        toast.error(`Ошибка при обновлении статьи: ${result.error || result.message || "Неизвестная ошибка"}`);
         setLoading(false);
         return;
       }
 
-      toast.success("Статья успешно создана");
+      toast.success("Статья успешно обновлена");
       router.push("/admin");
     } catch (error) {
-      console.error("[NewArticlePage] Error:", error.message);
+      console.error("[EditArticlePage] Update error:", error.message);
+      setError(error.message);
       toast.error(`Ошибка: ${error.message || "Не удалось выполнить запрос"}`);
     } finally {
       setLoading(false);
@@ -238,7 +301,7 @@ export default function NewArticlePage() {
     ) {
       if (
         confirm(
-          "Вы уверены, что хотите отменить создание статьи? Все изменения будут потеряны.",
+          "Вы уверены, что хотите отменить редактирование? Все изменения будут потеряны."
         )
       ) {
         router.push("/admin");
@@ -247,6 +310,22 @@ export default function NewArticlePage() {
       router.push("/admin");
     }
   };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
+          <div className="space-y-4">
+            <div className="h-10 bg-gray-200 rounded"></div>
+            <div className="h-24 bg-gray-200 rounded"></div>
+            <div className="h-10 bg-gray-200 rounded"></div>
+            <div className="h-10 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -258,10 +337,17 @@ export default function NewArticlePage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Создать новую статью</h1>
-          <p className="text-gray-600">Добавьте информацию и содержание статьи</p>
+          <h1 className="text-3xl font-bold text-gray-900">Редактировать статью</h1>
+          <p className="text-gray-600">Обновите информацию и содержание статьи</p>
         </div>
       </div>
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Ошибка</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
       <form onSubmit={handleSubmit} className="space-y-8">
         <Card>
           <CardHeader>
@@ -305,9 +391,7 @@ export default function NewArticlePage() {
               <Input
                 id="author"
                 value={article.author}
-                onChange={(e) =>
-                  setArticle({ ...article, author: e.target.value })
-                }
+                onChange={(e) => setArticle({ ...article, author: e.target.value })}
                 placeholder="Введите имя автора (мин. 2 символа)"
                 required
               />
@@ -318,9 +402,7 @@ export default function NewArticlePage() {
                 id="readTime"
                 type="number"
                 value={article.readTime}
-                onChange={(e) =>
-                  setArticle({ ...article, readTime: e.target.value })
-                }
+                onChange={(e) => setArticle({ ...article, readTime: e.target.value })}
                 placeholder="5"
                 min="1"
                 required
@@ -331,9 +413,7 @@ export default function NewArticlePage() {
               <Input
                 id="slug"
                 value={article.slug}
-                onChange={(e) =>
-                  setArticle({ ...article, slug: e.target.value })
-                }
+                onChange={(e) => setArticle({ ...article, slug: e.target.value })}
                 placeholder="например, novaia-statya (мин. 3 символа)"
                 required
               />
@@ -356,7 +436,7 @@ export default function NewArticlePage() {
         </Card>
         <div className="flex items-center gap-4">
           <Button type="submit" disabled={loading} className="min-w-32">
-            {loading ? "Создание..." : "Создать статью"}
+            {loading ? "Сохранение..." : "Сохранить изменения"}
           </Button>
           <Button type="button" variant="outline" onClick={handleCancel}>
             Отменить

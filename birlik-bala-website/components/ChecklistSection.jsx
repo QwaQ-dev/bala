@@ -1,36 +1,27 @@
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card";
 
-export default function ChecklistSection() {
-  const checklists = [
-    {
-      title: "Произношение",
-      description: "10 упражнений для развития правильного произношения и артикуляции у детей",
-      color: "bg-pink-500",
-      bgColor: "bg-pink-50",
-      borderColor: "border-pink-200",
-    },
-    {
-      title: "Произношение",
-      description: "10 упражнений для развития правильного произношения и артикуляции у детей",
-      color: "bg-blue-500",
-      bgColor: "bg-blue-50",
-      borderColor: "border-blue-200",
-    },
-    {
-      title: "Произношение",
-      description: "10 упражнений для развития правильного произношения и артикуляции у детей",
-      color: "bg-green-500",
-      bgColor: "bg-green-50",
-      borderColor: "border-green-200",
-    },
-    {
-      title: "Произношение",
-      description: "10 упражнений для развития правильного произношения и артикуляции у детей",
-      color: "bg-orange-500",
-      bgColor: "bg-orange-50",
-      borderColor: "border-orange-200",
-    },
-  ]
+export const revalidate = 60; // ISR: обновляем данные раз в 60 секунд
+
+export default async function ChecklistSection() {
+  let checklists = [];
+
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/checklists`, {
+      next: { revalidate: 60 }, // ISR
+    });
+    const data = await res.json();
+    checklists = Array.isArray(data) ? data.slice(0, 4) : [];
+  } catch (err) {
+    console.error("Error fetching checklists:", err);
+  }
+
+  if (checklists.length === 0) {
+    return (
+      <div className="text-center py-8 text-gray-600">
+        Чеклисты не найдены
+      </div>
+    );
+  }
 
   return (
     <section className="py-16 bg-gray-50">
@@ -46,17 +37,17 @@ export default function ChecklistSection() {
           {checklists.map((checklist, index) => (
             <Card
               key={index}
-              className={`${checklist.bgColor} ${checklist.borderColor} border-2 hover:shadow-lg transition-shadow`}
+              className="border-2 border-gray-200 bg-white shadow-sm hover:shadow-lg transition-shadow flex flex-col"
             >
-              <CardContent className="p-6">
-                <div className={`w-12 h-12 ${checklist.color} rounded-xl mb-4 flex items-center justify-center`}>
+              <CardContent className="flex flex-col h-full p-6">
+                <div className="w-12 h-12 bg-blue-500 rounded-xl mb-4 flex items-center justify-center">
                   <span className="text-white font-bold text-xl">✓</span>
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">{checklist.title}</h3>
-                <p className="text-gray-600 mb-6 text-sm leading-relaxed">{checklist.description}</p>
-                <button
-                  className={`w-full py-3 px-4 ${checklist.color} text-white rounded-lg hover:opacity-90 transition-opacity font-medium`}
-                >
+                <p className="text-gray-600 mb-6 text-sm leading-relaxed flex-grow">
+                  {checklist.description}
+                </p>
+                <button className="w-full py-3 px-4 bg-blue-500 text-white rounded-lg hover:opacity-90 transition-opacity font-medium">
                   Скачать
                 </button>
               </CardContent>
@@ -65,5 +56,5 @@ export default function ChecklistSection() {
         </div>
       </div>
     </section>
-  )
+  );
 }

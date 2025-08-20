@@ -24,6 +24,7 @@ func NewCourseHandler(courseService *services.CourseService, log *slog.Logger) *
 		log:           log,
 	}
 }
+
 func (h *CourseHandler) CreateCourse(c *fiber.Ctx) error {
 	const op = "handlers.course_handler.CreateCourse"
 	log := h.log.With("op", op)
@@ -32,19 +33,22 @@ func (h *CourseHandler) CreateCourse(c *fiber.Ctx) error {
 	description := c.FormValue("description")
 	costStr := c.FormValue("cost")
 
-	if title == "" || description == "" || costStr == "" {
+	if title == "" || description == "" {
 		log.Error("missing required fields")
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "missing required fields"})
 	}
 
-	cost, err := strconv.Atoi(costStr)
-	if err != nil {
-		log.Error("invalid cost format", sl.Err(err))
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "cost must be an integer"})
+	cost := 0
+	if costStr != "" {
+		var err error
+		cost, err = strconv.Atoi(costStr)
+		if err != nil {
+			log.Error("invalid cost format", sl.Err(err))
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "cost must be an integer"})
+		}
 	}
 
 	file, err := c.FormFile("img")
-
 	var imgPath string
 
 	if err == nil && file != nil {
@@ -53,7 +57,6 @@ func (h *CourseHandler) CreateCourse(c *fiber.Ctx) error {
 			log.Error("failed to create uploads dir", sl.Err(err))
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create uploads dir"})
 		}
-
 		filename := fmt.Sprintf("%d_%s", time.Now().UnixNano(), file.Filename)
 		savePath := uploadDir + "/" + filename
 		if err := c.SaveFile(file, savePath); err != nil {
@@ -105,9 +108,7 @@ func (h *CourseHandler) GetCourseByID(c *fiber.Ctx) error {
 		}
 	}
 
-	return c.Status(200).JSON(fiber.Map{
-		"course": course,
-	})
+	return c.Status(200).JSON(fiber.Map{"course": course})
 }
 
 func (h *CourseHandler) UpdateCourse(c *fiber.Ctx) error {
@@ -130,14 +131,17 @@ func (h *CourseHandler) UpdateCourse(c *fiber.Ctx) error {
 	title := c.FormValue("title")
 	description := c.FormValue("description")
 	costStr := c.FormValue("cost")
-	if title == "" || description == "" || costStr == "" {
+	if title == "" || description == "" {
 		log.Error("missing required fields")
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "missing required fields"})
 	}
-	cost, err := strconv.Atoi(costStr)
-	if err != nil {
-		log.Error("invalid cost format", sl.Err(err))
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "cost must be an integer"})
+	cost := 0
+	if costStr != "" {
+		cost, err = strconv.Atoi(costStr)
+		if err != nil {
+			log.Error("invalid cost format", sl.Err(err))
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "cost must be an integer"})
+		}
 	}
 
 	file, err := c.FormFile("img")
@@ -203,12 +207,6 @@ func (h *CourseHandler) UploadVideos(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid course_id"})
 	}
 
-	videoTitle := c.FormValue("title")
-	if err != nil {
-		log.Error("ivalid video title", sl.Err(err))
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "ivalid video title"})
-	}
-
 	form, err := c.MultipartForm()
 	if err != nil {
 		log.Error("failed to parse multipart form", sl.Err(err))
@@ -216,8 +214,13 @@ func (h *CourseHandler) UploadVideos(c *fiber.Ctx) error {
 	}
 
 	files := form.File["videos"]
+	titles := form.Value["titles"]
+
 	if len(files) == 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "no files uploaded"})
+	}
+	if len(files) != len(titles) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "mismatched number of videos and titles"})
 	}
 
 	uploadDir := "./uploads/videos"
@@ -227,7 +230,7 @@ func (h *CourseHandler) UploadVideos(c *fiber.Ctx) error {
 	}
 
 	var uploadedPaths []string
-	for _, file := range files {
+	for i, file := range files {
 		filename := fmt.Sprintf("%d_%s", time.Now().UnixNano(), file.Filename)
 		savePath := uploadDir + "/" + filename
 
@@ -237,7 +240,7 @@ func (h *CourseHandler) UploadVideos(c *fiber.Ctx) error {
 		}
 
 		relativePath := "/uploads/videos/" + filename
-		if err := h.courseService.AddVideoToCourse(courseID, relativePath, videoTitle); err != nil {
+		if err := h.courseService.AddVideoToCourse(courseID, relativePath, titles[i]); err != nil {
 			log.Error("failed to save path to DB", sl.Err(err))
 			continue
 		}
@@ -256,7 +259,7 @@ func (h *CourseHandler) UploadVideos(c *fiber.Ctx) error {
 }
 
 func (h *CourseHandler) GetAllCourses(c *fiber.Ctx) error {
-	const op = "handlers.checklist_handler.GetAllChecklists"
+	const op = "handlers.course_handler.GetAllCourses"
 	log := h.log.With("op", op)
 
 	courses, err := h.courseService.GetAllCourses()
@@ -265,60 +268,43 @@ func (h *CourseHandler) GetAllCourses(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch courses"})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"courses": courses,
-	})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"courses": courses})
 }
 
 func (h *CourseHandler) GiveAccess(c *fiber.Ctx) error {
-	const op = "handlers.checklist_handler.GiveAccess"
+	const op = "handlers.course_handler.GiveAccess"
 	log := h.log.With("op", op)
 
 	var req structures.CourseAccessRequest
-
 	if err := c.BodyParser(&req); err != nil {
 		log.Error("failed to parse request body", sl.Err(err))
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid request body",
-		})
-	}
-	err := h.courseService.GiveAccess(req.UserID, req.CourseID)
-	if err != nil {
-		log.Error("Error with access", sl.Err(err))
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"Message": "Access has been given",
-	})
+	if err := h.courseService.GiveAccess(req.UserID, req.CourseID); err != nil {
+		log.Error("Error with access", sl.Err(err))
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Access has been given"})
 }
 
 func (h *CourseHandler) TakeAwayAccess(c *fiber.Ctx) error {
-	const op = "handlers.checklist_handler.TakeAwayAccess"
+	const op = "handlers.course_handler.TakeAwayAccess"
 	log := h.log.With("op", op)
 
 	var req structures.CourseAccessRequest
-
 	if err := c.BodyParser(&req); err != nil {
 		log.Error("failed to parse request body", sl.Err(err))
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid request body",
-		})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
 	}
 
-	err := h.courseService.TakeAwayAccess(req.UserID, req.CourseID)
-	if err != nil {
+	if err := h.courseService.TakeAwayAccess(req.UserID, req.CourseID); err != nil {
 		log.Error("Error with access", sl.Err(err))
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "Access has been taken away",
-	})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Access has been taken away"})
 }
 
 func (h *CourseHandler) GetAllCoursesWithAccess(c *fiber.Ctx) error {
@@ -329,7 +315,5 @@ func (h *CourseHandler) GetAllCoursesWithAccess(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch courses"})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"courses": courses,
-	})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"courses": courses})
 }

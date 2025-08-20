@@ -19,8 +19,9 @@ async function getArticle(slug) {
       console.error("[getArticle] Ошибка:", res.status, await res.text());
       return null;
     }
+    const data = await res.json();
+    const article = data.article;
 
-    const article = await res.json();
 
     // Format data to match ArticlePage expectations and JSON
     return {

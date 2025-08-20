@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, AlertTriangle } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 
 export default function CoursePage({ params }) {
   const [course, setCourse] = useState(null);
@@ -40,10 +40,11 @@ export default function CoursePage({ params }) {
         },
       });
 
-      const responseText = await response.text();
-      if (!response.ok) throw new Error(`HTTP error: ${response.status} - ${responseText}`);
+      const responseText = await response.json();
 
-      const courseData = JSON.parse(responseText);
+      if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+      
+      const courseData = responseText;
       if (!courseData.id || !Array.isArray(courseData.videos)) {
         throw new Error("Invalid course data format");
       }
@@ -59,8 +60,6 @@ export default function CoursePage({ params }) {
   };
 
   const selectVideo = (video) => setCurrentVideo(video);
-
-  const formatDuration = (seconds) => `${Math.floor(seconds / 60)} мин`;
 
   if (loading) {
     return (
@@ -111,17 +110,18 @@ export default function CoursePage({ params }) {
                 <div>
                   <div className="aspect-video bg-black rounded-t-lg overflow-hidden">
                     <video
-                      src={`http://localhost:8080${currentVideo.path}` || "/placeholder.mp4"}
+                      src={`http://localhost:8080${currentVideo.path}`}
                       controls
                       className="w-full h-full object-contain"
                     >
-                      <source src={`http://localhost:8080${currentVideo.path}` || "/placeholder.mp4"} type="video/mp4" />
                       Ваш браузер не поддерживает воспроизведение видео.
                     </video>
                   </div>
                   <div className="p-6">
                     <h2 className="text-xl font-semibold mb-2">{currentVideo.title}</h2>
-                    <p className="text-gray-600 mb-4">{currentVideo.description}</p>
+                    {currentVideo.description && (
+                      <p className="text-gray-600 mb-4">{currentVideo.description}</p>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -154,7 +154,9 @@ export default function CoursePage({ params }) {
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
-                <CardDescription className="text-xs mb-2">{video.description}</CardDescription>
+                {video.description && (
+                  <CardDescription className="text-xs mb-2">{video.description}</CardDescription>
+                )}
               </CardContent>
             </Card>
           ))}

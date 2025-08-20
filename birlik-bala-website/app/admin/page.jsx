@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Trash2, Plus } from "lucide-react";
+import { AlertTriangle, Trash2, Plus, Pencil } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Link from "next/link";
 
@@ -24,6 +24,7 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     setLoading(true);
     setError(null);
+
     try {
       const token = document.cookie
         .split("; ")
@@ -40,19 +41,9 @@ export default function AdminDashboard() {
         },
         credentials: "include",
       });
-      console.log("[AdminDashboard] Fetch checklists response status:", checklistResponse.status);
-      const checklistData = await checklistResponse.json();
-      console.log("[AdminDashboard] Fetch checklists response body:", checklistData);
-
-      if (!checklistResponse.ok) {
-        console.error("[AdminDashboard] Failed to fetch checklists:", checklistResponse.status, checklistData);
-        throw new Error(checklistData.error || `HTTP error (checklists): ${checklistResponse.status}`);
-      }
-
-      if (!Array.isArray(checklistData)) {
-        console.error("[AdminDashboard] Expected checklists array:", checklistData);
-        throw new Error("Invalid checklists data format");
-      }
+      let checklistData = await checklistResponse.json();
+      checklistData = checklistData ?? [];
+      if (!checklistResponse.ok) throw new Error(checklistData.error || `HTTP error (checklists): ${checklistResponse.status}`);
 
       // Fetch Courses
       const courseResponse = await fetch("/api/admin/courses", {
@@ -63,19 +54,9 @@ export default function AdminDashboard() {
         },
         credentials: "include",
       });
-      console.log("[AdminDashboard] Fetch courses response status:", courseResponse.status);
-      const courseData = await courseResponse.json();
-      console.log("[AdminDashboard] Fetch courses response body:", courseData);
-
-      if (!courseResponse.ok) {
-        console.error("[AdminDashboard] Failed to fetch courses:", courseResponse.status, courseData);
-        throw new Error(courseData.error || `HTTP error (courses): ${courseResponse.status}`);
-      }
-
-      if (!Array.isArray(courseData)) {
-        console.error("[AdminDashboard] Expected courses array:", courseData);
-        throw new Error("Invalid courses data format");
-      }
+      let courseData = await courseResponse.json();
+      courseData = courseData ?? [];
+      if (!courseResponse.ok) throw new Error(courseData.error || `HTTP error (courses): ${courseResponse.status}`);
 
       // Fetch Articles
       const articleResponse = await fetch("/api/articles", {
@@ -86,24 +67,10 @@ export default function AdminDashboard() {
         },
         credentials: "include",
       });
-      console.log("[AdminDashboard] Fetch articles response status:", articleResponse.status);
-      const articleData = await articleResponse.json();
-      console.log(articleData)
-      console.log("[AdminDashboard] Fetch articles response body:", articleData);
+      let articleData = await articleResponse.json();
+      articleData = articleData ?? [];
+      if (!articleResponse.ok) throw new Error(articleData.error || `HTTP error (articles): ${articleResponse.status}`);
 
-      if (!articleResponse.ok) {
-        console.error("[AdminDashboard] Failed to fetch articles:", articleResponse.status, articleData);
-        throw new Error(articleData.error || `HTTP error (articles): ${articleResponse.status}`);
-      }
-
-      if (!Array.isArray(articleData)) {
-        console.error("[AdminDashboard] Expected articles array:", articleData);
-        throw new Error("Invalid articles data format");
-      }
-
-      if (checklistData.checklists === null || checklistData.checklist === undefined){
-        setChecklists([])
-      }
       setChecklists(checklistData);
       setCourses(courseData);
       setArticles(articleData);
@@ -123,7 +90,6 @@ export default function AdminDashboard() {
         .split("; ")
         .find((row) => row.startsWith("access_token="))
         ?.split("=")[1];
-      console.log("[AdminDashboard] Access token for delete checklist:", token || "none");
 
       const response = await fetch(`/api/admin/checklists/${id}`, {
         method: "DELETE",
@@ -133,28 +99,78 @@ export default function AdminDashboard() {
         },
         credentials: "include",
       });
-      console.log("[AdminDashboard] Delete checklist response status:", response.status);
-      const responseText = await response.text();
-      console.log("[AdminDashboard] Delete checklist response body:", responseText);
 
-      let data;
-      try {
-        data = responseText ? JSON.parse(responseText) : {};
-      } catch (parseError) {
-        console.error("[AdminDashboard] JSON parse error:", parseError.message, responseText);
-        throw new Error("Invalid response format from server");
-      }
+      let data = await response.text();
+      data = data ? JSON.parse(data) : {};
 
-      if (!response.ok) {
-        console.error("[AdminDashboard] Failed to delete checklist:", response.status, data);
-        throw new Error(data.error || `Failed to delete checklist: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(data.error || `Failed to delete checklist: ${response.status}`);
 
-      console.log("[AdminDashboard] Checklist deleted successfully:", id);
       setSuccess(`Чеклист с ID ${id} успешно удалён`);
       setChecklists(checklists.filter((checklist) => checklist.id !== id));
     } catch (error) {
       console.error("[AdminDashboard] Delete checklist error:", error.message);
+      setError(error.message);
+    }
+  };
+
+  const handleDeleteArticle = async (id) => {
+    setError(null);
+    setSuccess(null);
+    try {
+      const token = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("access_token="))
+        ?.split("=")[1];
+
+      const response = await fetch(`/api/admin/articles/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+      });
+
+      let data = await response.text();
+      data = data ? JSON.parse(data) : {};
+
+      if (!response.ok) throw new Error(data.error || `Failed to delete article: ${response.status}`);
+
+      setSuccess(`Статья с ID ${id} успешно удалена`);
+      setArticles(articles.filter((article) => article.id !== id));
+    } catch (error) {
+      console.error("[AdminDashboard] Delete article error:", error.message);
+      setError(error.message);
+    }
+  };
+
+  const handleDeleteCourse = async (id) => {
+    setError(null);
+    setSuccess(null);
+    try {
+      const token = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("access_token="))
+        ?.split("=")[1];
+
+      const response = await fetch(`/api/admin/courses/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+      });
+
+      let data = await response.text();
+      data = data ? JSON.parse(data) : {};
+
+      if (!response.ok) throw new Error(data.error || `Failed to delete course: ${response.status}`);
+
+      setSuccess(`Курс с ID ${id} успешно удалён`);
+      setCourses(courses.filter((course) => course.id !== id));
+    } catch (error) {
+      console.error("[AdminDashboard] Delete course error:", error.message);
       setError(error.message);
     }
   };
@@ -258,6 +274,21 @@ export default function AdminDashboard() {
                   <p className="text-sm text-gray-600">{course.description}</p>
                   <p className="text-sm text-gray-500">Slug: {course.slug}</p>
                 </CardHeader>
+                <CardContent className="flex items-center gap-2">
+                  <Link href={`/admin/courses/${course.id}/edit`}>
+                    <Button variant="outline">
+                      <Pencil className="w-4 h-4 mr-2" />
+                      Редактировать
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="destructive"
+                    onClick={() => handleDeleteCourse(course.id)}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Удалить
+                  </Button>
+                </CardContent>
               </Card>
             ))}
           </div>
@@ -289,6 +320,21 @@ export default function AdminDashboard() {
                   <p className="text-sm text-gray-600">{article.description}</p>
                   <p className="text-sm text-gray-500">Slug: {article.slug}</p>
                 </CardHeader>
+                <CardContent className="flex items-center gap-2">
+                  <Link href={`/admin/articles/${article.id}/edit`}>
+                    <Button variant="outline">
+                      <Pencil className="w-4 h-4 mr-2" />
+                      Редактировать
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="destructive"
+                    onClick={() => handleDeleteArticle(article.id)}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Удалить
+                  </Button>
+                </CardContent>
               </Card>
             ))}
           </div>

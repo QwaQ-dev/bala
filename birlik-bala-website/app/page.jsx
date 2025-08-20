@@ -8,10 +8,9 @@ import ConsultationSection from "@/components/ConsultationSection";
 import Footer from "@/components/Footer";
 
 // ISR: страница будет перегенерироваться каждые 3600 секунд (1 час)
-export const revalidate = 3600;
+export const revalidate = 1800;
 
 export default async function Home() {
-  console.log("[Home] Fetching articles via proxy at", new Date().toISOString());
   let articles = [];
 
   try {
@@ -20,7 +19,7 @@ export default async function Home() {
       headers: {
         "Content-Type": "application/json",
       },
-      next: { revalidate: 3600 }, // Cache and revalidate every hour
+      next: { revalidate: 1800 }, // Cache and revalidate every hour
     });
     console.log("[Home] Proxy response status:", response.status);
 
