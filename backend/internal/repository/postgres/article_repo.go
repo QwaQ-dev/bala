@@ -225,7 +225,7 @@ func (r *ArticleRepo) SelectArticleFiles(articleID int) ([]structures.ArticleFil
 	const op = "postgres.article_repo.SelectArticleFiles"
 	log := r.log.With("op", op)
 
-	query := `SELECT id, path, type FROM article_files WHERE article_id = $1`
+	query := `SELECT id, path FROM article_files WHERE article_id = $1`
 
 	rows, err := r.db.Query(query, articleID)
 	if err != nil {
@@ -237,7 +237,7 @@ func (r *ArticleRepo) SelectArticleFiles(articleID int) ([]structures.ArticleFil
 	var files []structures.ArticleFile
 	for rows.Next() {
 		var f structures.ArticleFile
-		if err := rows.Scan(&f.Id); err != nil {
+		if err := rows.Scan(&f.Id, &f.FilePath); err != nil {
 			log.Error("failed to scan file row", sl.Err(err))
 			continue
 		}

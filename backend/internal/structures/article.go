@@ -21,7 +21,7 @@ type Article struct {
 }
 
 type ArticleFile struct {
-	Id        int    `json:"id"`
+	Id        int    `json:"id, omitempty"`
 	ArticleId int    `json:"articleId"`
 	FileName  string `json:"fileName"`
 	FilePath  string `json:"filePath"`

@@ -58,7 +58,7 @@ func (h *ArticleHandler) CreateArticle(c *fiber.Ctx) error {
 		files := form.File["files[]"]
 
 		for _, file := range files {
-			savePath := fmt.Sprintf("uploads/articles/%d/%s", id, file.Filename)
+			savePath := fmt.Sprintf("uploads/articles/%s", file.Filename)
 			if err := c.SaveFile(file, savePath); err != nil {
 				log.Error("failed to save file", slog.Any("err", err))
 				continue
