@@ -20,8 +20,8 @@ async function getArticles() {
       console.error("[getArticles] Ошибка:", res.status, await res.text());
       return [];
     }
-
-    const articles = await res.json();
+    const data = await res.json();
+    const articles = data.articles;
     console.log(articles)
 
 
