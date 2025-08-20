@@ -55,7 +55,7 @@ func (h *ArticleHandler) CreateArticle(c *fiber.Ctx) error {
 	// Получаем файлы
 	form, err := c.MultipartForm()
 	if err == nil && form != nil {
-		files := form.File["files[]"]
+		files := form.File["files"]
 
 		for _, file := range files {
 			savePath := fmt.Sprintf("uploads/articles/%s", file.Filename)
