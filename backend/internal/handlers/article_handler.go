@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"log/slog"
 	"strconv"
 
@@ -25,19 +26,46 @@ func (h *ArticleHandler) CreateArticle(c *fiber.Ctx) error {
 	const op = "handlers.article_handler.CreateArticle"
 	log := h.log.With("op", op)
 
-	var article structures.Article
-	if err := c.BodyParser(&article); err != nil {
-		log.Error("failed to parse article body", slog.Any("err", err))
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	// Получаем текстовые данные
+	article := structures.Article{
+		Title:    c.FormValue("title"),
+		Content:  c.FormValue("content"),
+		Category: c.FormValue("category"),
+		Author:   c.FormValue("author"),
+		Slug:     c.FormValue("slug"),
 	}
+	readTime, _ := strconv.Atoi(c.FormValue("readTime"))
+	article.ReadTime = readTime
 
-	if err := h.articleService.CreateArticle(article); err != nil {
+	// Сохраняем статью в БД
+	id, err := h.articleService.CreateArticle(article)
+	if err != nil {
 		log.Error("failed to create article", slog.Any("err", err))
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create article"})
 	}
 
+	// Получаем файлы
+	form, err := c.MultipartForm()
+	if err == nil && form != nil {
+		files := form.File["files[]"]
+
+		for _, file := range files {
+			savePath := fmt.Sprintf("uploads/articles/%d/%s", id, file.Filename)
+			if err := c.SaveFile(file, savePath); err != nil {
+				log.Error("failed to save file", slog.Any("err", err))
+				continue
+			}
+
+			// Сохраняем путь в БД
+			if err := h.articleService.AddFileToArticle(id, savePath, file.Header.Get("Content-Type")); err != nil {
+				log.Error("failed to insert file path", slog.Any("err", err))
+			}
+		}
+	}
+
 	return c.Status(201).JSON(fiber.Map{
 		"message": "Article created",
+		"id":      id,
 	})
 }
 

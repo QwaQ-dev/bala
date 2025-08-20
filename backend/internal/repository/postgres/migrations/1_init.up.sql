@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS public.articles (
 
 ALTER SEQUENCE public.articles_id_seq OWNED BY public.articles.id;
 
-CREATE SEQUENCE IF NOT EXISTS public.checklists_id_seq
+CREATE SEQUENCE IF NOT EXISTS public.article_files_id_seq
     AS integer
     START WITH 1
     INCREMENT BY 1
@@ -41,16 +41,16 @@ CREATE SEQUENCE IF NOT EXISTS public.checklists_id_seq
     NO MAXVALUE
     CACHE 1;
 
-CREATE TABLE IF NOT EXISTS public.checklists (
-    id integer NOT NULL DEFAULT nextval('public.checklists_id_seq'::regclass),
-    title character varying(100) NOT NULL,
-    description text,
-    for_age integer,
-    slug text,
-    CONSTRAINT checklists_pkey PRIMARY KEY (id)
+CREATE TABLE IF NOT EXISTS public.article_files (
+    id integer NOT NULL DEFAULT nextval('public.article_files_id_seq'::regclass),
+    article_id integer NOT NULL,
+    path text NOT NULL,
+    type character varying(50), -- "image/jpeg", "video/mp4" и т.д.
+    CONSTRAINT article_files_pkey PRIMARY KEY (id),
+    CONSTRAINT article_files_article_id_fkey FOREIGN KEY (article_id) REFERENCES public.articles(id) ON DELETE CASCADE
 );
 
-ALTER SEQUENCE public.checklists_id_seq OWNED BY public.checklists.id;
+ALTER SEQUENCE public.article_files_id_seq OWNED BY public.article_files.id;
 
 CREATE SEQUENCE IF NOT EXISTS public.courses_id_seq
     AS integer

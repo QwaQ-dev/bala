@@ -23,20 +23,20 @@ func NewArticleService(repo *postgres.ArticleRepo, log *slog.Logger, cfg *config
 	}
 }
 
-func (s *ArticleService) CreateArticle(article structures.Article) error {
+func (s *ArticleService) CreateArticle(article structures.Article) (int, error) {
 	const op = "service.article_service.CreateArticle"
 	log := s.log.With("op", op)
 
 	log.Info("Creating article", slog.String("title", article.Title))
 
-	err := s.repo.InsertArticle(article)
+	id, err := s.repo.InsertArticle(article)
 	if err != nil {
 		log.Error("failed to create article", slog.Any("err", err))
-		return fmt.Errorf("%s: %w", op, err)
+		return 0, fmt.Errorf("%s: %w", op, err)
 	}
 
-	log.Info("Article created", slog.String("slug", article.Slug))
-	return nil
+	log.Info("Article created", slog.Int("id", id), slog.String("slug", article.Slug))
+	return id, nil
 }
 
 func (s *ArticleService) GetAllArticles() ([]structures.Article, error) {
@@ -85,4 +85,8 @@ func (s *ArticleService) DeleteArticle(id int) error {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 	return nil
+}
+
+func (s *ArticleService) AddFileToArticle(articleID int, path, fileType string) error {
+	return s.repo.InsertArticleFile(articleID, path, fileType)
 }

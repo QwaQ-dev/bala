@@ -20,25 +20,33 @@ func NewArticleRepo(log *slog.Logger, db *sql.DB) *ArticleRepo {
 		db:  db,
 	}
 }
-
-func (r *ArticleRepo) InsertArticle(article structures.Article) error {
+func (r *ArticleRepo) InsertArticle(article structures.Article) (int, error) {
 	const op = "postgres.article_repo.InsertArticle"
 	log := r.log.With("op", op)
 
 	query := `
-	INSERT INTO articles (title, content, category, author, read_time, slug)
-	VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO articles (title, content, category, author, read_time, slug)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id
 	`
 
-	_, err := r.db.Exec(query, article.Title, article.Content, article.Category, article.Author, article.ReadTime, article.Slug)
+	var id int
+	err := r.db.QueryRow(query,
+		article.Title,
+		article.Content,
+		article.Category,
+		article.Author,
+		article.ReadTime,
+		article.Slug,
+	).Scan(&id)
 	if err != nil {
-		log.Error("Error with inserting user data", sl.Err(err))
-		return err
+		log.Error("Error with inserting article data", sl.Err(err))
+		return 0, err
 	}
 
-	log.Debug("Article has been added")
+	log.Debug("Article has been added", slog.Int("id", id))
 
-	return nil
+	return id, nil
 }
 
 func (r *ArticleRepo) SelectAllArticles() ([]structures.Article, error) {
@@ -167,10 +175,21 @@ func (r *ArticleRepo) UpdateArticle(a *structures.Article, id int) error {
 	}
 
 	if rowsAffected == 0 {
-		log.Info("no article found with ID", slog.Int64("id", a.Id))
+		log.Info("no article found with ID")
 		return fmt.Errorf("%s: no article with id=%d", op, a.Id)
 	}
 
-	log.Info("article updated", slog.Int64("id", a.Id))
+	log.Info("article updated")
+	return nil
+}
+
+func (r *ArticleRepo) InsertArticleFile(articleID int, path, fileType string) error {
+	const op = "postgres.article_repo.InsertArticleFile"
+	query := `INSERT INTO article_files (article_id, path, type) VALUES ($1, $2, $3)`
+	_, err := r.db.Exec(query, articleID, path, fileType)
+	if err != nil {
+		r.log.Error("failed to insert article file", sl.Err(err))
+		return fmt.Errorf("%s: %w", op, err)
+	}
 	return nil
 }

@@ -10,11 +10,12 @@ const (
 )
 
 type Article struct {
-	Id       int64           `json:"id, omitempty"`
-	Title    string          `json:"title"`
-	Content  string          `json:"content"`
-	Category ArticleCategory `json:"category"`
-	Author   string          `json:"author"`
-	ReadTime int             `json:"readTime"`
-	Slug     string          `json:"slug"`
+	Id       int      `json:"id"`
+	Title    string   `json:"title"`
+	Content  string   `json:"content"`
+	Category string   `json:"category"`
+	Author   string   `json:"author"`
+	ReadTime int      `json:"readTime"`
+	Slug     string   `json:"slug"`
+	Files    []string `json:"files,omitempty"`
 }
