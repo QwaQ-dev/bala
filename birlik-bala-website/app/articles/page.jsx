@@ -4,12 +4,14 @@ import Action from "@/components/Action";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8080";
+
 // ISR - обновляем каждые 30 минут
 export const revalidate = 1800;
 
 async function getArticles() {
   try {
-    const res = await fetch("http://localhost:8080/api/v1/article/get", {
+    const res = await fetch(`${BACKEND_URL}/api/v1/article/get`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

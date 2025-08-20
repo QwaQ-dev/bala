@@ -14,7 +14,7 @@ export default async function Home() {
   let articles = [];
 
   try {
-    const response = await fetch("http://localhost:3000/api/articles", {
+    const response = await fetch("/api/articles", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

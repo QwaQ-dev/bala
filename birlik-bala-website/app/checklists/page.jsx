@@ -5,10 +5,11 @@ import { Card, CardContent } from "@/components/ui/card";
 
 // ISR - обновляем каждые 30 минут
 export const revalidate = 1800;
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8080";
 
 async function getChecklists() {
   try {
-    const res = await fetch("http://localhost:8080/api/v1/checklist/get", {
+    const res = await fetch(`${BACKEND_URL}/api/v1/checklist/get`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

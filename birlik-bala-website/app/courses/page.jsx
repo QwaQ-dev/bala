@@ -5,7 +5,8 @@ import CoursesClient from "@/components/CoursesClient"
 import { getUserData } from "@/app/api/user"
 
 // ISR - обновляем каждые 30 минут
-export const revalidate = 30
+export const revalidate = 1800
+
 
 export default async function CoursesPage() {
   const userData = await getUserData();
