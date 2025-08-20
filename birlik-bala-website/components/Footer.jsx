@@ -1,3 +1,4 @@
+
 export default function Footer() {
   return (
     <footer className="bg-gradient-to-r from-green-800 to-green-900 text-white py-12">

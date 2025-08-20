@@ -138,20 +138,14 @@ export async function GET(request) {
     console.log("[Admin Courses API] Backend response headers:", [...response.headers.entries()]);
     const contentType = response.headers.get("content-type");
     const responseText = await response.json();
-    console.log(responseText.courses)
+    console.log(responseText)
     console.log("[Admin Courses API] Backend response body:", responseText);
 
     let data;
     if (response.status >= 200 && response.status < 300) {
       if (contentType?.includes("application/json")) {
         try {
-          data = responseText.courses;
-          console.log(data)
-          if (!Array.isArray(data)) {
-            console.log("[Admin Courses API] Expected courses array, got:", data);
-            alert(data)
-            data = { courses: [] };
-          }
+          data = responseText;
         } catch (parseError) {
           console.error("[Admin Courses API] JSON parse error:", parseError.message, responseText);
           data = { courses: [] };

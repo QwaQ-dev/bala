@@ -1,7 +1,6 @@
 import { Inter } from "next/font/google";
 import "@/styles/globals.css";
 import HeaderServer from "@/components/HeaderServer";
-import Toast from "@/components/Toast"; // клиентский компонент уведомлений
 
 const inter = Inter({ subsets: ["latin", "cyrillic"] });
 
@@ -19,8 +18,6 @@ export default function RootLayout({ children }) {
         {/* Серверный компонент */}
         <HeaderServer />
 
-        {/* Клиентский компонент уведомлений */}
-        <Toast />
 
         {/* Контент страницы */}
         {children}

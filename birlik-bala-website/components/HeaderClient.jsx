@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { User, LogOut, ChevronDown, Menu } from "lucide-react";
 import { useRouter } from "next/navigation";
+import redirect from "@/lib/whatsapp";
 
 export default function HeaderClient({ userData }) {
   const router = useRouter();
@@ -20,6 +21,13 @@ export default function HeaderClient({ userData }) {
     setUsername(userData?.user?.username || "");
     setIsAdmin(userData?.user?.role === "admin" || false);
   }, [userData]);
+
+  const handleRedirect = () => {
+  window.location.href = "https://wa.me/77001234567";
+};
+
+
+
 
   const handleLogout = async () => {
     try {
@@ -82,11 +90,11 @@ export default function HeaderClient({ userData }) {
               <Menu className="w-6 h-6" />
             </button>
 
-            <Link href="/consultation" className="hidden sm:block">
-              <Button className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg whitespace-nowrap">
+
+              <Button onClick={handleRedirect} className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg whitespace-nowrap">
                 Онлайн-консультация
               </Button>
-            </Link>
+
 
             {username ? (
               <div className="relative">
@@ -100,6 +108,8 @@ export default function HeaderClient({ userData }) {
                   <span className="font-medium hidden sm:block">{username}</span>
                   <ChevronDown className="w-4 h-4" />
                 </button>
+
+
 
                 {isDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">

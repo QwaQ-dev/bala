@@ -1,90 +1,353 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ArrowLeft, AlertTriangle } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import Link from "next/link";
-import { toast } from "sonner";
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import TiptapLink from "@tiptap/extension-link";
+import { useState, useEffect } from "react"
+import { useRouter, useParams } from "next/navigation"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { ArrowLeft, AlertTriangle } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import Link from "next/link"
+import { toast } from "sonner"
+import { useEditor, EditorContent } from "@tiptap/react"
+import StarterKit from "@tiptap/starter-kit"
+import TiptapLink from "@tiptap/extension-link"
+import { Node } from "@tiptap/core"
 
-const MenuBar = ({ editor }) => {
-  if (!editor) {
-    return null;
+const CustomImage = Node.create({
+  name: "image",
+  group: "block",
+  selectable: true,
+  atom: true,
+
+  parseHTML() {
+    return [{ tag: "img[data-path]" }]
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    const path = HTMLAttributes["data-path"]
+    return [
+      "img",
+      {
+        ...HTMLAttributes,
+        "data-path": path,
+        src: HTMLAttributes.src || `http://localhost:8080/uploads/articles/${path}`,
+        alt: path || "Image",
+        style: "max-width: 500px; width: 100%; height: auto;",
+      },
+    ]
+  },
+
+  addAttributes() {
+    return {
+      "data-path": { default: null },
+      src: { default: null },
+    }
+  },
+
+  addCommands() {
+    return {
+      setImage:
+        (options) =>
+        ({ commands }) =>
+          commands.insertContent({
+            type: this.name,
+            attrs: {
+              "data-path": options["data-path"],
+              src: `http://localhost:8080/uploads/articles/${options["data-path"]}`,
+            },
+          }),
+    }
+  },
+
+  addNodeView() {
+    return ({ node }) => {
+      const div = document.createElement("div")
+      const img = document.createElement("img")
+      const path = node.attrs["data-path"] || ""
+
+      img.setAttribute("data-path", path)
+      img.setAttribute("src", `http://localhost:8080/uploads/articles/${path}`)
+      img.setAttribute("alt", path || "Image")
+      img.setAttribute("style", "max-width: 500px; width: 100%; height: auto;")
+
+      div.appendChild(img)
+      return { dom: div, contentDOM: null }
+    }
+  },
+})
+
+const Video = Node.create({
+  name: "video",
+  group: "block",
+  selectable: true,
+  atom: true,
+
+  parseHTML() {
+    return [{ tag: "video[data-path]" }]
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    const path = HTMLAttributes["data-path"]
+    return [
+      "video",
+      {
+        ...HTMLAttributes,
+        "data-path": path,
+        src: `http://localhost:8080/uploads/articles/${path}`,
+        controls: true,
+        style: "width: 100%; max-width: 600px; height: auto;",
+      },
+    ]
+  },
+
+  addAttributes() {
+    return {
+      "data-path": { default: null },
+      src: { default: null },
+    }
+  },
+
+  addCommands() {
+    return {
+      setVideo:
+        (options) =>
+        ({ commands }) =>
+          commands.insertContent({
+            type: this.name,
+            attrs: {
+              "data-path": options["data-path"],
+              src: `http://localhost:8080/uploads/articles/${options["data-path"]}`,
+            },
+          }),
+    }
+  },
+
+  addNodeView() {
+    return ({ node }) => {
+      const div = document.createElement("div")
+      const video = document.createElement("video")
+      const path = node.attrs["data-path"] || ""
+
+      video.setAttribute("data-path", path)
+      video.setAttribute("src", `http://localhost:8080/uploads/articles/${path}`)
+      video.setAttribute("controls", "true")
+      video.setAttribute("style", "width: 100%; max-width: 600px; height: auto;")
+
+      div.appendChild(video)
+      return { dom: div, contentDOM: null }
+    }
+  },
+})
+
+const MenuBar = ({ editor, onAddMedia }) => {
+  if (!editor) return null
+
+  const addImage = () => {
+    const input = document.createElement("input")
+    input.type = "file"
+    input.accept = "image/*"
+    input.onchange = async (e) => {
+      const file = e.target.files[0]
+      if (!file) return
+
+      if (file.size > 100 * 1024 * 1024) {
+        toast.error(`Файл ${file.name} превышает лимит в 100 МБ`)
+        return
+      }
+
+      editor.chain().focus().setImage({ "data-path": file.name }).run()
+      if (onAddMedia) onAddMedia(file)
+    }
+    input.click()
+  }
+
+  const addVideo = () => {
+    const input = document.createElement("input")
+    input.type = "file"
+    input.accept = "video/mp4"
+    input.onchange = async (e) => {
+      const file = e.target.files[0]
+      if (!file) return
+
+      if (file.size > 100 * 1024 * 1024) {
+        toast.error(`Файл ${file.name} превышает лимит в 100 МБ`)
+        return
+      }
+
+      editor.chain().focus().setVideo({ "data-path": file.name }).run()
+      if (onAddMedia) onAddMedia(file)
+    }
+    input.click()
   }
 
   return (
-    <div className="flex gap-2 mb-2">
-      <Button
-        type="button"
-        variant={editor.isActive("bold") ? "default" : "outline"}
-        onClick={() => editor.chain().focus().toggleBold().run()}
-        disabled={!editor.can().chain().focus().toggleBold().run()}
-      >
-        Bold
-      </Button>
-      <Button
-        type="button"
-        variant={editor.isActive("italic") ? "default" : "outline"}
-        onClick={() => editor.chain().focus().toggleItalic().run()}
-        disabled={!editor.can().chain().focus().toggleItalic().run()}
-      >
-        Italic
-      </Button>
-      <Button
-        type="button"
-        variant={editor.isActive("bulletList") ? "default" : "outline"}
-        onClick={() => editor.chain().focus().toggleBulletList().run()}
-        disabled={!editor.can().chain().focus().toggleBulletList().run()}
-      >
-        Bullet List
-      </Button>
-      <Button
-        type="button"
-        variant={editor.isActive("orderedList") ? "default" : "outline"}
-        onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        disabled={!editor.can().chain().focus().toggleOrderedList().run()}
-      >
-        Ordered List
-      </Button>
-      <Button
-        type="button"
-        variant={editor.isActive("heading", { level: 2 }) ? "default" : "outline"}
-        onClick={() => editor.chain().focus().setHeading({ level: 2 }).run()}
-        disabled={!editor.can().chain().focus().setHeading({ level: 2 }).run()}
-      >
-        Heading 2
-      </Button>
-      <Button
-        type="button"
-        variant={editor.isActive("link") ? "default" : "outline"}
-        onClick={() => {
-          const url = prompt("Enter URL:");
-          if (url) {
-            editor.chain().focus().setLink({ href: url }).run();
-          } else {
-            editor.chain().focus().unsetLink().run();
-          }
-        }}
-        disabled={!editor.can().chain().focus().toggleLink().run()}
-      >
-        Link
-      </Button>
+    <div className="space-y-2 mb-4 p-2 border rounded bg-gray-50">
+      {/* Text Formatting Row */}
+      <div className="flex gap-2 flex-wrap">
+        <Button
+          type="button"
+          size="sm"
+          variant={editor.isActive("bold") ? "default" : "outline"}
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          disabled={!editor.can().chain().focus().toggleBold().run()}
+        >
+          Жирный
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={editor.isActive("italic") ? "default" : "outline"}
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          disabled={!editor.can().chain().focus().toggleItalic().run()}
+        >
+          Курсив
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={editor.isActive("underline") ? "default" : "outline"}
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+          disabled={!editor.can().chain().focus().toggleUnderline().run()}
+        >
+          Подчеркнутый
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={editor.isActive("strike") ? "default" : "outline"}
+          onClick={() => editor.chain().focus().toggleStrike().run()}
+          disabled={!editor.can().chain().focus().toggleStrike().run()}
+        >
+          Зачеркнутый
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={editor.isActive("code") ? "default" : "outline"}
+          onClick={() => editor.chain().focus().toggleCode().run()}
+          disabled={!editor.can().chain().focus().toggleCode().run()}
+        >
+          Код
+        </Button>
+      </div>
+
+      {/* Headings Row */}
+      <div className="flex gap-2 flex-wrap">
+        <Button
+          type="button"
+          size="sm"
+          variant={editor.isActive("heading", { level: 1 }) ? "default" : "outline"}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+          disabled={!editor.can().chain().focus().toggleHeading({ level: 1 }).run()}
+        >
+          H1
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={editor.isActive("heading", { level: 2 }) ? "default" : "outline"}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          disabled={!editor.can().chain().focus().toggleHeading({ level: 2 }).run()}
+        >
+          H2
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={editor.isActive("heading", { level: 3 }) ? "default" : "outline"}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+          disabled={!editor.can().chain().focus().toggleHeading({ level: 3 }).run()}
+        >
+          H3
+        </Button>
+        <div className="w-px h-6 bg-gray-300 mx-1"></div>
+        <Button
+          type="button"
+          size="sm"
+          variant={editor.isActive("bulletList") ? "default" : "outline"}
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          disabled={!editor.can().chain().focus().toggleBulletList().run()}
+        >
+          • Список
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={editor.isActive("orderedList") ? "default" : "outline"}
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          disabled={!editor.can().chain().focus().toggleOrderedList().run()}
+        >
+          1. Нумерованный
+        </Button>
+      </div>
+
+      {/* Structure & Media Row */}
+      <div className="flex gap-2 flex-wrap">
+        <Button
+          type="button"
+          size="sm"
+          variant={editor.isActive("blockquote") ? "default" : "outline"}
+          onClick={() => editor.chain().focus().toggleBlockquote().run()}
+          disabled={!editor.can().chain().focus().toggleBlockquote().run()}
+        >
+          Цитата
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={editor.isActive("codeBlock") ? "default" : "outline"}
+          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+          disabled={!editor.can().chain().focus().toggleCodeBlock().run()}
+        >
+          Блок кода
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => editor.chain().focus().setHorizontalRule().run()}
+          disabled={!editor.can().chain().focus().setHorizontalRule().run()}
+        >
+          Разделитель
+        </Button>
+        <div className="w-px h-6 bg-gray-300 mx-1"></div>
+        <Button type="button" size="sm" variant="outline" onClick={addImage}>
+          📷 Изображение
+        </Button>
+        <Button type="button" size="sm" variant="outline" onClick={addVideo}>
+          🎥 Видео
+        </Button>
+        <div className="w-px h-6 bg-gray-300 mx-1"></div>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => editor.chain().focus().undo().run()}
+          disabled={!editor.can().chain().focus().undo().run()}
+        >
+          ↶ Отменить
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => editor.chain().focus().redo().run()}
+          disabled={!editor.can().chain().focus().redo().run()}
+        >
+          ↷ Повторить
+        </Button>
+      </div>
     </div>
-  );
-};
+  )
+}
 
 export default function EditArticlePage() {
-  const router = useRouter();
-  const { id } = useParams();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const router = useRouter()
+  const { id } = useParams()
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [article, setArticle] = useState({
     title: "",
     content: "",
@@ -92,7 +355,8 @@ export default function EditArticlePage() {
     author: "",
     readTime: "",
     slug: "",
-  });
+    files: [],
+  })
 
   const editor = useEditor({
     extensions: [
@@ -104,21 +368,23 @@ export default function EditArticlePage() {
         heading: { levels: [1, 2, 3] },
       }),
       TiptapLink.configure({ openOnClick: false }),
+      CustomImage,
+      Video,
     ],
     content: "",
     onUpdate: ({ editor }) => {
-      console.log("[EditArticlePage] Editor updated, content:", editor.getHTML());
-      setArticle((prev) => ({ ...prev, content: editor.getHTML() }));
+      console.log("[EditArticlePage] Editor updated, content:", editor.getHTML())
+      setArticle((prev) => ({ ...prev, content: editor.getHTML() }))
     },
     immediatelyRender: false,
-  });
+  })
 
   const categoryOptions = [
     { value: "АФК", label: "АФК" },
     { value: "Сенсорные игры", label: "Сенсорные игры" },
     { value: "Коммуникативные игры", label: "Коммуникативные игры" },
     { value: "Нейроигры", label: "Нейроигры" },
-  ];
+  ]
 
   const generateSlug = (title) => {
     return (
@@ -126,22 +392,22 @@ export default function EditArticlePage() {
         .toLowerCase()
         .replace(/[^a-z0-9а-яё]+/g, "-")
         .replace(/(^-|-$)+/g, "") || "article-" + Date.now()
-    );
-  };
+    )
+  }
 
   useEffect(() => {
     const fetchArticle = async () => {
-      setLoading(true);
-      setError(null);
+      setLoading(true)
+      setError(null)
       try {
         const token = document.cookie
           .split("; ")
           .find((row) => row.startsWith("access_token="))
-          ?.split("=")[1];
-        console.log("[EditArticlePage] Access token:", token || "none");
+          ?.split("=")[1]
+        console.log("[EditArticlePage] Access token:", token || "none")
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 10000)
         const response = await fetch(`/api/articles/${id}`, {
           method: "GET",
           headers: {
@@ -150,17 +416,16 @@ export default function EditArticlePage() {
           },
           credentials: "include",
           signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
+        })
+        clearTimeout(timeoutId)
 
-        console.log("[EditArticlePage] Fetch article response status:", response.status);
-        const data = await response.json();
-        console.log("[EditArticlePage] Fetch article response body:", data);
+        console.log("[EditArticlePage] Fetch article response status:", response.status)
+        const data = await response.json()
+        console.log("[EditArticlePage] Fetch article response body:", data)
 
-        
         if (!response.ok) {
-          console.error("[EditArticlePage] Failed to fetch article:", response.status, data);
-          throw new Error(data.error || `HTTP ошибка: ${response.status}`);
+          console.error("[EditArticlePage] Failed to fetch article:", response.status, data)
+          throw new Error(data.error || `HTTP ошибка: ${response.status}`)
         }
 
         setArticle({
@@ -170,90 +435,87 @@ export default function EditArticlePage() {
           author: data.article.author || "",
           readTime: data.article.readTime ? String(data.article.readTime) : "",
           slug: data.article.slug || "",
-        });
+          files: [],
+        })
 
         if (editor && data.article.content) {
-          editor.commands.setContent(data.article.content);
+          editor.commands.setContent(data.article.content)
         }
       } catch (error) {
-        console.error("[EditArticlePage] Fetch error:", error.message);
-        setError(error.message);
-        toast.error(`Ошибка при загрузке статьи: ${error.message}`);
+        console.error("[EditArticlePage] Fetch error:", error.message)
+        setError(error.message)
+        toast.error(`Ошибка при загрузке статьи: ${error.message}`)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    fetchArticle();
-  }, [id, editor]);
+    fetchArticle()
+  }, [id, editor])
 
   const handleCategoryChange = (e) => {
-    const selected = Array.from(e.target.selectedOptions).map((option) => option.value);
-    console.log("[EditArticlePage] Selected categories:", selected);
-    setArticle({ ...article, category: selected });
-  };
+    const selected = Array.from(e.target.selectedOptions).map((option) => option.value)
+    console.log("[EditArticlePage] Selected categories:", selected)
+    setArticle({ ...article, category: selected })
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
 
     if (!article.title.trim() || article.title.length < 3) {
-      toast.error("Название статьи должно быть не короче 3 символов");
-      setLoading(false);
-      return;
+      toast.error("Название статьи должно быть не короче 3 символов")
+      setLoading(false)
+      return
     }
     if (!article.content.trim() || article.content === "<p></p>") {
-      toast.error("Введите содержание статьи");
-      setLoading(false);
-      return;
+      toast.error("Введите содержание статьи")
+      setLoading(false)
+      return
     }
     if (article.category.length === 0) {
-      toast.error("Выберите хотя бы одну категорию");
-      setLoading(false);
-      return;
+      toast.error("Выберите хотя бы одну категорию")
+      setLoading(false)
+      return
     }
     if (!article.author.trim() || article.author.length < 2) {
-      toast.error("Имя автора должно быть не короче 2 символов");
-      setLoading(false);
-      return;
+      toast.error("Имя автора должно быть не короче 2 символов")
+      setLoading(false)
+      return
     }
-    const readTimeNum = parseInt(article.readTime);
+    const readTimeNum = Number.parseInt(article.readTime)
     if (!article.readTime || isNaN(readTimeNum) || readTimeNum <= 0) {
-      toast.error("Введите корректное время чтения (в минутах, больше 0)");
-      setLoading(false);
-      return;
+      toast.error("Введите корректное время чтения (в минутах, больше 0)")
+      setLoading(false)
+      return
     }
     if (!article.slug.trim() || article.slug.length < 3) {
-      toast.error("Slug должен быть не короче 3 символов");
-      setLoading(false);
-      return;
+      toast.error("Slug должен быть не короче 3 символов")
+      setLoading(false)
+      return
     }
 
     try {
       const jsonData = {
         title: article.title,
         content: article.content,
-        category: Array.isArray(article.category) 
-                  ? article.category.join(",") 
-                  : article.category,
+        category: Array.isArray(article.category) ? article.category.join(",") : article.category,
         author: article.author,
         readTime: readTimeNum,
         slug: article.slug,
-      };
-
-      
+      }
 
       const token = document.cookie
         .split("; ")
         .find((row) => row.startsWith("access_token="))
-        ?.split("=")[1];
-      console.log("[EditArticlePage] Access token for update:", token || "none");
-      console.log("[EditArticlePage] JSON data:", jsonData);
+        ?.split("=")[1]
+      console.log("[EditArticlePage] Access token for update:", token || "none")
+      console.log("[EditArticlePage] JSON data:", jsonData)
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
-      console.log("JSON.stringify(jsonData):", JSON.stringify(jsonData));
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000)
+      console.log("JSON.stringify(jsonData):", JSON.stringify(jsonData))
 
       const response = await fetch(`/api/admin/articles/${id}`, {
         method: "PUT",
@@ -264,31 +526,31 @@ export default function EditArticlePage() {
         credentials: "include",
         body: JSON.stringify(jsonData),
         signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
+      })
+      clearTimeout(timeoutId)
       console.log(response)
 
-      console.log("[EditArticlePage] Update article response status:", response.status);
-      const result = await response.json();
-      console.log("[EditArticlePage] Update article response body:", result);
+      console.log("[EditArticlePage] Update article response status:", response.status)
+      const result = await response.json()
+      console.log("[EditArticlePage] Update article response body:", result)
 
       if (!response.ok) {
-        console.error("[EditArticlePage] Failed to update article:", response.status, result);
-        toast.error(`Ошибка при обновлении статьи: ${result.error || result.message || "Неизвестная ошибка"}`);
-        setLoading(false);
-        return;
+        console.error("[EditArticlePage] Failed to update article:", response.status, result)
+        toast.error(`Ошибка при обновлении статьи: ${result.error || result.message || "Неизвестная ошибка"}`)
+        setLoading(false)
+        return
       }
 
-      toast.success("Статья успешно обновлена");
-      router.push("/admin");
+      toast.success("Статья успешно обновлена")
+      router.push("/admin")
     } catch (error) {
-      console.error("[EditArticlePage] Update error:", error.message);
-      setError(error.message);
-      toast.error(`Ошибка: ${error.message || "Не удалось выполнить запрос"}`);
+      console.error("[EditArticlePage] Update error:", error.message)
+      setError(error.message)
+      toast.error(`Ошибка: ${error.message || "Не удалось выполнить запрос"}`)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleCancel = () => {
     if (
@@ -299,17 +561,17 @@ export default function EditArticlePage() {
       article.readTime ||
       article.slug
     ) {
-      if (
-        confirm(
-          "Вы уверены, что хотите отменить редактирование? Все изменения будут потеряны."
-        )
-      ) {
-        router.push("/admin");
+      if (confirm("Вы уверены, что хотите отменить редактирование? Все изменения будут потеряны.")) {
+        router.push("/admin")
       }
     } else {
-      router.push("/admin");
+      router.push("/admin")
     }
-  };
+  }
+
+  const handleAddMedia = (file) => {
+    setArticle((prev) => ({ ...prev, files: [...prev.files, file] }))
+  }
 
   if (loading) {
     return (
@@ -324,7 +586,7 @@ export default function EditArticlePage() {
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -360,17 +622,15 @@ export default function EditArticlePage() {
                 id="title"
                 value={article.title}
                 onChange={(e) => {
-                  const title = e.target.value;
-                  setArticle({ ...article, title, slug: generateSlug(title) });
+                  const title = e.target.value
+                  setArticle({ ...article, title, slug: generateSlug(title) })
                 }}
                 placeholder="Введите название статьи (мин. 3 символа)"
                 required
               />
             </div>
             <div>
-              <Label htmlFor="category">
-                Категории * (удерживайте Ctrl/Cmd для множественного выбора)
-              </Label>
+              <Label htmlFor="category">Категории * (удерживайте Ctrl/Cmd для множественного выбора)</Label>
               <select
                 id="category"
                 multiple
@@ -422,11 +682,8 @@ export default function EditArticlePage() {
               <Label htmlFor="content">Содержание статьи *</Label>
               {editor ? (
                 <>
-                  <MenuBar editor={editor} />
-                  <EditorContent
-                    editor={editor}
-                    className="border rounded p-2 bg-white min-h-[200px]"
-                  />
+                  <MenuBar editor={editor} onAddMedia={handleAddMedia} />
+                  <EditorContent editor={editor} className="border rounded p-2 bg-white min-h-[200px]" />
                 </>
               ) : (
                 <p className="text-gray-500">Загрузка редактора...</p>
@@ -444,5 +701,5 @@ export default function EditArticlePage() {
         </div>
       </form>
     </div>
-  );
+  )
 }

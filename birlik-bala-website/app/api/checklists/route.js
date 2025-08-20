@@ -6,9 +6,10 @@ export async function GET(request) {
     const cookieHeader = request.headers.get("cookie") || "";
     console.log("[Checklists API] Cookies:", cookieHeader || "none");
     const token = request.cookies.get("access_token")?.value;
+
     const headers = {
       "Content-Type": "application/json",
-      "Cookie": cookieHeader,
+      Cookie: cookieHeader,
     };
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
@@ -16,56 +17,60 @@ export async function GET(request) {
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
+
     const response = await fetch(`${BACKEND_URL}/api/v1/checklist/get`, {
       method: "GET",
       headers,
       credentials: "include",
       signal: controller.signal,
     });
-    console.log(response)
     clearTimeout(timeoutId);
 
     console.log("[Checklists API] Backend response status:", response.status);
-    console.log("[Checklists API] Backend response headers:", [...response.headers.entries()]);
-    const responseText = await response.json();
-    console.log("[Checklists API] Backend response body:", responseText);
+    console.log(
+      "[Checklists API] Backend response headers:",
+      [...response.headers.entries()]
+    );
 
-    let data;
+    // ✅ безопасный парсинг
+    let responseText = "";
+    let parsed = {};
     try {
-      data = responseText.checklists
-      if (!Array.isArray(data)) {
-        console.warn("[Checklists API] Expected array, got:", data);
-        data = [];
-      }
-    } catch (parseError) {
-      console.error("[Checklists API] JSON parse error:", parseError.message, responseText);
-      return new Response(
-        JSON.stringify({
-          error: "Неверный формат ответа от бэкенда",
-          details: responseText.slice(0, 100) + "...",
-        }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
-      );
+      responseText = await response.text();
+      parsed = responseText ? JSON.parse(responseText) : {};
+    } catch (err) {
+      console.error("[Checklists API] Failed to parse JSON:", err.message);
+      parsed = {};
+    }
+
+    console.log("[Checklists API] Backend response body:", parsed);
+
+    let data = Array.isArray(parsed.checklists) ? parsed.checklists : [];
+    if (!Array.isArray(parsed.checklists)) {
+      console.warn("[Checklists API] Expected array, got:", parsed.checklists);
     }
 
     if (!response.ok) {
-      console.error("[Checklists API] Backend error details:", data);
       return new Response(
         JSON.stringify({
           error: "Не удалось получить чеклисты",
           status: response.status,
-          details: data.error || responseText || "Неизвестная ошибка",
+          details: parsed.error || responseText || "Неизвестная ошибка",
         }),
         { status: response.status, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    return new Response(
-      JSON.stringify(data),
-      { status: 200, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify(data), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (err) {
-    console.error("[Checklists API] Request error:", { name: err.name, message: err.message });
+    console.error("[Checklists API] Request error:", {
+      name: err.name,
+      message: err.message,
+    });
+
     if (err.name === "AbortError") {
       return new Response(
         JSON.stringify({ error: `Таймаут подключения к ${BACKEND_URL}` }),

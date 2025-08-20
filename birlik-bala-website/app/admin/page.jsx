@@ -55,7 +55,8 @@ export default function AdminDashboard() {
         credentials: "include",
       });
       let courseData = await courseResponse.json();
-      courseData = courseData ?? [];
+      console.log(courseData)
+      let coursesData = courseData.courses ?? [];
       if (!courseResponse.ok) throw new Error(courseData.error || `HTTP error (courses): ${courseResponse.status}`);
 
       // Fetch Articles
@@ -72,7 +73,7 @@ export default function AdminDashboard() {
       if (!articleResponse.ok) throw new Error(articleData.error || `HTTP error (articles): ${articleResponse.status}`);
 
       setChecklists(checklistData);
-      setCourses(courseData);
+      setCourses(coursesData);
       setArticles(articleData);
     } catch (error) {
       console.error("[AdminDashboard] Failed to load data:", error.message);

@@ -31,7 +31,8 @@ export async function POST(request) {
     console.log("[Admin Article Create API] Backend response status:", response.status);
     console.log("[Admin Article Create API] Backend response headers:", [...response.headers.entries()]);
     const contentType = response.headers.get("content-type");
-    const responseText = await response.text();
+    const responseText = await response.json();
+    
     console.log("[Admin Article Create API] Backend response body:", responseText);
 
     let data = {};
@@ -39,7 +40,7 @@ export async function POST(request) {
     if (response.status >= 200 && response.status < 300) {
       if (contentType?.includes("application/json")) {
         try {
-          data = JSON.parse(responseText);
+          data = responseText
         } catch (parseError) {
           console.error("[Admin Article Create API] Ошибка парсинга JSON:", parseError.message, responseText);
           data = { message: responseText || "Статья создана" };

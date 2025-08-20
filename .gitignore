@@ -3,4 +3,6 @@ birlik-bala-website/node_modules
 backend/cmd/.env
 backend/cmd/uploads/videos
 backend/cmd/uploads/photos
+backend/cmd/uploads/articles
+
 .env

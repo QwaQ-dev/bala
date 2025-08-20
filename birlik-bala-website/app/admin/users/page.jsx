@@ -59,7 +59,7 @@ export default function AdminUsersPage() {
       if (data.length === 0) {
         setCourseLoadError("Список курсов пуст. Добавьте курсы в систему.");
       }
-      setCourses(data);
+      setCourses(data.courses);
     } catch (error) {
       console.error("[AdminUsersPage] Failed to load courses:", error.message);
       setCourseLoadError("Ошибка при загрузке курсов: " + error.message);

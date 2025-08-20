@@ -1,10 +1,9 @@
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
+import redirect from "@/lib/whatsapp"
 
 
 export default function CoursesGrid({ courses }) {
-  const handleRedirect = () => {
-    window.location.href = "https://wa.me/77001234567"; // замени номер
-  };
+
 
   if (!courses || courses.length === 0) {
     return (
@@ -49,8 +48,8 @@ export default function CoursesGrid({ courses }) {
             </div>
 
             <div className="flex gap-2">
-              <Button onClick={handleRedirect} className="flex-1 bg-blue-600 hover:bg-blue-700">Подробнее</Button>
-              <Button onClick={handleRedirect} variant="outline" className="flex-1 bg-transparent">
+              <Button onClick={redirect()} className="flex-1 bg-blue-600 hover:bg-blue-700">Подробнее</Button>
+              <Button onClick={redirect()} variant="outline" className="flex-1 bg-transparent">
                 Записаться
               </Button>
             </div>
