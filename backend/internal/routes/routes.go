@@ -51,7 +51,7 @@ func InitRoutes(
 	adminChecklists.Delete("/:id", checklistHandler.DeleteChecklist)
 
 	adminArticles.Post("/create", articleHandler.CreateArticle)
-	adminArticles.Put("/update", articleHandler.UpdateArticle)
+	adminArticles.Put("/update/:id", articleHandler.UpdateArticle)
 	articles.Get("/get", articleHandler.GetAllArticles)
 	articles.Get("/get/:id", articleHandler.GetOneArticle)
 	adminArticles.Delete("/:id", articleHandler.DeleteArticle)
