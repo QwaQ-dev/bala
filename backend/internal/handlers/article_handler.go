@@ -3,10 +3,12 @@ package handlers
 import (
 	"fmt"
 	"log/slog"
+	"os"
 	"strconv"
 
 	"github.com/QwaQ-dev/bala/internal/services"
 	"github.com/QwaQ-dev/bala/internal/structures"
+	"github.com/QwaQ-dev/bala/pkg/sl"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -42,6 +44,12 @@ func (h *ArticleHandler) CreateArticle(c *fiber.Ctx) error {
 	if err != nil {
 		log.Error("failed to create article", slog.Any("err", err))
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create article"})
+	}
+
+	uploadDir := "./uploads/articles"
+	if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
+		log.Error("failed to create uploads dir", sl.Err(err))
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create uploads dir"})
 	}
 
 	// Получаем файлы
