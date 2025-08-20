@@ -3,6 +3,10 @@ import { Check, Calendar, Flame } from "lucide-react"
 
 
 export default function CourseSection() {
+  const handleRedirect = () => {
+    window.location.href = "https://wa.me/77001234567"; // замени номер
+  };
+
   const features = [
     "20+ практических и теоретических заданий",
     "Поддержка специалиста в чате",
@@ -58,11 +62,12 @@ export default function CourseSection() {
             </div>
 
             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
-              <Button className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-lg">
+              <Button onClick = {handleRedirect}className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-lg">
                 Купить курс сейчас
               </Button>
               <Button
                 variant="outline"
+                onClick={handleRedirect}
                 className="border-white text-white hover:bg-white hover:text-blue-600 bg-transparent rounded-lg"
               >
                 Узнать подробнее

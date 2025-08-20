@@ -47,7 +47,7 @@ export default function CoursesClient() {
     if (course.has_access) {
       router.push(`/courses/${course.id}`)
     } else {
-      alert(`Переход к оплате курса "${course.title}" за ${course.cost}₸`)
+      alert(`Обратитесь в Whats App за покупкой курса`)
     }
   }
 

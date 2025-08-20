@@ -2,6 +2,10 @@ import { Button } from "@/components/ui/button"
 
 
 export default function CoursesGrid({ courses }) {
+  const handleRedirect = () => {
+    window.location.href = "https://wa.me/77001234567"; // замени номер
+  };
+
   if (!courses || courses.length === 0) {
     return (
       <div className="text-center py-12">
@@ -45,8 +49,8 @@ export default function CoursesGrid({ courses }) {
             </div>
 
             <div className="flex gap-2">
-              <Button className="flex-1 bg-blue-600 hover:bg-blue-700">Подробнее</Button>
-              <Button variant="outline" className="flex-1 bg-transparent">
+              <Button onClick={handleRedirect} className="flex-1 bg-blue-600 hover:bg-blue-700">Подробнее</Button>
+              <Button onClick={handleRedirect} variant="outline" className="flex-1 bg-transparent">
                 Записаться
               </Button>
             </div>

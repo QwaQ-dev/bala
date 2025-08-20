@@ -3,6 +3,10 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Check } from "lucide-react"
 
 export default function ConsultationSection() {
+  const handleRedirect = () => {
+    window.location.href = "https://wa.me/77001234567"; // замени номер
+  };
+
   const benefits = [
     {
       title: "Анализ ситуации на 100%",
@@ -71,7 +75,7 @@ export default function ConsultationSection() {
               ))}
             </div>
 
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg">
+            <Button onClick={handleRedirect} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg">
               Записаться на консультацию
             </Button>
           </div>
