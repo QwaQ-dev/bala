@@ -82,9 +82,9 @@ export default function AuthPage() {
       const data = await response.json();
       console.log("[AuthPage] Ответ сервера:", data);
 
-      if (response.ok && data.Message) {
+      if (response.ok || data.Message) {
         router.push("/courses");
-        router.refresh(); // 🔥 обновит серверные компоненты и подгрузит актуальные куки
+        router.refresh();
 
       } else {
         let errorMessage = "Произошла ошибка";
