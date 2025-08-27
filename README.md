@@ -106,6 +106,7 @@ FORM-DATA: CREATE
     "title": "",
     "description": "",
     "cost": ,
+    "diploma": file,
     "img": file
 
 PUT:
@@ -119,6 +120,7 @@ FORM-DATA: UPDATE
 POST: ADD-VIDEO
     "course_id": ,
     "videos": file,
+    "file": file,
     "title": "",
 
 POST: TAKE-AWAY-ACCESS

@@ -156,16 +156,16 @@ func (r *ChecklistRepo) DeleteChecklist(id int64) error {
 	return nil
 }
 
-func (r *CourseRepo) AddVideoToCourse(courseID int, path string, title string) error {
+func (r *CourseRepo) AddVideoToCourse(courseID int, path string, title, file string) error {
 	const op = "postgres.course_repo.AddVideoToCourse"
 	log := r.log.With("op", op)
 
 	query := `
-		INSERT INTO videos (path, course_id, title)
-		VALUES ($1, $2, $3)
+		INSERT INTO videos (path, course_id, title, file)
+		VALUES ($1, $2, $3, $4)
 	`
 
-	_, err := r.db.Exec(query, path, courseID, title)
+	_, err := r.db.Exec(query, path, courseID, title, file)
 	if err != nil {
 		log.Error("failed to insert video path", sl.Err(err))
 		return fmt.Errorf("%s: %w", op, err)

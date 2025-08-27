@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -29,6 +30,7 @@ func (h *CourseHandler) CreateCourse(c *fiber.Ctx) error {
 	const op = "handlers.course_handler.CreateCourse"
 	log := h.log.With("op", op)
 
+	// Parse form data
 	title := c.FormValue("title")
 	description := c.FormValue("description")
 	costStr := c.FormValue("cost")
@@ -48,31 +50,75 @@ func (h *CourseHandler) CreateCourse(c *fiber.Ctx) error {
 		}
 	}
 
-	file, err := c.FormFile("img")
-	var imgPath string
-
-	if err == nil && file != nil {
+	// Handle image upload
+	imgPath := ""
+	if file, err := c.FormFile("img"); err == nil && file != nil {
 		uploadDir := "./uploads/photos"
 		if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
 			log.Error("failed to create uploads dir", sl.Err(err))
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create uploads dir"})
 		}
 		filename := fmt.Sprintf("%d_%s", time.Now().UnixNano(), file.Filename)
-		savePath := uploadDir + "/" + filename
+		savePath := filepath.Join(uploadDir, filename)
 		if err := c.SaveFile(file, savePath); err != nil {
 			log.Error("failed to save photo", sl.Err(err))
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save photo"})
 		}
 		imgPath = "/uploads/photos/" + filename
-	} else {
-		imgPath = ""
 	}
 
+	// Handle diploma upload (save directly to diplomas folder)
+	diplomaPath := ""
+	if diploma, err := c.FormFile("diploma"); err == nil && diploma != nil {
+		uploadDir := "./uploads/diplomas"
+		if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
+			log.Error("failed to create diplomas dir", sl.Err(err))
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create diplomas dir"})
+		}
+		filename := fmt.Sprintf("%s_%s", time.Now().Format("20060102150405"), diploma.Filename)
+		savePath := filepath.Join(uploadDir, filename)
+		if err := c.SaveFile(diploma, savePath); err != nil {
+			log.Error("failed to save diploma", sl.Err(err))
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save diploma"})
+		}
+		diplomaPath = "/uploads/diplomas/" + filename
+	}
+
+	// Parse webinars from form data
+	var webinars []structures.Webinar
+	form, err := c.MultipartForm()
+	if err != nil {
+		log.Error("failed to parse multipart form", sl.Err(err))
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid form data"})
+	}
+
+	webinarTitles := form.Value["webinar_titles"]
+	webinarLinks := form.Value["webinar_links"]
+	webinarDates := form.Value["webinar_dates"]
+
+	if len(webinarTitles) > 0 && len(webinarTitles) == len(webinarLinks) && len(webinarLinks) == len(webinarDates) {
+		for i := range webinarTitles {
+			date, err := time.Parse(time.RFC3339, webinarDates[i])
+			if err != nil {
+				log.Error("invalid webinar date format", slog.String("date", webinarDates[i]), sl.Err(err))
+				continue
+			}
+			webinars = append(webinars, structures.Webinar{
+				Title: webinarTitles[i],
+				Link:  webinarLinks[i],
+				Date:  date.UTC(),
+			})
+		}
+	}
+
+	// Create course with all data
 	course := structures.Course{
 		Title:       title,
 		Description: description,
 		Cost:        cost,
 		Img:         imgPath,
+		DiplomaPath: diplomaPath,
+		Webinars:    webinars,
 	}
 
 	courseID, err := h.courseService.CreateCourse(course)
@@ -81,7 +127,7 @@ func (h *CourseHandler) CreateCourse(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create course"})
 	}
 
-	return c.Status(201).JSON(fiber.Map{"course_id": courseID})
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"course_id": courseID})
 }
 
 func (h *CourseHandler) GetCourseByID(c *fiber.Ctx) error {
@@ -213,6 +259,26 @@ func (h *CourseHandler) UploadVideos(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid form data"})
 	}
 
+	file, err := c.FormFile("file")
+	var filePath string
+
+	if err == nil && file != nil {
+		uploadDir := "./uploads/files"
+		if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
+			log.Error("failed to create files dir", sl.Err(err))
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create files dir"})
+		}
+		filename := fmt.Sprintf("%d_%s", time.Now().UnixNano(), file.Filename)
+		savePath := uploadDir + "/" + filename
+		if err := c.SaveFile(file, savePath); err != nil {
+			log.Error("failed to save file", sl.Err(err))
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to file photo"})
+		}
+		filePath = "/uploads/files/" + filename
+	} else {
+		filePath = ""
+	}
+
 	files := form.File["videos"]
 	titles := form.Value["titles"]
 
@@ -240,7 +306,7 @@ func (h *CourseHandler) UploadVideos(c *fiber.Ctx) error {
 		}
 
 		relativePath := "/uploads/videos/" + filename
-		if err := h.courseService.AddVideoToCourse(courseID, relativePath, titles[i]); err != nil {
+		if err := h.courseService.AddVideoToCourse(courseID, relativePath, titles[i], filePath); err != nil {
 			log.Error("failed to save path to DB", sl.Err(err))
 			continue
 		}

@@ -18,10 +18,12 @@ func NewCourseRepo(log *slog.Logger, db *sql.DB) *CourseRepo {
 	return &CourseRepo{log: log, db: db}
 }
 
-// InsertCourse добавляет курс в БД и возвращает его ID
+// InsertCourse adds a course to the database and returns its ID, including webinars
 func (r *CourseRepo) InsertCourse(course structures.Course) (int, error) {
 	const op = "postgres.course_repo.InsertCourse"
 	log := r.log.With("op", op)
+
+	log.Info("course", course)
 
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -30,12 +32,26 @@ func (r *CourseRepo) InsertCourse(course structures.Course) (int, error) {
 	}
 	defer tx.Rollback()
 
-	query := `INSERT INTO courses (title, description, cost, img) VALUES ($1, $2, $3, $4) RETURNING id`
+	query := `INSERT INTO courses (title, description, cost, diploma_path, img)
+	          VALUES ($1, $2, $3, $4, $5)
+	          RETURNING id`
 	var courseID int
-	err = tx.QueryRow(query, course.Title, course.Description, course.Cost, course.Img).Scan(&courseID)
+	err = tx.QueryRow(query, course.Title, course.Description, course.Cost, course.DiplomaPath, course.Img).Scan(&courseID)
 	if err != nil {
 		log.Error("failed to insert course", sl.Err(err))
 		return 0, err
+	}
+
+	// Insert webinars if provided
+	for _, webinar := range course.Webinars {
+		_, err := tx.Exec(`
+			INSERT INTO webinars (title, link, date, course_id)
+			VALUES ($1, $2, $3, $4)
+		`, webinar.Title, webinar.Link, webinar.Date, courseID)
+		if err != nil {
+			log.Error("failed to insert webinar", sl.Err(err))
+			return 0, err
+		}
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -43,10 +59,11 @@ func (r *CourseRepo) InsertCourse(course structures.Course) (int, error) {
 		return 0, err
 	}
 
+	log.Info("course created", slog.Int("id", courseID))
 	return courseID, nil
 }
 
-// DeleteCourse удаляет курс по ID
+// DeleteCourse deletes a course by ID (webinars and videos are deleted via CASCADE)
 func (r *CourseRepo) DeleteCourse(id int) error {
 	const op = "postgres.course_repo.DeleteCourse"
 	log := r.log.With("op", op)
@@ -61,24 +78,27 @@ func (r *CourseRepo) DeleteCourse(id int) error {
 	rowsAffected, _ := result.RowsAffected()
 	if rowsAffected == 0 {
 		log.Warn("no course found with ID", slog.Int("id", id))
+		return fmt.Errorf("course with id=%d not found", id)
 	}
 
 	log.Info("course deleted", slog.Int("id", id))
 	return nil
 }
 
-// SelectCourseById возвращает курс с его видео
+// SelectCourseById returns a course with its videos and webinars
 func (r *CourseRepo) SelectCourseById(courseID int) (structures.Course, error) {
 	const op = "postgres.course_repo.SelectCourseById"
 	log := r.log.With("op", op)
 
 	query := `
         SELECT 
-            c.id, c.title, c.description, c.cost, c.img,
-            v.id AS video_id, v.path AS video_path, v.title AS video_title
+            c.id, c.title, c.description, c.cost, c.diploma_path, c.img,
+            v.id AS video_id, v.file, v.path AS video_path, v.title AS video_title,
+            w.id AS webinar_id, w.title AS webinar_title, w.link AS webinar_link, w.date AS webinar_date
         FROM courses c
         LEFT JOIN videos v ON v.course_id = c.id
-        WHERE c.id = $1;
+        LEFT JOIN webinars w ON w.course_id = c.id
+        WHERE c.id = $1
     `
 
 	rows, err := r.db.Query(query, courseID)
@@ -89,14 +109,21 @@ func (r *CourseRepo) SelectCourseById(courseID int) (structures.Course, error) {
 	defer rows.Close()
 
 	var course structures.Course
-	videos := []structures.Video{}
+	var videos []structures.Video
+	var webinars []structures.Webinar
 	courseInitialized := false
 
 	for rows.Next() {
 		var (
-			videoID    sql.NullInt64
-			videoPath  sql.NullString
-			videoTitle sql.NullString
+			videoID      sql.NullInt64
+			videoPath    sql.NullString
+			videoTitle   sql.NullString
+			file         sql.NullString
+			webinarID    sql.NullInt64
+			webinarTitle sql.NullString
+			webinarLink  sql.NullString
+			webinarDate  sql.NullTime
+			diplomaPath  sql.NullString
 		)
 
 		var cId int
@@ -108,11 +135,18 @@ func (r *CourseRepo) SelectCourseById(courseID int) (structures.Course, error) {
 			&title,
 			&description,
 			&cost,
+			&diplomaPath,
 			&img,
 			&videoID,
+			&file,
 			&videoPath,
 			&videoTitle,
+			&webinarID,
+			&webinarTitle,
+			&webinarLink,
+			&webinarDate,
 		); err != nil {
+			log.Error("failed to scan row", sl.Err(err))
 			return structures.Course{}, fmt.Errorf("%s: %w", op, err)
 		}
 
@@ -122,29 +156,43 @@ func (r *CourseRepo) SelectCourseById(courseID int) (structures.Course, error) {
 				Title:       title,
 				Description: description,
 				Cost:        cost,
+				DiplomaPath: diplomaPath.String,
 				Img:         img,
 			}
 			courseInitialized = true
 		}
 
 		if videoID.Valid && videoPath.Valid {
-			titleStr := ""
-			if videoTitle.Valid {
-				titleStr = videoTitle.String
-			}
 			videos = append(videos, structures.Video{
 				Id:    int(videoID.Int64),
 				Path:  videoPath.String,
-				Title: titleStr,
+				Title: videoTitle.String,
+				File:  file.String,
+			})
+		}
+
+		if webinarID.Valid {
+			webinars = append(webinars, structures.Webinar{
+				Id:       int(webinarID.Int64),
+				Title:    webinarTitle.String,
+				Link:     webinarLink.String,
+				Date:     webinarDate.Time,
+				CourseID: cId,
 			})
 		}
 	}
 
+	if !courseInitialized {
+		log.Warn("no course found", slog.Int("id", courseID))
+		return structures.Course{}, fmt.Errorf("course with id=%d not found", courseID)
+	}
+
 	course.Videos = videos
+	course.Webinars = webinars
 	return course, nil
 }
 
-// UpdateCourse обновляет данные курса
+// UpdateCourse updates course data
 func (r *CourseRepo) UpdateCourse(c *structures.Course) error {
 	const op = "postgres.course_repo.UpdateCourse"
 	log := r.log.With("op", op)
@@ -154,10 +202,11 @@ func (r *CourseRepo) UpdateCourse(c *structures.Course) error {
 	SET title = $1,
 		description = $2,
 		cost = $3,
-		img = $4
-	WHERE id = $5`
+		img = $4,
+		diploma_path = $5
+	WHERE id = $6`
 
-	result, err := r.db.Exec(query, c.Title, c.Description, c.Cost, c.Img, c.Id)
+	result, err := r.db.Exec(query, c.Title, c.Description, c.Cost, c.Img, c.DiplomaPath, c.Id)
 	if err != nil {
 		log.Error("failed to update course", sl.Err(err))
 		return fmt.Errorf("%s: %w", op, err)
@@ -173,13 +222,13 @@ func (r *CourseRepo) UpdateCourse(c *structures.Course) error {
 	return nil
 }
 
-// SelectAllCourses возвращает все курсы без видео
+// SelectAllCourses returns all courses without videos but with diploma_path
 func (r *CourseRepo) SelectAllCourses() ([]structures.Course, error) {
 	const op = "postgres.course_repo.SelectAllCourses"
 	log := r.log.With("op", op)
 
 	query := `
-		SELECT id, title, description, cost, img 
+		SELECT id, title, description, cost, img, diploma_path
 		FROM courses
 		ORDER BY id DESC
 	`
@@ -195,6 +244,7 @@ func (r *CourseRepo) SelectAllCourses() ([]structures.Course, error) {
 
 	for rows.Next() {
 		var course structures.Course
+		var diplomaPath sql.NullString
 
 		err := rows.Scan(
 			&course.Id,
@@ -202,12 +252,14 @@ func (r *CourseRepo) SelectAllCourses() ([]structures.Course, error) {
 			&course.Description,
 			&course.Cost,
 			&course.Img,
+			&diplomaPath,
 		)
 		if err != nil {
 			log.Error("failed to scan course row", sl.Err(err))
 			continue
 		}
 
+		course.DiplomaPath = diplomaPath.String
 		courses = append(courses, course)
 	}
 
@@ -219,7 +271,26 @@ func (r *CourseRepo) SelectAllCourses() ([]structures.Course, error) {
 	return courses, nil
 }
 
-// UpdateUsersIds добавляет курс в массив пользователя
+// AddWebinarToCourse adds a webinar to a course
+func (r *CourseRepo) AddWebinarToCourse(courseID int, webinar structures.Webinar) error {
+	const op = "postgres.course_repo.AddWebinarToCourse"
+	log := r.log.With("op", op)
+
+	query := `
+		INSERT INTO webinars (title, link, date, course_id)
+		VALUES ($1, $2, $3, $4)
+	`
+	_, err := r.db.Exec(query, webinar.Title, webinar.Link, webinar.Date, courseID)
+	if err != nil {
+		log.Error("failed to add webinar", sl.Err(err))
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	log.Info("webinar added", slog.Int("course_id", courseID), slog.String("title", webinar.Title))
+	return nil
+}
+
+// UpdateUsersIds adds a course to a user's course_ids array
 func (r *CourseRepo) UpdateUsersIds(userId, courseId int) error {
 	const op = "postgres.course_repo.UpdateUsersIds"
 	log := r.log.With("op", op)
@@ -227,7 +298,7 @@ func (r *CourseRepo) UpdateUsersIds(userId, courseId int) error {
 	query := `
 		UPDATE users
 		SET course_ids = array_append(course_ids, $1)
-		WHERE id = $2;
+		WHERE id = $2
 	`
 
 	result, err := r.db.Exec(query, courseId, userId)
@@ -246,7 +317,7 @@ func (r *CourseRepo) UpdateUsersIds(userId, courseId int) error {
 	return nil
 }
 
-// RemoveCourseId удаляет курс из массива пользователя
+// RemoveCourseId removes a course from a user's course_ids array
 func (r *CourseRepo) RemoveCourseId(userId, courseId int) error {
 	const op = "postgres.course_repo.RemoveCourseId"
 	log := r.log.With("op", op)
@@ -254,7 +325,7 @@ func (r *CourseRepo) RemoveCourseId(userId, courseId int) error {
 	query := `
 		UPDATE users
 		SET course_ids = array_remove(course_ids, $1)
-		WHERE id = $2;
+		WHERE id = $2
 	`
 
 	result, err := r.db.Exec(query, courseId, userId)

@@ -96,11 +96,37 @@ CREATE TABLE IF NOT EXISTS public.courses (
     title text NOT NULL,
     description text NOT NULL,
     cost integer NOT NULL,
+    diploma_path text NOT NULL,
     img text NOT NULL,
     CONSTRAINT courses_pkey PRIMARY KEY (id)
 );
 
 ALTER SEQUENCE public.courses_id_seq OWNED BY public.courses.id;
+
+-- ======================
+-- Таблица вебинаров
+-- ======================
+CREATE SEQUENCE IF NOT EXISTS public.webinars_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+CREATE TABLE IF NOT EXISTS public.webinars (
+    id integer NOT NULL DEFAULT nextval('public.webinars_id_seq'::regclass),
+    title text NOT NULL,
+    link text NOT NULL,
+    date timestamp without time zone NOT NULL,
+    course_id integer NOT NULL,
+    CONSTRAINT webinars_pkey PRIMARY KEY (id),
+    CONSTRAINT webinars_course_id_fkey FOREIGN KEY (course_id) REFERENCES public.courses(id) ON DELETE CASCADE
+);
+
+ALTER SEQUENCE public.webinars_id_seq OWNED BY public.webinars.id;
+
+CREATE INDEX IF NOT EXISTS idx_webinars_course_id ON public.webinars(course_id);
 
 -- ======================
 -- Таблица пользователей
@@ -139,6 +165,7 @@ CREATE TABLE IF NOT EXISTS public.videos (
     id integer NOT NULL DEFAULT nextval('public.videos_id_seq'::regclass),
     path text NOT NULL,
     title text NOT NULL,
+    file text NOT NULL,
     course_id integer,
     CONSTRAINT videos_pkey PRIMARY KEY (id),
     CONSTRAINT videos_course_id_fkey FOREIGN KEY (course_id) REFERENCES public.courses(id) ON DELETE CASCADE

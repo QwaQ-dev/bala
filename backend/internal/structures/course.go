@@ -1,18 +1,23 @@
 package structures
 
+import "time"
+
 type Course struct {
-	Id          int     `json:"id"`
-	Title       string  `json:"title"`
-	Description string  `json:"description"`
-	Cost        int     `json:"cost"`
-	Videos      []Video `json:"videos, omitempty"`
-	Img         string  `json:"img"`
+	Id          int       `json:"id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Cost        int       `json:"cost"`
+	DiplomaPath string    `json:"diploma_path"`
+	Videos      []Video   `json:"videos, omitempty"`
+	Webinars    []Webinar `json:"webinars"`
+	Img         string    `json:"img"`
 }
 
 type Video struct {
 	Id    int    `json:"id"`
 	Path  string `json:"path"`
 	Title string `json:"title"`
+	File  string `json:"file"`
 }
 
 type CourseAccessRequest struct {
@@ -23,4 +28,12 @@ type CourseAccessRequest struct {
 type CourseWithAccess struct {
 	Course
 	HasAccess bool `json:"has_access"`
+}
+
+type Webinar struct {
+	Id       int       `json:"id"`
+	Title    string    `json:"title"`
+	Link     string    `json:"link"`
+	Date     time.Time `json:"date"`
+	CourseID int       `json:"course_id"`
 }
