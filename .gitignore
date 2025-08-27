@@ -4,5 +4,7 @@ backend/cmd/.env
 backend/cmd/uploads/videos
 backend/cmd/uploads/photos
 backend/cmd/uploads/articles
+backend/cmd/uploads/diplomas
+backend/cmd/uploads/files
 
 .env
