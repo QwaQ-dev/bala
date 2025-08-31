@@ -19,32 +19,72 @@ export async function POST(request) {
       );
     }
 
-    const videos = formData.getAll("videos"); // массив файлов
-    const titles = formData.getAll("titles"); // массив названий
+    const videos = [];
+    const titles = [];
+    const extraFiles = [];
+    let index = 0;
+
+    // Собираем все video[], title[], extra_file[] с учетом их индексов
+    while (true) {
+      const video = formData.get(`video[${index}]`);
+      const title = formData.get(`title[${index}]`);
+      const extraFile = formData.get(`extra_file[${index}]`);
+
+      if (!video && !title && !extraFile) break; // Прерываем, если больше нет данных
+
+      videos.push(video);
+      titles.push(title);
+      extraFiles.push(extraFile);
+      index++;
+    }
+
     if (videos.length === 0) {
       return new Response(
-        JSON.stringify({ error: "no files uploaded" }),
+        JSON.stringify({ error: "Не загружены видео" }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
     if (videos.length !== titles.length) {
       return new Response(
-        JSON.stringify({ error: "mismatched number of videos and titles" }),
+        JSON.stringify({ error: "Количество видео и заголовков не совпадает" }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    // Формируем новый FormData для бекенда
+    const ALLOWED_EXTRA_FILE_TYPES = ["application/pdf", "image/jpeg", "image/png", "application/zip", ""];
+    const MAX_EXTRA_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
+
+    for (let i = 0; i < extraFiles.length; i++) {
+      if (extraFiles[i] instanceof File && extraFiles[i].size > MAX_EXTRA_FILE_SIZE) { // Исправлено: убрано Measures
+        return new Response(
+          JSON.stringify({ error: `Дополнительный файл ${i + 1} превышает максимальный размер` }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      if (extraFiles[i] instanceof File && !ALLOWED_EXTRA_FILE_TYPES.includes(extraFiles[i].type)) {
+        return new Response(
+          JSON.stringify({ error: `Недопустимый тип дополнительного файла ${i + 1}` }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+      }
+    }
+
     const uploadData = new FormData();
     uploadData.append("course_id", courseId);
-
     videos.forEach((video, index) => {
-      uploadData.append("videos", video);
-      uploadData.append("titles", titles[index] || `Урок ${index + 1}`);
+      if (video instanceof File) {
+        uploadData.append("video[]", video); // Изменено на "video[]" для соответствия Go backend
+        uploadData.append("title[]", titles[index] || `Урок ${index + 1}`);
+        if (extraFiles[index] instanceof File && extraFiles[index].size > 0) {
+          uploadData.append("extra_file[]", extraFiles[index]); // Изменено на "extra_file[]"
+        }
+      }
     });
 
+    console.log("[Admin Add Video API] UploadData entries:", [...uploadData.entries()]);
+
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 секунд
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
 
     const response = await fetch(`${BACKEND_URL}/api/v1/admin/course/add-video`, {
       method: "POST",

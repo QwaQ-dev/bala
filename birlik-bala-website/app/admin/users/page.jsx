@@ -1,38 +1,38 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, BookOpen, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
-import Link from "next/link";
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Users, BookOpen, CheckCircle, XCircle, AlertTriangle } from "lucide-react"
+import Link from "next/link"
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState([]);
-  const [courses, setCourses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedCourse, setSelectedCourse] = useState({});
-  const [courseLoadError, setCourseLoadError] = useState(null);
+  const [users, setUsers] = useState([])
+  const [courses, setCourses] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [selectedCourse, setSelectedCourse] = useState({})
+  const [courseLoadError, setCourseLoadError] = useState(null)
 
   useEffect(() => {
-    loadData();
-  }, []);
+    loadData()
+  }, []) // Empty dependency array ensures this only runs once
 
   const loadData = async () => {
-    setLoading(true);
-    setCourseLoadError(null);
+    setLoading(true)
+    setCourseLoadError(null)
 
     try {
-      await loadCourses();
-      await loadUsers();
+      const coursesData = await loadCourses()
+      await loadUsers(coursesData)
     } catch (error) {
-      console.error("[AdminUsersPage] Failed to load data:", error.message);
-      alert("Ошибка при загрузке данных: " + error.message);
+      console.error("[AdminUsersPage] Failed to load data:", error.message)
+      alert("Ошибка при загрузке данных: " + error.message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const loadCourses = async () => {
     try {
@@ -40,208 +40,181 @@ export default function AdminUsersPage() {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-      });
+      })
       if (!response.ok) {
-        console.warn("[AdminUsersPage] Failed to load admin courses, falling back to /api/courses:", response.status, await response.text());
+        console.warn(
+          "[AdminUsersPage] Failed to load admin courses, falling back to /api/courses:",
+          response.status,
+          await response.text(),
+        )
         response = await fetch("/api/courses", {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-        });
+        })
         if (!response.ok) {
-          console.error("[AdminUsersPage] Failed to load courses:", response.status, await response.text());
-          setCourseLoadError("Не удалось загрузить курсы. Проверьте базу данных или доступ.");
-          return;
+          console.error("[AdminUsersPage] Failed to load courses:", response.status, await response.text())
+          setCourseLoadError("Не удалось загрузить курсы. Проверьте базу данных или доступ.")
+          return []
         }
       }
-      const data = await response.json();
-      console.log("[AdminUsersPage] Courses data:", data);
-      if (data.length === 0) {
-        setCourseLoadError("Список курсов пуст. Добавьте курсы в систему.");
+      const data = await response.json()
+      const coursesArray = Array.isArray(data) ? data : data.courses || []
+      console.log("[AdminUsersPage] Courses data:", coursesArray)
+      if (coursesArray.length === 0) {
+        setCourseLoadError("Список курсов пуст. Добавьте курсы в систему.")
       }
-      setCourses(data.courses);
+      setCourses(coursesArray)
+      return coursesArray
     } catch (error) {
-      console.error("[AdminUsersPage] Failed to load courses:", error.message);
-      setCourseLoadError("Ошибка при загрузке курсов: " + error.message);
+      console.error("[AdminUsersPage] Failed to load courses:", error.message)
+      setCourseLoadError("Ошибка при загрузке курсов: " + error.message)
+      return []
     }
-  };
+  }
 
-  const loadUsers = async () => {
+  const loadUsers = async (coursesData = courses) => {
     try {
       const response = await fetch("/api/admin/users", {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-      });
+      })
       if (!response.ok) {
-        console.error("[AdminUsersPage] Failed to load users:", response.status, await response.text());
-        return;
+        console.error("[AdminUsersPage] Failed to load users:", response.status, await response.text())
+        return
       }
-      const data = await response.json();
-      console.log("[AdminUsersPage] Raw users data:", data);
-      const processedUsers = await Promise.all(
-        data.map(async (user) => {
-          let courseIds = Array.isArray(user.CourseIDs) ? [...new Set(user.CourseIDs)] : [];
-          if (Array.isArray(user.CourseIDs) && user.CourseIDs.length !== courseIds.length) {
-            console.warn(`[AdminUsersPage] User ${user.id} (${user.username}) has duplicate CourseIDs:`, user.CourseIDs);
-          }
-          const validCourses = await Promise.all(
-            courseIds.map(async (courseId) => {
-              let course = courses.find((c) => c.id === courseId);
-              if (!course) {
-                try {
-                  const courseResponse = await fetch(`/api/admin/courses/${courseId}`, {
-                    method: "GET",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: "include",
-                  });
-                  if (courseResponse.ok) {
-                    course = await courseResponse.json();
-                    setCourses((prev) => {
-                      if (!prev.some((c) => c.id === course.id)) {
-                        return [...prev, course];
-                      }
-                      return prev;
-                    });
-                  }
-                } catch (error) {
-                  console.error(`[AdminUsersPage] Failed to fetch course ${courseId}:`, error.message);
-                }
-              }
-              return course || { id: courseId, title: `Course ID: ${courseId} (Not Found)`, slug: '', isMissing: true };
-            })
-          );
-          if (courseIds.length > validCourses.filter((c) => !c.isMissing).length) {
-            console.warn(`[AdminUsersPage] User ${user.id} (${user.username}) has invalid CourseIDs:`, {
-              invalidIds: courseIds.filter((id) => !validCourses.find((c) => c.id === id && !c.isMissing)),
-              allCourseIds: courseIds,
-              availableCourses: courses.map((c) => c.id),
-            });
-          }
-          if (user.password) {
-            console.warn(`[AdminUsersPage] Security: Password field returned for user ${user.id} (${user.username})`);
-          }
-          return {
-            ...user,
-            courses: validCourses.filter((c) => c),
-            password: undefined,
-          };
-        })
-      );
-      setUsers(processedUsers);
+      const data = await response.json()
+      console.log("[AdminUsersPage] Raw users data:", data)
+      const processedUsers = data.map((user) => {
+        const courseIds = Array.isArray(user.CourseIDs) ? [...new Set(user.CourseIDs)] : []
+
+        const userCourses = courseIds
+          .map((courseId) => {
+            const course = coursesData.find((c) => c.id === courseId)
+            if (course) {
+              return course
+            }
+            // Return fallback course object with proper title
+            return {
+              id: courseId,
+              title: `Course ID: ${courseId} (Not Found)`,
+              name: `Course ID: ${courseId} (Not Found)`, // Additional fallback field
+              slug: "",
+              isMissing: true,
+            }
+          })
+          .filter(Boolean)
+
+        return {
+          ...user,
+          courses: userCourses,
+          password: undefined, // Remove password for security
+        }
+      })
+      setUsers(processedUsers)
     } catch (error) {
-      console.error("[AdminUsersPage] Failed to load users:", error.message);
+      console.error("[AdminUsersPage] Failed to load users:", error.message)
     }
-  };
+  }
 
   const giveAccess = async (user_id, course_id) => {
-    const course = courses.find((c) => c.id === parseInt(course_id));
+    const course = courses.find((c) => c.id === Number.parseInt(course_id))
     if (!course || course.isMissing) {
-      console.error("[AdminUsersPage] Invalid course:", course_id);
-      alert("Курс не существует");
-      return;
+      console.error("[AdminUsersPage] Invalid course:", course_id)
+      alert("Курс не существует")
+      return
     }
     try {
-      console.log("[AdminUsersPage] Giving access:", { user_id, course_id });
+      console.log("[AdminUsersPage] Giving access:", { user_id, course_id })
       const response = await fetch("/api/admin/courses/give-access", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ user_id, course_id }),
-      });
-      console.log("[AdminUsersPage] Give access response status:", response.status);
-      const responseText = await response.text();
-      console.log("[AdminUsersPage] Give access response body:", responseText);
+      })
 
       if (!response.ok) {
-        let errorData;
+        const errorText = await response.text()
+        let errorData
         try {
-          errorData = JSON.parse(responseText);
+          errorData = JSON.parse(errorText)
         } catch (parseError) {
-          console.error("[AdminUsersPage] Failed to parse error response:", parseError.message, responseText);
-          alert("Ошибка при предоставлении доступа: Неверный формат ответа");
-          return;
+          console.error("[AdminUsersPage] Failed to parse error response:", parseError.message, errorText)
+          alert("Ошибка при предоставлении доступа: Неверный формат ответа")
+          return
         }
-        console.error("[AdminUsersPage] Failed to give access:", response.status, errorData);
-        alert(`Ошибка при предоставлении доступа: ${errorData.error || "Неизвестная ошибка"}`);
-        return;
+        console.error("[AdminUsersPage] Failed to give access:", response.status, errorData)
+        alert(`Ошибка при предоставлении доступа: ${errorData.error || "Неизвестная ошибка"}`)
+        return
       }
 
-      let data;
+      const responseText = await response.text()
+      let data
       try {
-        data = JSON.parse(responseText);
+        data = JSON.parse(responseText)
       } catch (parseError) {
-        console.error("[AdminUsersPage] Failed to parse success response:", parseError.message, responseText);
-        alert("Ошибка: Неверный формат ответа от сервера");
-        return;
+        console.error("[AdminUsersPage] Failed to parse success response:", parseError.message, responseText)
+        alert("Ошибка: Неверный формат ответа от сервера")
+        return
       }
 
-      alert(data.message || "Доступ предоставлен");
-      setUsers(
-        users.map((user) =>
-          user.id === user_id
-            ? { ...user, courses: [...(user.courses || []), course] }
-            : user
-        )
-      );
-      await loadUsers(); // Refresh users to confirm backend state
+      alert(data.message || "Доступ предоставлен")
+      const coursesData = await loadCourses()
+      await loadUsers(coursesData)
     } catch (error) {
-      console.error("[AdminUsersPage] Failed to give access:", error.message);
-      alert("Ошибка при предоставлении доступа: " + error.message);
+      console.error("[AdminUsersPage] Failed to give access:", error.message)
+      alert("Ошибка при предоставлении доступа: " + error.message)
     }
-  };
+  }
 
   const takeAwayAccess = async (user_id, course_id) => {
-    const course = courses.find((c) => c.id === course_id);
+    const course = courses.find((c) => c.id === course_id)
     if (!course || course.isMissing) {
-      alert("Курс не существует, удаление записи...");
+      alert("Курс не существует, удаление записи...")
       setUsers(
         users.map((user) =>
-          user.id === user_id ? { ...user, courses: user.courses.filter((c) => c.id !== course_id) } : user
-        )
-      );
+          user.id === user_id ? { ...user, courses: user.courses.filter((c) => c.id !== course_id) } : user,
+        ),
+      )
       try {
         const response = await fetch("/api/admin/courses/take-away-access", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({ user_id, course_id }),
-        });
+        })
         if (!response.ok) {
-          console.error("[AdminUsersPage] Failed to clean invalid course:", response.status, await response.text());
+          console.error("[AdminUsersPage] Failed to clean invalid course:", response.status, await response.text())
         }
       } catch (error) {
-        console.error("[AdminUsersPage] Error cleaning invalid course:", error.message);
+        console.error("[AdminUsersPage] Error cleaning invalid course:", error.message)
       }
-      return;
+      return
     }
-    if (!confirm("Вы уверены, что хотите отозвать доступ к этому курсу?")) return;
+    if (!confirm("Вы уверены, что хотите отозвать доступ к этому курсу?")) return
     try {
       const response = await fetch("/api/admin/courses/take-away-access", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ user_id, course_id }),
-      });
+      })
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error("[AdminUsersPage] Failed to take away access:", response.status, errorData);
-        alert(`Ошибка при отзыве доступа: ${errorData.error || "Неизвестная ошибка"}`);
-        return;
+        const errorData = await response.json()
+        console.error("[AdminUsersPage] Failed to take away access:", response.status, errorData)
+        alert(`Ошибка при отзыве доступа: ${errorData.error || "Неизвестная ошибка"}`)
+        return
       }
-      const data = await response.json();
-      alert(data.message || "Доступ отозван");
-      setUsers(
-        users.map((user) =>
-          user.id === user_id ? { ...user, courses: user.courses.filter((c) => c.id !== course_id) } : user
-        )
-      );
-      await loadUsers();
+      const data = await response.json()
+      alert(data.message || "Доступ отозван")
+      const coursesData = await loadCourses()
+      await loadUsers(coursesData)
     } catch (error) {
-      console.error("[AdminUsersPage] Failed to take away access:", error.message);
-      alert("Ошибка при отзыве доступа: " + error.message);
+      console.error("[AdminUsersPage] Failed to take away access:", error.message)
+      alert("Ошибка при отзыве доступа: " + error.message)
     }
-  };
+  }
 
   if (loading) {
     return (
@@ -255,7 +228,7 @@ export default function AdminUsersPage() {
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -288,7 +261,7 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-2">
@@ -307,7 +280,9 @@ export default function AdminUsersPage() {
               <BookOpen className="w-5 h-5 text-green-500" />
               <div>
                 <p className="text-sm text-gray-600">Курсов с доступом</p>
-                <p className="text-2xl font-bold">{users.reduce((sum, user) => sum + (user.courses?.filter((c) => !c.isMissing).length || 0), 0)}</p>
+                <p className="text-2xl font-bold">
+                  {users.reduce((sum, user) => sum + (user.courses?.filter((c) => !c.isMissing).length || 0), 0)}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -334,7 +309,7 @@ export default function AdminUsersPage() {
                           variant={course.isMissing ? "destructive" : "secondary"}
                           className="flex items-center gap-1"
                         >
-                          {course.title}
+                          {course.title || course.name || `Course ${course.id}` || "Unknown Course"}
                           <Button
                             variant="ghost"
                             size="sm"
@@ -361,18 +336,22 @@ export default function AdminUsersPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {courses
-                        .filter((course) => !course.isMissing)
+                        .filter((course) => !course.isMissing && course.id !== null && course.id !== undefined)
                         .map((course) => (
                           <SelectItem key={course.id} value={course.id.toString()}>
-                            {course.title}
+                            {course.title || course.name || `Course ${course.id}` || "Unknown Course"}
                           </SelectItem>
                         ))}
                     </SelectContent>
                   </Select>
                   <Button
                     size="sm"
-                    onClick={() => giveAccess(user.id, parseInt(selectedCourse[user.id]))}
-                    disabled={!selectedCourse[user.id] || user.courses?.some((c) => c.id === parseInt(selectedCourse[user.id]))}
+                    onClick={() => giveAccess(user.id, Number.parseInt(selectedCourse[user.id]))}
+                    disabled={
+                      !selectedCourse[user.id] ||
+                      isNaN(Number.parseInt(selectedCourse[user.id])) ||
+                      user.courses?.some((c) => c.id === Number.parseInt(selectedCourse[user.id]))
+                    }
                     className="bg-green-600 hover:bg-green-700"
                   >
                     <CheckCircle className="w-4 h-4 mr-2" />
@@ -393,5 +372,5 @@ export default function AdminUsersPage() {
         </div>
       )}
     </div>
-  );
+  )
 }

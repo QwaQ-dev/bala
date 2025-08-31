@@ -59,15 +59,6 @@ export async function GET(request) {
     }
 
     console.log("[Admin Users API] Parsed data:", data);
-    if (!Array.isArray(data)) {
-      return new Response(
-        JSON.stringify({
-          error: "Неверный формат данных: ожидался массив",
-          received: data,
-        }),
-        { status: 500 }
-      );
-    }
 
     return new Response(JSON.stringify(data), { status: 200 });
   } catch (err) {

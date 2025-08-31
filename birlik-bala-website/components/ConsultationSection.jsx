@@ -5,9 +5,14 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Check } from "lucide-react"
 
 export default function ConsultationSection() {
-  const handleRedirect = () => {
-    window.location.href = "https://wa.me/77001234567"; // замени номер
-  };
+  const handleRedirect = (pkgName) => {
+    const phone = "77053245524" 
+    const message = pkgName
+      ? `Здравствуйте! Хочу записаться на ${pkgName}.`
+      : "Здравствуйте! Хочу записаться на консультацию."
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
+    window.location.href = url
+  }
 
   const benefits = [
     {
@@ -61,7 +66,9 @@ export default function ConsultationSection() {
           {/* Левая сторона */}
           <div>
             <h2 className="text-4xl font-bold text-gray-900 mb-6">Онлайн-консультации</h2>
-            <p className="text-lg text-gray-600 mb-8">Получите персональную помощь и рекомендации для вашего ребенка</p>
+            <p className="text-lg text-gray-600 mb-8">
+              Получите персональную помощь и рекомендации для вашего ребенка
+            </p>
 
             <div className="space-y-6 mb-8">
               {benefits.map((benefit, index) => (
@@ -77,7 +84,10 @@ export default function ConsultationSection() {
               ))}
             </div>
 
-            <Button onClick={handleRedirect} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg">
+            <Button
+              onClick={() => handleRedirect()}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg"
+            >
               Записаться на консультацию
             </Button>
           </div>
@@ -98,7 +108,9 @@ export default function ConsultationSection() {
                   )}
 
                   <Card
-                    className={`border-2 hover:shadow-lg transition-shadow ${pkg.isPopular ? "border-orange-200 bg-orange-50" : "border-gray-200 bg-white"}`}
+                    className={`border-2 hover:shadow-lg transition-shadow ${
+                      pkg.isPopular ? "border-orange-200 bg-orange-50" : "border-gray-200 bg-white"
+                    }`}
                   >
                     <CardContent className="p-6">
                       <div className="flex justify-between items-start mb-4">
@@ -113,7 +125,12 @@ export default function ConsultationSection() {
                         </div>
                       </div>
 
-                      <Button className={`w-full ${pkg.color} ${pkg.hoverColor} text-white py-3`}>Выбрать</Button>
+                      <Button
+                        onClick={() => handleRedirect(pkg.name)}
+                        className={`w-full ${pkg.color} ${pkg.hoverColor} text-white py-3`}
+                      >
+                        Выбрать
+                      </Button>
                     </CardContent>
                   </Card>
                 </div>

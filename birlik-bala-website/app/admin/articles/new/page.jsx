@@ -27,12 +27,13 @@ const CustomImage = Node.create({
 
   renderHTML({ HTMLAttributes }) {
     const path = HTMLAttributes["data-path"]
+    const src = HTMLAttributes["src"] || `http://localhost:8080/uploads/articles/${path}`
     return [
       "img",
       {
         ...HTMLAttributes,
         "data-path": path,
-        src: HTMLAttributes.src || `http://localhost:8080/uploads/articles/${path}`,
+        src,
         alt: path || "Image",
         style: "max-width: 500px; width: 100%; height: auto;",
       },
@@ -42,7 +43,7 @@ const CustomImage = Node.create({
   addAttributes() {
     return {
       "data-path": { default: null },
-      src: { default: null },
+      src: { default: null }, // Allow src to be set for preview
     }
   },
 
@@ -55,7 +56,7 @@ const CustomImage = Node.create({
             type: this.name,
             attrs: {
               "data-path": options["data-path"],
-              src: `http://localhost:8080/uploads/articles/${options["data-path"]}`,
+              src: options.src || `http://localhost:8080/uploads/articles/${options["data-path"]}`,
             },
           }),
     }
@@ -66,9 +67,10 @@ const CustomImage = Node.create({
       const div = document.createElement("div")
       const img = document.createElement("img")
       const path = node.attrs["data-path"] || ""
+      const src = node.attrs["src"] || `http://localhost:8080/uploads/articles/${path}`
 
       img.setAttribute("data-path", path)
-      img.setAttribute("src", `http://localhost:8080/uploads/articles/${path}`)
+      img.setAttribute("src", src)
       img.setAttribute("alt", path || "Image")
       img.setAttribute("style", "max-width: 500px; width: 100%; height: auto;")
 
@@ -90,12 +92,13 @@ const Video = Node.create({
 
   renderHTML({ HTMLAttributes }) {
     const path = HTMLAttributes["data-path"]
+    const src = HTMLAttributes["src"] || `http://localhost:8080/uploads/articles/${path}`
     return [
       "video",
       {
         ...HTMLAttributes,
         "data-path": path,
-        src: `http://localhost:8080/uploads/articles/${path}`,
+        src,
         controls: true,
         style: "width: 100%; max-width: 600px; height: auto;",
       },
@@ -106,6 +109,7 @@ const Video = Node.create({
     return {
       "data-path": { default: null },
       "data-type": { default: "video" },
+      src: { default: null }, // Allow src to be set for preview
     }
   },
 
@@ -118,6 +122,7 @@ const Video = Node.create({
             type: this.name,
             attrs: {
               "data-path": options["data-path"],
+              src: options.src || `http://localhost:8080/uploads/articles/${options["data-path"]}`,
               "data-type": "video",
             },
           }),
@@ -129,9 +134,10 @@ const Video = Node.create({
       const div = document.createElement("div")
       const video = document.createElement("video")
       const path = node.attrs["data-path"] || ""
+      const src = node.attrs["src"] || `http://localhost:8080/uploads/articles/${path}`
 
       video.setAttribute("data-path", path)
-      video.setAttribute("src", `http://localhost:8080/uploads/articles/${path}`)
+      video.setAttribute("src", src)
       video.setAttribute("controls", "true")
       video.setAttribute("style", "width: 100%; max-width: 600px; height: auto;")
 
@@ -155,8 +161,9 @@ const MenuBar = ({ editor, onAddMedia }) => {
         return
       }
 
-      editor.chain().focus().setImage({ "data-path": file.name }).run()
-      onAddMedia(file)
+      const previewUrl = URL.createObjectURL(file)
+      editor.chain().focus().setImage({ "data-path": file.name, src: previewUrl }).run()
+      onAddMedia(file, previewUrl)
     }
     input.click()
   }
@@ -174,8 +181,9 @@ const MenuBar = ({ editor, onAddMedia }) => {
         return
       }
 
-      editor.chain().focus().setVideo({ "data-path": file.name }).run()
-      onAddMedia(file)
+      const previewUrl = URL.createObjectURL(file)
+      editor.chain().focus().setVideo({ "data-path": file.name, src: previewUrl }).run()
+      onAddMedia(file, previewUrl)
     }
     input.click()
   }
@@ -347,6 +355,7 @@ export default function NewArticlePage() {
     readTime: "",
     slug: "",
     files: [],
+    filePreviews: {}, // Store temporary URLs for preview
   })
 
   const editor = useEditor({
@@ -370,7 +379,17 @@ export default function NewArticlePage() {
       Video,
     ],
     content: article.content,
-    onUpdate: ({ editor }) => setArticle({ ...article, content: editor.getHTML() }),
+    onUpdate: ({ editor }) => {
+      // Update content with server paths when submitting
+      let updatedContent = editor.getHTML()
+      Object.entries(article.filePreviews).forEach(([previewUrl, fileName]) => {
+        updatedContent = updatedContent.replaceAll(
+          previewUrl,
+          `http://localhost:8080/uploads/articles/${fileName}`
+        )
+      })
+      setArticle({ ...article, content: updatedContent })
+    },
     immediatelyRender: false,
   })
 
@@ -390,7 +409,13 @@ export default function NewArticlePage() {
 
   const handleCategoryChange = (e) => setArticle({ ...article, category: e.target.value })
 
-  const handleAddMedia = (file) => setArticle((prev) => ({ ...prev, files: [...prev.files, file] }))
+  const handleAddMedia = (file, previewUrl) => {
+    setArticle((prev) => ({
+      ...prev,
+      files: [...prev.files, file],
+      filePreviews: { ...prev.filePreviews, [previewUrl]: file.name },
+    }))
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -398,7 +423,8 @@ export default function NewArticlePage() {
     if (!article.title.trim() || article.title.length < 3)
       return toast.error("Название статьи должно быть не короче 3 символов")
 
-    if (!article.content.trim() || article.content === "<p></p>") return toast.error("Введите содержание статьи")
+    if (!article.content.trim() || article.content === "<p></p>")
+      return toast.error("Введите содержание статьи")
 
     if (!article.category) return toast.error("Выберите категорию")
 

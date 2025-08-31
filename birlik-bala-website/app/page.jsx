@@ -5,6 +5,7 @@ import ArticlesSection from "@/components/ArticlesSection";
 import MethodologySection from "@/components/MethodologySection";
 import ConsultationSection from "@/components/ConsultationSection";
 import Footer from "@/components/Footer";
+import VideoExercises from "@/components/VideoExercises"
 
 // ISR: страница будет перегенерироваться каждые 1800 секунд (30 минут)
 export const revalidate = 10;
@@ -33,7 +34,7 @@ export default async function Home() {
     headers: {
       "Content-Type": "application/json",
     },
-    next: { revalidate: 1800 },
+    next: { revalidate: 10 },
   });
   console.log(data)
 
@@ -54,6 +55,7 @@ export default async function Home() {
     <main className="min-h-screen">
       <HeroSection />
       <CourseSection />
+      <VideoExercises/>
       <ChecklistSection />
       <ArticlesSection articles={articles} />
       <MethodologySection />

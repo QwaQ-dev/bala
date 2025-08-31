@@ -1,25 +1,33 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect, useRef } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle } from "lucide-react";
+import { ExternalLink, Download, Calendar } from "lucide-react";
+import { use } from "react";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 export default function CoursePage({ params }) {
+  const unwrappedParams = use(params);
+  const slug = unwrappedParams.slug;
+
   const [course, setCourse] = useState(null);
   const [currentVideo, setCurrentVideo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [allVideosWatched, setAllVideosWatched] = useState(false);
+  const [studentName, setStudentName] = useState("");
+  const videoRefs = useRef([]);
 
   useEffect(() => {
-    if (!params?.slug || params.slug === "undefined") {
-      console.log("[CoursePage] Invalid params.slug:", params.slug);
+    if (!slug || slug === "undefined") {
       setError("Неверный slug курса");
       setLoading(false);
       return;
     }
     loadCourse();
-  }, [params?.slug]);
+  }, [slug]);
 
   const loadCourse = async () => {
     setLoading(true);
@@ -29,9 +37,8 @@ export default function CoursePage({ params }) {
         .split("; ")
         .find((row) => row.startsWith("access_token="))
         ?.split("=")[1];
-      console.log("[CoursePage] Access token:", token || "none");
 
-      const response = await fetch(`/api/courses/${params.slug}`, {
+      const response = await fetch(`/api/courses/${slug}`, {
         method: "GET",
         credentials: "include",
         headers: {
@@ -40,69 +47,103 @@ export default function CoursePage({ params }) {
         },
       });
 
-      const responseText = await response.json();
-
+      const data = await response.json();
       if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
-      
-      const courseData = responseText;
-      if (!courseData.id || !Array.isArray(courseData.videos)) {
-        throw new Error("Invalid course data format");
-      }
+      if (!data.id) throw new Error("Invalid course data format");
 
-      setCourse(courseData);
-      setCurrentVideo(courseData.videos[0]);
+      setCourse(data);
+      if (Array.isArray(data.videos) && data.videos.length > 0) {
+        setCurrentVideo(data.videos[0]);
+      }
+      videoRefs.current = data.videos.map(() => ({ ended: false }));
     } catch (error) {
-      console.error("[CoursePage] Failed to load course:", error);
       setError(error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const selectVideo = (video) => setCurrentVideo(video);
+  const selectVideo = (video) => {
+    const index = course.videos.findIndex((v) => v.id === video.id);
+    setCurrentVideo(video);
+    if (videoRefs.current[index]?.ended) {
+      setAllVideosWatched(true);
+    }
+  };
 
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded w-2/3 mb-8"></div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 h-96 bg-gray-200 rounded"></div>
-            <div className="space-y-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-24 bg-gray-200 rounded"></div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const handleVideoEnd = (index) => {
+    videoRefs.current[index].ended = true;
+    setAllVideosWatched(videoRefs.current.every((ref) => ref.ended));
+  };
 
-  if (error || !course) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center p-4 bg-red-100 border border-red-400 text-red-700 rounded flex flex-col items-center gap-2">
-          <AlertTriangle className="w-8 h-8" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">{error || "Курс не найден"}</h1>
-          <p className="text-gray-600 mb-4">Проверьте правильность ссылки или попробуйте снова</p>
-          <Button variant="outline" onClick={loadCourse}>
-            Повторить
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  const downloadDiploma = async () => {
+    if (!studentName.trim()) return alert("Пожалуйста, введите имя студента");
+    if (!course.diploma_path) return alert("Шаблон диплома не доступен.");
+
+    try {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const diplomaImg = new Image();
+      diplomaImg.crossOrigin = "anonymous";
+      diplomaImg.src = `http://localhost:8080${course.diploma_path}`;
+      await new Promise((resolve, reject) => {
+        diplomaImg.onload = resolve;
+        diplomaImg.onerror = reject;
+      });
+
+      canvas.width = course.diploma_natural_width || diplomaImg.width;
+      canvas.height = course.diploma_natural_height || diplomaImg.height;
+      ctx.drawImage(diplomaImg, 0, 0);
+
+      const verticalOffset = 20;
+      ctx.font = "bold 48px Arial";
+      ctx.fillStyle = "black";
+      ctx.fillText(studentName, course.diploma_x, course.diploma_y + verticalOffset);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "white";
+      ctx.strokeText(studentName, course.diploma_x, course.diploma_y + verticalOffset);
+
+      const link = document.createElement("a");
+      link.href = canvas.toDataURL("image/png");
+      link.download = `diploma_${studentName}.png`;
+      link.click();
+    } catch (error) {
+      alert("Ошибка при создании диплома: " + error.message);
+    }
+  };
+
+  if (loading) return <p className="p-8">Загрузка курса...</p>;
+  if (error || !course) return <p className="p-8 text-red-600">{error || "Курс не найден"}</p>;
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">{course.title}</h1>
-        <p className="text-gray-600 mb-4">{course.description}</p>
-      </div>
+      <h1 className="text-3xl font-bold mb-2">{course.title}</h1>
+      <p className="text-gray-600 mb-4">{course.description}</p>
 
+      {/* Diploma Section */}
+      {course.diploma_x && course.diploma_y && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Диплом</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Label>Введите имя студента</Label>
+            <Input
+              value={studentName}
+              onChange={(e) => setStudentName(e.target.value)}
+              placeholder="Введите имя"
+            />
+            <Button onClick={downloadDiploma} disabled={!allVideosWatched} className="mt-4">
+              <Download className="w-4 h-4 mr-2" />
+              {allVideosWatched ? "Скачать диплом" : "Просмотрите все видео"}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Основной блок */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Видео */}
         <div className="lg:col-span-2">
           <Card>
             <CardContent className="p-0">
@@ -113,14 +154,30 @@ export default function CoursePage({ params }) {
                       src={`http://localhost:8080${currentVideo.path}`}
                       controls
                       className="w-full h-full object-contain"
-                    >
-                      Ваш браузер не поддерживает воспроизведение видео.
-                    </video>
+                      onEnded={() =>
+                        handleVideoEnd(course.videos.findIndex((v) => v.id === currentVideo.id))
+                      }
+                    />
                   </div>
                   <div className="p-6">
                     <h2 className="text-xl font-semibold mb-2">{currentVideo.title}</h2>
                     {currentVideo.description && (
                       <p className="text-gray-600 mb-4">{currentVideo.description}</p>
+                    )}
+
+                    {/* Attached file */}
+                    {currentVideo.file && (
+                      <div className="mt-4">
+                        <Label>Прикреплённый файл:</Label>
+                        <a
+                          href={`http://localhost:8080${currentVideo.file}`}
+                          download
+                          className="text-blue-600 hover:underline flex items-center gap-2"
+                        >
+                          <Download className="w-4 h-4" />
+                          Скачать файл
+                        </a>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -133,8 +190,11 @@ export default function CoursePage({ params }) {
           </Card>
         </div>
 
+        {/* Уроки + вебинар */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Уроки курса</h3>
+
+          {/* Уроки */}
           {course.videos.map((video, index) => (
             <Card
               key={video.id}
@@ -146,20 +206,50 @@ export default function CoursePage({ params }) {
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-medium text-gray-500">Урок {index + 1}</span>
-                    </div>
+                    <span className="text-sm font-medium text-gray-500">Урок {index + 1}</span>
                     <CardTitle className="text-sm leading-tight">{video.title}</CardTitle>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="pt-0">
-                {video.description && (
+              {video.description && (
+                <CardContent className="pt-0">
                   <CardDescription className="text-xs mb-2">{video.description}</CardDescription>
-                )}
-              </CardContent>
+                </CardContent>
+              )}
             </Card>
           ))}
+
+          {/* Вебинар (последний элемент) */}
+          {course.webinars && (
+            <Card className="cursor-pointer transition-all hover:shadow-md">
+              <CardHeader className="pb-2 flex items-center justify-between">
+                <CardTitle className="text-sm leading-tight">Вебинар</CardTitle>
+                <div className="flex items-center gap-1 text-xs text-gray-500">
+                  <Calendar className="w-4 h-4" />
+                  {course.webinars.date
+                    ? new Date(course.webinars.date).toLocaleString("ru-RU", {
+                        day: "2-digit",
+                        month: "long",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                    : "Дата не указана"}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <a
+                  href={course.webinars.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 font-medium hover:underline flex items-center gap-2"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Перейти к вебинару
+                </a>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

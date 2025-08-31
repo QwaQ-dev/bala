@@ -14,10 +14,13 @@ export default function HeroSection() {
               АЛЕЙКУМ
             </h1>
             <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-              Помогаем родителям лучше понимать своих детей через воспитание в духе. Специализируемся на АВА и
-              специальной методологии.
-            </p>
+              Я — Маргулан Косаев, специалист по АФК и сенсорной интеграции.
+За 3 года работы я помог 200+ детям с особенностями развития укрепить тело, улучшить внимание и освоить новые навыки.
 
+Моя миссия — сделать так, чтобы каждый ребёнок чувствовал радость движения, а родители понимали, как правильно поддерживать его дома.
+Здесь мы вместе учимся не только упражнениям, но и тому, как видеть сильные стороны ребёнка и развивать их каждый день.
+            </p>
+            
             <div className="flex items-center space-x-4 mb-8">
               <Button className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold px-8 py-3 rounded-lg">
                 Записаться
@@ -26,11 +29,11 @@ export default function HeroSection() {
 
             <div className="flex items-center space-x-8">
               <div>
-                <div className="text-3xl font-bold text-gray-900">500+</div>
+                <div className="text-3xl font-bold text-gray-900">200+</div>
                 <div className="text-sm text-gray-600">учеников</div>
               </div>
               <div>
-                <div className="text-3xl font-bold text-gray-900">5+</div>
+                <div className="text-3xl font-bold text-gray-900">3+</div>
                 <div className="text-sm text-gray-600">лет опыта</div>
               </div>
               <div className="flex items-center space-x-1">

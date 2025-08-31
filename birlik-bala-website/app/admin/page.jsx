@@ -232,8 +232,7 @@ export default function AdminDashboard() {
                   <CardTitle>{checklist.title}</CardTitle>
                   <p className="text-sm text-gray-600">{checklist.description}</p>
                   <p className="text-sm text-gray-500">Возраст: {checklist.forAge} лет</p>
-                  <p className="text-sm text-gray-500">Slug: {checklist.slug}</p>
-                  <p className="text-sm text-gray-500 truncate">URL: {checklist.url}</p>
+                  <p className="text-sm text-gray-500">URL: {checklist.slug}</p>
                 </CardHeader>
                 <CardContent className="flex items-center gap-2">
                   <Button
