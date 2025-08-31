@@ -112,16 +112,16 @@ func (r *CourseRepo) SelectCourseById(courseID int) (structures.Course, error) {
 
 	for rows.Next() {
 		var (
-			videoID      sql.NullInt64
-			videoPath    sql.NullString
-			videoTitle   sql.NullString
-			file         sql.NullString
-			webinarID    sql.NullInt64
-			webinarLink  sql.NullString
-			webinarDate  sql.NullTime
-			diplomaPath  sql.NullString
-			diplomaX     int
-			diplomaY     int
+			videoID     sql.NullInt64
+			videoPath   sql.NullString
+			videoTitle  sql.NullString
+			file        sql.NullString
+			webinarID   sql.NullInt64
+			webinarLink sql.NullString
+			webinarDate sql.NullTime
+			diplomaPath sql.NullString
+			diplomaX    int
+			diplomaY    int
 		)
 
 		var cId int
@@ -341,5 +341,24 @@ func (r *CourseRepo) RemoveCourseId(userId, courseId int) error {
 	}
 
 	log.Info("access has been taken from user", slog.Int("id", userId))
+	return nil
+}
+
+func (s *CourseRepo) AddVideoToCourse(courseID int, path string, title, file string) error {
+	const op = "postgres.course_repo.AddVideoToCourse"
+	log := s.log.With("op", op)
+
+	query := `
+		INSERT INTO videos (path, course_id, title, file)
+		VALUES ($1, $2, $3, $4)
+	`
+
+	_, err := s.db.Exec(query, path, courseID, title, file)
+	if err != nil {
+		log.Error("failed to insert video path", sl.Err(err))
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	log.Info("video added to course", slog.Int("course_id", courseID), slog.String("path", path))
 	return nil
 }
