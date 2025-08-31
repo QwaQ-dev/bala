@@ -86,31 +86,19 @@ func (h *CourseHandler) CreateCourse(c *fiber.Ctx) error {
 		diplomaPath = "/uploads/diplomas/" + filename
 	}
 
-	// Parse webinars from form data
-	var webinars []structures.Webinar
-	form, err := c.MultipartForm()
+	webinarLink := c.FormValue("webinar_link")
+	webinarDateStr := c.FormValue("webinar_date")
+
+	date, err := time.Parse(time.RFC3339, webinarDateStr)
 	if err != nil {
-		log.Error("failed to parse multipart form", sl.Err(err))
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid form data"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": fmt.Sprintf("invalid webinar_date: %v", err),
+		})
 	}
 
-	webinarTitles := form.Value["webinar_titles"]
-	webinarLinks := form.Value["webinar_links"]
-	webinarDates := form.Value["webinar_dates"]
-
-	if len(webinarTitles) > 0 && len(webinarTitles) == len(webinarLinks) && len(webinarLinks) == len(webinarDates) {
-		for i := range webinarTitles {
-			date, err := time.Parse(time.RFC3339, webinarDates[i])
-			if err != nil {
-				log.Error("invalid webinar date format", slog.String("date", webinarDates[i]), sl.Err(err))
-				continue
-			}
-			webinars = append(webinars, structures.Webinar{
-				Title: webinarTitles[i],
-				Link:  webinarLinks[i],
-				Date:  date.UTC(),
-			})
-		}
+	webinar := structures.Webinar{
+		Link: webinarLink,
+		Date: date.UTC(),
 	}
 
 	// Create course with all data
@@ -122,7 +110,7 @@ func (h *CourseHandler) CreateCourse(c *fiber.Ctx) error {
 		DiplomaPath: diplomaPath,
 		Diploma_x:   diplomaX,
 		Diploma_y:   diplomaY,
-		Webinars:    webinars,
+		Webinars:    webinar,
 	}
 
 	courseID, err := h.courseService.CreateCourse(course)

@@ -42,16 +42,13 @@ func (r *CourseRepo) InsertCourse(course structures.Course) (int, error) {
 		return 0, err
 	}
 
-	// Insert webinars if provided
-	for _, webinar := range course.Webinars {
-		_, err := tx.Exec(`
-			INSERT INTO webinars (title, link, date, course_id)
-			VALUES ($1, $2, $3, $4)
-		`, webinar.Title, webinar.Link, webinar.Date, courseID)
-		if err != nil {
-			log.Error("failed to insert webinar", sl.Err(err))
-			return 0, err
-		}
+	_, err = tx.Exec(`
+		INSERT INTO webinars (link, date, course_id)
+		VALUES ($1, $2, $3)
+	`, course.Webinars.Link, course.Webinars.Date, courseID)
+	if err != nil {
+		log.Error("failed to insert webinar", sl.Err(err))
+		return 0, err
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -94,7 +91,7 @@ func (r *CourseRepo) SelectCourseById(courseID int) (structures.Course, error) {
         SELECT 
             c.id, c.title, c.description, c.cost, c.diploma_path, c.diploma_x, c.diploma_y, c.img,
             v.id AS video_id, v.file, v.path AS video_path, v.title AS video_title,
-            w.id AS webinar_id, w.title AS webinar_title, w.link AS webinar_link, w.date AS webinar_date
+            w.id AS webinar_id, w.link AS webinar_link, w.date AS webinar_date
         FROM courses c
         LEFT JOIN videos v ON v.course_id = c.id
         LEFT JOIN webinars w ON w.course_id = c.id
@@ -110,7 +107,7 @@ func (r *CourseRepo) SelectCourseById(courseID int) (structures.Course, error) {
 
 	var course structures.Course
 	var videos []structures.Video
-	var webinars []structures.Webinar
+	var webinar structures.Webinar
 	courseInitialized := false
 
 	for rows.Next() {
@@ -178,13 +175,12 @@ func (r *CourseRepo) SelectCourseById(courseID int) (structures.Course, error) {
 		}
 
 		if webinarID.Valid {
-			webinars = append(webinars, structures.Webinar{
+			webinar = structures.Webinar{
 				Id:       int(webinarID.Int64),
-				Title:    webinarTitle.String,
 				Link:     webinarLink.String,
 				Date:     webinarDate.Time,
 				CourseID: cId,
-			})
+			}
 		}
 	}
 
@@ -194,7 +190,7 @@ func (r *CourseRepo) SelectCourseById(courseID int) (structures.Course, error) {
 	}
 
 	course.Videos = videos
-	course.Webinars = webinars
+	course.Webinars = webinar
 	return course, nil
 }
 
@@ -283,16 +279,16 @@ func (r *CourseRepo) AddWebinarToCourse(courseID int, webinar structures.Webinar
 	log := r.log.With("op", op)
 
 	query := `
-		INSERT INTO webinars (title, link, date, course_id)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO webinars (link, date, course_id)
+		VALUES ($1, $2, $3)
 	`
-	_, err := r.db.Exec(query, webinar.Title, webinar.Link, webinar.Date, courseID)
+	_, err := r.db.Exec(query, webinar.Link, webinar.Date, courseID)
 	if err != nil {
 		log.Error("failed to add webinar", sl.Err(err))
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	log.Info("webinar added", slog.Int("course_id", courseID), slog.String("title", webinar.Title))
+	log.Info("webinar added", slog.Int("course_id", courseID), slog.String("title", webinar.Link))
 	return nil
 }
 
