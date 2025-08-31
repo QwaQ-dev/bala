@@ -262,13 +262,13 @@ func (h *CourseHandler) UploadVideos(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "mismatched number of videos and titles"})
 	}
 
-	uploadDir := "./Uploads/videos"
+	uploadDir := "./uploads/videos"
 	if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
 		log.Error("failed to create videos dir", sl.Err(err))
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create videos dir"})
 	}
 
-	fileUploadDir := "./Uploads/files"
+	fileUploadDir := "./uploads/files"
 	if err := os.MkdirAll(fileUploadDir, os.ModePerm); err != nil {
 		log.Error("failed to create files dir", sl.Err(err))
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create files dir"})
@@ -283,7 +283,7 @@ func (h *CourseHandler) UploadVideos(c *fiber.Ctx) error {
 			log.Error("failed to save video", sl.Err(err))
 			continue
 		}
-		videoRelativePath := "/Uploads/videos/" + videoFilename
+		videoRelativePath := "/uploads/videos/" + videoFilename
 
 		// Сохранение дополнительного файла, если он есть
 		var filePath string
@@ -295,7 +295,7 @@ func (h *CourseHandler) UploadVideos(c *fiber.Ctx) error {
 				log.Error("failed to save extra file", sl.Err(err))
 				continue
 			}
-			filePath = "/Uploads/files/" + extraFilename
+			filePath = "/uploads/files/" + extraFilename
 		} else {
 			filePath = ""
 		}
