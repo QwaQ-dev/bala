@@ -349,11 +349,11 @@ func (s *CourseRepo) AddVideoToCourse(courseID int, path string, title, file str
 	log := s.log.With("op", op)
 
 	query := `
-		INSERT INTO videos (path, course_id, title, file)
+		INSERT INTO videos (course_id, path, title, file)
 		VALUES ($1, $2, $3, $4)
 	`
 
-	_, err := s.db.Exec(query, path, courseID, title, file)
+	_, err := s.db.Exec(query, courseID, path, title, file)
 	if err != nil {
 		log.Error("failed to insert video path", sl.Err(err))
 		return fmt.Errorf("%s: %w", op, err)

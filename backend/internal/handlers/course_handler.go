@@ -287,18 +287,20 @@ func (h *CourseHandler) UploadVideos(c *fiber.Ctx) error {
 
 		// Сохранение дополнительного файла, если он есть
 		var filePath string
-		if i < len(extraFiles) && extraFiles[i] != nil {
+		if len(extraFiles) > i && extraFiles[i] != nil {
 			extraFile := extraFiles[i]
 			extraFilename := fmt.Sprintf("%d_%s", time.Now().UnixNano(), extraFile.Filename)
 			extraSavePath := filepath.Join(fileUploadDir, extraFilename)
 			if err := c.SaveFile(extraFile, extraSavePath); err != nil {
 				log.Error("failed to save extra file", sl.Err(err))
-				continue
+				filePath = "" // просто оставляем пустым, но не continue
+			} else {
+				filePath = "/uploads/files/" + extraFilename
 			}
-			filePath = "/uploads/files/" + extraFilename
 		} else {
 			filePath = ""
 		}
+
 
 		// Добавление видео и дополнительного файла в базу данных
 		if err := h.courseService.AddVideoToCourse(courseID, videoRelativePath, titles[i], filePath); err != nil {
