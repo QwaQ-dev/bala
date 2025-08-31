@@ -88,9 +88,9 @@ func (r *CourseRepo) SelectCourseById(courseID int) (structures.Course, error) {
 	log := r.log.With("op", op)
 
 	query := `
-        SELECT 
+		SELECT 
             c.id, c.title, c.description, c.cost, c.diploma_path, c.diploma_x, c.diploma_y, c.img,
-            v.id AS video_id, v.file, v.path AS video_path, v.title AS video_title,
+            v.id AS video_id, v.file AS video_file, v.path AS video_path, v.title AS video_title,
             w.id AS webinar_id, w.link AS webinar_link, w.date AS webinar_date
         FROM courses c
         LEFT JOIN videos v ON v.course_id = c.id
@@ -117,7 +117,6 @@ func (r *CourseRepo) SelectCourseById(courseID int) (structures.Course, error) {
 			videoTitle   sql.NullString
 			file         sql.NullString
 			webinarID    sql.NullInt64
-			webinarTitle sql.NullString
 			webinarLink  sql.NullString
 			webinarDate  sql.NullTime
 			diplomaPath  sql.NullString
@@ -143,7 +142,6 @@ func (r *CourseRepo) SelectCourseById(courseID int) (structures.Course, error) {
 			&videoPath,
 			&videoTitle,
 			&webinarID,
-			&webinarTitle,
 			&webinarLink,
 			&webinarDate,
 		); err != nil {
