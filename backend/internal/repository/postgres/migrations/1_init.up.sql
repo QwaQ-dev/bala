@@ -97,6 +97,8 @@ CREATE TABLE IF NOT EXISTS public.courses (
     description text NOT NULL,
     cost integer NOT NULL,
     diploma_path text NOT NULL,
+    diploma_x integer NOT NULL,
+    diploma_y integer NOT NULL,
     img text NOT NULL,
     CONSTRAINT courses_pkey PRIMARY KEY (id)
 );

@@ -32,11 +32,11 @@ func (r *CourseRepo) InsertCourse(course structures.Course) (int, error) {
 	}
 	defer tx.Rollback()
 
-	query := `INSERT INTO courses (title, description, cost, diploma_path, img)
-	          VALUES ($1, $2, $3, $4, $5)
+	query := `INSERT INTO courses (title, description, cost, diploma_path, diploma_x, diploma_y, img)
+	          VALUES ($1, $2, $3, $4, $5, $6, $7)
 	          RETURNING id`
 	var courseID int
-	err = tx.QueryRow(query, course.Title, course.Description, course.Cost, course.DiplomaPath, course.Img).Scan(&courseID)
+	err = tx.QueryRow(query, course.Title, course.Description, course.Cost, course.DiplomaPath, course.Diploma_x, course.Diploma_y, course.Img).Scan(&courseID)
 	if err != nil {
 		log.Error("failed to insert course", sl.Err(err))
 		return 0, err
@@ -92,7 +92,7 @@ func (r *CourseRepo) SelectCourseById(courseID int) (structures.Course, error) {
 
 	query := `
         SELECT 
-            c.id, c.title, c.description, c.cost, c.diploma_path, c.img,
+            c.id, c.title, c.description, c.cost, c.diploma_path, c.diploma_x, c.diploma_y, c.img,
             v.id AS video_id, v.file, v.path AS video_path, v.title AS video_title,
             w.id AS webinar_id, w.title AS webinar_title, w.link AS webinar_link, w.date AS webinar_date
         FROM courses c
@@ -124,6 +124,8 @@ func (r *CourseRepo) SelectCourseById(courseID int) (structures.Course, error) {
 			webinarLink  sql.NullString
 			webinarDate  sql.NullTime
 			diplomaPath  sql.NullString
+			diplomaX     int
+			diplomaY     int
 		)
 
 		var cId int
@@ -136,6 +138,8 @@ func (r *CourseRepo) SelectCourseById(courseID int) (structures.Course, error) {
 			&description,
 			&cost,
 			&diplomaPath,
+			&diplomaX,
+			&diplomaY,
 			&img,
 			&videoID,
 			&file,
@@ -157,6 +161,8 @@ func (r *CourseRepo) SelectCourseById(courseID int) (structures.Course, error) {
 				Description: description,
 				Cost:        cost,
 				DiplomaPath: diplomaPath.String,
+				Diploma_x:   diplomaX,
+				Diploma_y:   diplomaY,
 				Img:         img,
 			}
 			courseInitialized = true

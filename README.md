@@ -107,6 +107,8 @@ FORM-DATA: CREATE
     "description": "",
     "cost": ,
     "diploma": file,
+    "diploma_x": ,
+    "diploma_y": ,
     "img": file
 
 PUT:

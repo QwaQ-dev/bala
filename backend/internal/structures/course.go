@@ -8,6 +8,8 @@ type Course struct {
 	Description string    `json:"description"`
 	Cost        int       `json:"cost"`
 	DiplomaPath string    `json:"diploma_path"`
+	Diploma_x   int       `json:"diploma_x"`
+	Diploma_y   int       `json:"diploma_y"`
 	Videos      []Video   `json:"videos, omitempty"`
 	Webinars    []Webinar `json:"webinars"`
 	Img         string    `json:"img"`

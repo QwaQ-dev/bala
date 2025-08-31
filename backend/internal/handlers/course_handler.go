@@ -34,6 +34,8 @@ func (h *CourseHandler) CreateCourse(c *fiber.Ctx) error {
 	title := c.FormValue("title")
 	description := c.FormValue("description")
 	costStr := c.FormValue("cost")
+	diplomaX, _ := strconv.Atoi(c.FormValue("diploma_x"))
+	diplomaY, _ := strconv.Atoi(c.FormValue("diploma_y"))
 
 	if title == "" || description == "" {
 		log.Error("missing required fields")
@@ -118,6 +120,8 @@ func (h *CourseHandler) CreateCourse(c *fiber.Ctx) error {
 		Cost:        cost,
 		Img:         imgPath,
 		DiplomaPath: diplomaPath,
+		Diploma_x:   diplomaX,
+		Diploma_y:   diplomaY,
 		Webinars:    webinars,
 	}
 
