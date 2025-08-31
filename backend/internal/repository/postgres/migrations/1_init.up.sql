@@ -118,7 +118,6 @@ CREATE SEQUENCE IF NOT EXISTS public.webinars_id_seq
 
 CREATE TABLE IF NOT EXISTS public.webinars (
     id integer NOT NULL DEFAULT nextval('public.webinars_id_seq'::regclass),
-    title text NOT NULL,
     link text NOT NULL,
     date timestamp without time zone NOT NULL,
     course_id integer NOT NULL,
