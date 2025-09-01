@@ -55,30 +55,27 @@ export async function POST(request) {
     const MAX_EXTRA_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
 
     for (let i = 0; i < extraFiles.length; i++) {
-      if (extraFiles[i] instanceof File && extraFiles[i].size > MAX_EXTRA_FILE_SIZE) { // Исправлено: убрано Measures
+      if (extraFiles[i] && extraFiles[i].size > MAX_EXTRA_FILE_SIZE) { // Исправлено: убрано Measures
         return new Response(
           JSON.stringify({ error: `Дополнительный файл ${i + 1} превышает максимальный размер` }),
           { status: 400, headers: { "Content-Type": "application/json" } }
         );
       }
-      if (extraFiles[i] instanceof File && !ALLOWED_EXTRA_FILE_TYPES.includes(extraFiles[i].type)) {
+      if (extraFiles[i] && extraFiles[i].type && !ALLOWED_EXTRA_FILE_TYPES.includes(extraFiles[i].type)) {
         return new Response(
           JSON.stringify({ error: `Недопустимый тип дополнительного файла ${i + 1}` }),
           { status: 400, headers: { "Content-Type": "application/json" } }
         );
       }
     }
-
     const uploadData = new FormData();
     uploadData.append("course_id", courseId);
     videos.forEach((video, index) => {
-      if (video instanceof File) {
         uploadData.append("video[]", video); // Изменено на "video[]" для соответствия Go backend
         uploadData.append("title[]", titles[index] || `Урок ${index + 1}`);
-        if (extraFiles[index] instanceof File && extraFiles[index].size > 0) {
+        if (extraFiles[index].size > 0) {
           uploadData.append("extra_file[]", extraFiles[index]); // Изменено на "extra_file[]"
         }
-      }
     });
 
     console.log("[Admin Add Video API] UploadData entries:", [...uploadData.entries()]);

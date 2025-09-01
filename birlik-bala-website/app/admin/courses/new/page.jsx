@@ -305,10 +305,6 @@ export default function NewCoursePage() {
           }
         });
 
-        console.log("[NewCoursePage] FormData for video upload:");
-        for (const [key, value] of videoFormData.entries()) {
-          console.log(`[NewCoursePage] ${key} = ${value instanceof File ? value.name || "(empty file)" : value}`);
-        }
 
         const xhr = new XMLHttpRequest();
         xhr.upload.onprogress = (event) => {
