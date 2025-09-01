@@ -55,7 +55,6 @@ export default function AdminDashboard() {
         credentials: "include",
       });
       let courseData = await courseResponse.json();
-      console.log(courseData)
       let coursesData = courseData.courses ?? [];
       if (!courseResponse.ok) throw new Error(courseData.error || `HTTP error (courses): ${courseResponse.status}`);
 
@@ -192,8 +191,8 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Админ-панель</h1>
+    <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      <h1 className="text-2xl sm:text-3xl font-bold mb-6">Админ-панель</h1>
       {error && (
         <Alert variant="destructive" className="mb-4">
           <AlertTriangle className="h-4 w-4" />
@@ -210,10 +209,10 @@ export default function AdminDashboard() {
 
       {/* Checklists Section */}
       <div className="mb-12">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Чеклисты</h2>
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
+          <h2 className="text-xl sm:text-2xl font-semibold mb-2 sm:mb-0">Чеклисты</h2>
           <Link href="/admin/checklists/new">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white">
               <Plus className="w-4 h-4 mr-2" />
               Создать чеклист
             </Button>
@@ -221,23 +220,24 @@ export default function AdminDashboard() {
         </div>
         {checklists.length === 0 ? (
           <div className="text-center py-8">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Чеклисты не найдены</h3>
+            <h3 className="text-lg sm:text-xl font-medium text-gray-900 mb-2">Чеклисты не найдены</h3>
             <p className="text-gray-600">Создайте новый чеклист</p>
           </div>
         ) : (
           <div className="space-y-4">
             {checklists.map((checklist) => (
-              <Card key={checklist.id} className="flex items-center justify-between">
-                <CardHeader>
-                  <CardTitle>{checklist.title}</CardTitle>
+              <Card key={checklist.id} className="flex flex-col sm:flex-row items-center justify-between p-4">
+                <CardHeader className="p-0">
+                  <CardTitle className="text-base sm:text-lg">{checklist.title}</CardTitle>
                   <p className="text-sm text-gray-600">{checklist.description}</p>
                   <p className="text-sm text-gray-500">Возраст: {checklist.forAge} лет</p>
                   <p className="text-sm text-gray-500">URL: {checklist.slug}</p>
                 </CardHeader>
-                <CardContent className="flex items-center gap-2">
+                <CardContent className="p-0 mt-2 sm:mt-0 sm:ml-4 flex flex-col sm:flex-row items-center gap-2">
                   <Button
                     variant="destructive"
                     onClick={() => handleDeleteChecklist(checklist.id)}
+                    className="w-full sm:w-auto"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
                     Удалить
@@ -251,10 +251,10 @@ export default function AdminDashboard() {
 
       {/* Courses Section */}
       <div className="mb-12">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Курсы</h2>
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
+          <h2 className="text-xl sm:text-2xl font-semibold mb-2 sm:mb-0">Курсы</h2>
           <Link href="/admin/courses/new">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white">
               <Plus className="w-4 h-4 mr-2" />
               Создать Курс
             </Button>
@@ -262,21 +262,21 @@ export default function AdminDashboard() {
         </div>
         {courses.length === 0 ? (
           <div className="text-center py-8">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Курсы не найдены</h3>
+            <h3 className="text-lg sm:text-xl font-medium text-gray-900 mb-2">Курсы не найдены</h3>
             <p className="text-gray-600">Создайте новый курс на странице управления</p>
           </div>
         ) : (
           <div className="space-y-4">
             {courses.map((course) => (
-              <Card key={course.id} className="flex items-center justify-between">
-                <CardHeader>
-                  <CardTitle>{course.title}</CardTitle>
+              <Card key={course.id} className="flex flex-col sm:flex-row items-center justify-between p-4">
+                <CardHeader className="p-0">
+                  <CardTitle className="text-base sm:text-lg">{course.title}</CardTitle>
                   <p className="text-sm text-gray-600">{course.description}</p>
                   <p className="text-sm text-gray-500">Slug: {course.slug}</p>
                 </CardHeader>
-                <CardContent className="flex items-center gap-2">
+                <CardContent className="p-0 mt-2 sm:mt-0 sm:ml-4 flex flex-col sm:flex-row items-center gap-2">
                   <Link href={`/admin/courses/${course.id}/edit`}>
-                    <Button variant="outline">
+                    <Button variant="outline" className="w-full sm:w-auto">
                       <Pencil className="w-4 h-4 mr-2" />
                       Редактировать
                     </Button>
@@ -284,6 +284,7 @@ export default function AdminDashboard() {
                   <Button
                     variant="destructive"
                     onClick={() => handleDeleteCourse(course.id)}
+                    className="w-full sm:w-auto"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
                     Удалить
@@ -297,10 +298,10 @@ export default function AdminDashboard() {
 
       {/* Articles Section */}
       <div className="mb-12">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Статьи</h2>
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
+          <h2 className="text-xl sm:text-2xl font-semibold mb-2 sm:mb-0">Статьи</h2>
           <Link href="/admin/articles/new">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white">
               <Plus className="w-4 h-4 mr-2" />
               Создать статью
             </Button>
@@ -308,21 +309,21 @@ export default function AdminDashboard() {
         </div>
         {articles.length === 0 ? (
           <div className="text-center py-8">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Статьи не найдены</h3>
+            <h3 className="text-lg sm:text-xl font-medium text-gray-900 mb-2">Статьи не найдены</h3>
             <p className="text-gray-600">Создайте новую статью</p>
           </div>
         ) : (
           <div className="space-y-4">
             {articles.map((article) => (
-              <Card key={article.id} className="flex items-center justify-between">
-                <CardHeader>
-                  <CardTitle>{article.title}</CardTitle>
+              <Card key={article.id} className="flex flex-col sm:flex-row items-center justify-between p-4">
+                <CardHeader className="p-0">
+                  <CardTitle className="text-base sm:text-lg">{article.title}</CardTitle>
                   <p className="text-sm text-gray-600">{article.description}</p>
                   <p className="text-sm text-gray-500">Slug: {article.slug}</p>
                 </CardHeader>
-                <CardContent className="flex items-center gap-2">
+                <CardContent className="p-0 mt-2 sm:mt-0 sm:ml-4 flex flex-col sm:flex-row items-center gap-2">
                   <Link href={`/admin/articles/${article.id}/edit`}>
-                    <Button variant="outline">
+                    <Button variant="outline" className="w-full sm:w-auto">
                       <Pencil className="w-4 h-4 mr-2" />
                       Редактировать
                     </Button>
@@ -330,6 +331,7 @@ export default function AdminDashboard() {
                   <Button
                     variant="destructive"
                     onClick={() => handleDeleteArticle(article.id)}
+                    className="w-full sm:w-auto"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
                     Удалить
@@ -343,10 +345,10 @@ export default function AdminDashboard() {
 
       {/* Users Section */}
       <div className="mb-12">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Пользователи</h2>
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
+          <h2 className="text-xl sm:text-2xl font-semibold mb-2 sm:mb-0">Пользователи</h2>
           <Link href="/admin/users">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white">
               Управление пользователями
             </Button>
           </Link>

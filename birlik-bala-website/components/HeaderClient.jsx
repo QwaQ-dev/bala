@@ -4,35 +4,29 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
-import { User, LogOut, ChevronDown, Menu } from "lucide-react";
+import { User, LogOut, ChevronDown, Menu, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import redirect from "@/lib/whatsapp";
 
 export default function HeaderClient({ userData }) {
   const router = useRouter();
-  // Безопасная инициализация состояния
   const [username, setUsername] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Обновляем состояние при изменении userData
   useEffect(() => {
     setUsername(userData?.user?.username || "");
     setIsAdmin(userData?.user?.role === "admin" || false);
   }, [userData]);
 
   const handleRedirect = () => {
-  window.location.href = "https://wa.me/77001234567";
-};
-
-
-
+    window.location.href = "https://wa.me/77001234567";
+  };
 
   const handleLogout = async () => {
     try {
       const response = await fetch("/api/auth/logout", {
-        method: "DELETE", 
+        method: "DELETE",
         headers: {
           "Content-Type": "application/json",
         },
@@ -45,7 +39,6 @@ export default function HeaderClient({ userData }) {
         return;
       }
 
-      // Сбрасываем состояние и перенаправляем
       setUsername("");
       setIsAdmin(false);
       setIsDropdownOpen(false);
@@ -58,7 +51,7 @@ export default function HeaderClient({ userData }) {
   };
 
   return (
-    <header className="bg-white shadow-sm">
+    <header className="bg-white shadow-sm fixed top-0 left-0 right-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           <div className="flex items-center flex-shrink-0">
@@ -86,15 +79,17 @@ export default function HeaderClient({ userData }) {
             <button
               className="lg:hidden p-2 text-gray-600 hover:text-gray-900"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="Toggle mobile menu"
             >
-              <Menu className="w-6 h-6" />
+              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
 
-
-              <Button onClick={handleRedirect} className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg whitespace-nowrap">
-                Онлайн-консультация
-              </Button>
-
+            <Button
+              onClick={handleRedirect}
+              className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg hidden sm:block whitespace-nowrap"
+            >
+              Онлайн-консультация
+            </Button>
 
             {username ? (
               <div className="relative">
@@ -108,8 +103,6 @@ export default function HeaderClient({ userData }) {
                   <span className="font-medium hidden sm:block">{username}</span>
                   <ChevronDown className="w-4 h-4" />
                 </button>
-
-
 
                 {isDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
@@ -152,11 +145,53 @@ export default function HeaderClient({ userData }) {
         </div>
       </div>
 
-      {isDropdownOpen && (
-        <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)}></div>
-      )}
+      {/* Мобильное меню */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-30" onClick={() => setIsMobileMenuOpen(false)}></div>
+        <div className="lg:hidden bg-white border-t border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col space-y-4">
+            <Link
+              href="/courses"
+              className="text-gray-600 hover:text-gray-900 transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Курсы
+            </Link>
+            <Link
+              href="http://youtube.com"
+              className="text-gray-600 hover:text-gray-900 transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Видео
+            </Link>
+            <Link
+              href="/checklists"
+              className="text-gray-600 hover:text-gray-900 transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Чек-листы
+            </Link>
+            <Link
+              href="/articles"
+              className="text-gray-600 hover:text-gray-900 transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Статьи
+            </Link>
+            <Button
+              onClick={handleRedirect}
+              className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg w-full sm:hidden"
+            >
+              Онлайн-консультация
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {isDropdownOpen && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setIsDropdownOpen(false)}
+        ></div>
       )}
     </header>
   );
