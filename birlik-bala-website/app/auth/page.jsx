@@ -87,14 +87,7 @@ export default function AuthPage() {
         router.refresh();
 
       } else {
-        let errorMessage = "Произошла ошибка";
-        if (typeof data.error === "string") {
-          errorMessage = data.error;
-        } else if (data.error?.message) {
-          errorMessage = data.error.message;
-        } else if (Array.isArray(data.error)) {
-          errorMessage = data.error.join(", ");
-        }
+        let errorMessage = "Произошла ошибка, попробуйте заново проверив данные";
         setServerError(errorMessage);
       }
     } catch (error) {

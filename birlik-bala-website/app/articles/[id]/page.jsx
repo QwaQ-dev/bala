@@ -5,16 +5,16 @@ import Link from "next/link";
 
 export const revalidate = 3600;
 
-async function getArticle(slug) {
+async function getArticle(id) {
   try {
-    const res = await fetch(`http://localhost:3000/api/articles/${slug}`, {
+    const res = await fetch(`/api/articles/${id}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
       credentials: "include", // For OVT (access_token)
     });
-
+    
     if (!res.ok) {
       console.error("[getArticle] Ошибка:", res.status, await res.text());
       return null;
@@ -22,6 +22,7 @@ async function getArticle(slug) {
     const data = await res.json();
     const article = data.article;
 
+    console.log(data)
 
     // Format data to match ArticlePage expectations and JSON
     return {
@@ -41,7 +42,9 @@ async function getArticle(slug) {
 }
 
 export default async function ArticlePage({ params }) {
-  const article = await getArticle(params.slug);
+  const article = await getArticle(params.id);
+
+  console.log(article)
 
   if (!article) {
     return (
