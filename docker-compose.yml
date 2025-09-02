@@ -45,13 +45,26 @@ services:
     build:
       context: ./birlik-bala-website
       dockerfile: Dockerfile
-    env_file:
-      - birlik-bala-website/.env
+      args:
+        - NODE_ENV=production
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://backend:8080
+      - PORT=3000
     ports:
       - "3000:3000"
     restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
     networks:
       - prod_network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 volumes:
   pgdata:
