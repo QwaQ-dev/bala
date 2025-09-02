@@ -6,5 +6,6 @@ backend/cmd/uploads/photos
 backend/cmd/uploads/articles
 backend/cmd/uploads/diplomas
 backend/cmd/uploads/files
+backend/config/prod.yaml
 
 .env
