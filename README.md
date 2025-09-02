@@ -20,6 +20,8 @@ Birlik Bala - веб-платформа для курсов и чек-листо
 
 ## Быстрый старт
 
+### Продакшен
+
 1. **Клонируйте репозиторий:**
 ```bash
 git clone <repository-url>
@@ -33,6 +35,7 @@ cp .env.example .env
 
 # Настройте переменные для фронтенда
 cp birlik-bala-website/.env.example birlik-bala-website/.env
+# В файле birlik-bala-website/.env установите правильный API URL для продакшена
 ```
 
 3. **Запустите проект:**
@@ -42,6 +45,16 @@ make build && make up
 
 # Или напрямую через docker-compose
 docker-compose up --build
+```
+
+### Локальная разработка
+
+```bash
+# Запуск в режиме разработки с hot reload
+make dev-up
+
+# Или напрямую
+docker-compose -f docker-compose.yml -f docker-compose.local.yml up --build
 ```
 
 4. **Проверьте доступность:**

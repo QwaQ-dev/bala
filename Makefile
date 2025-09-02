@@ -1,12 +1,13 @@
 # Makefile for Bala project
 
-.PHONY: help build up down restart logs clean frontend-logs backend-logs db-logs
+.PHONY: help build up down restart logs clean frontend-logs backend-logs db-logs dev-up
 
 # Default target
 help:
 	@echo "Available commands:"
 	@echo "  build      - Build all Docker images"
-	@echo "  up         - Start all services"
+	@echo "  up         - Start all services (production)"
+	@echo "  dev-up     - Start all services (development mode)"
 	@echo "  down       - Stop all services"
 	@echo "  restart    - Restart all services"
 	@echo "  logs       - Show logs for all services"
@@ -20,9 +21,13 @@ help:
 build:
 	docker-compose build --no-cache
 
-# Start services
+# Start services (production)
 up:
 	docker-compose up -d
+
+# Start services (development)
+dev-up:
+	docker-compose -f docker-compose.yml -f docker-compose.local.yml up -d
 
 # Stop services
 down:

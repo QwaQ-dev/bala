@@ -1,0 +1,21 @@
+# Docker Compose override for local development
+# Use: docker-compose -f docker-compose.yml -f docker-compose.local.yml up
+
+services:
+  frontend:
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+    volumes:
+      # Mount source code for hot reload during development
+      - ./birlik-bala-website:/app
+      - /app/node_modules
+    command: ["pnpm", "dev"]
+    
+  backend:
+    volumes:
+      # Mount backend source for hot reload (if supported)
+      - ./backend:/app
+    environment:
+      - ENV=development
