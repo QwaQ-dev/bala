@@ -1,28 +1,36 @@
-FROM node:18-alpine AS deps
+# Use Node.js Alpine image
+FROM node:20-alpine
 
+# Install pnpm globally
+RUN npm install -g pnpm
+
+# Create app directory
 WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
 
-FROM node:18-alpine AS builder
+# Copy package files
+COPY package.json pnpm-lock.yaml* ./
 
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+# Install dependencies
+RUN pnpm install --no-frozen-lockfile
+
+# Copy source code
 COPY . .
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_ENV=production
-RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build
 
-FROM node:18-alpine AS runner
+# Create non-root user for security
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+RUN chown -R nextjs:nodejs /app
 
-WORKDIR /app
+# Set user
+USER nextjs
 
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/.next/cache ./.next/cache
-
+# Expose port
 EXPOSE 3000
-ENV PORT=3000
 
-CMD ["node", "server.js"]
+# Environment variables
+ENV PORT=3000
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Start the application in production mode
+CMD ["pnpm", "start"]
