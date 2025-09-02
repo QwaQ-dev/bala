@@ -9,3 +9,4 @@ backend/cmd/uploads/files
 backend/config/prod.yaml
 
 .env
+docker-compose.prod.yml
