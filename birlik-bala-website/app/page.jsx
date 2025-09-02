@@ -29,7 +29,7 @@ async function safeFetchJson(url, options = {}) {
 export default async function Home() {
   let articles = [];
 
-  const data = await safeFetchJson("http://localhost:3000/api/articles", {
+  const data = await safeFetchJson("/api/articles", {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
