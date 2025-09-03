@@ -27,7 +27,7 @@ const CustomImage = Node.create({
 
   renderHTML({ HTMLAttributes }) {
     const path = HTMLAttributes["data-path"]
-    const src = HTMLAttributes["src"] || `http://localhost:8081/uploads/articles/${path}`
+    const src = HTMLAttributes["src"] || `http://localhost:8080/uploads/articles/${path}`
     return [
       "img",
       {
@@ -56,7 +56,7 @@ const CustomImage = Node.create({
             type: this.name,
             attrs: {
               "data-path": options["data-path"],
-              src: options.src || `http://localhost:8081/uploads/articles/${options["data-path"]}`,
+              src: options.src || `http://localhost:8080/uploads/articles/${options["data-path"]}`,
             },
           }),
     }
@@ -67,7 +67,7 @@ const CustomImage = Node.create({
       const div = document.createElement("div")
       const img = document.createElement("img")
       const path = node.attrs["data-path"] || ""
-      const src = node.attrs["src"] || `http://localhost:8081/uploads/articles/${path}`
+      const src = node.attrs["src"] || `http://localhost:8080/uploads/articles/${path}`
 
       img.setAttribute("data-path", path)
       img.setAttribute("src", src)
@@ -92,7 +92,7 @@ const Video = Node.create({
 
   renderHTML({ HTMLAttributes }) {
     const path = HTMLAttributes["data-path"]
-    const src = HTMLAttributes["src"] || `http://localhost:8081/uploads/articles/${path}`
+    const src = HTMLAttributes["src"] || `http://localhost:8080/uploads/articles/${path}`
     return [
       "video",
       {
@@ -122,7 +122,7 @@ const Video = Node.create({
             type: this.name,
             attrs: {
               "data-path": options["data-path"],
-              src: options.src || `http://localhost:8081/uploads/articles/${options["data-path"]}`,
+              src: options.src || `http://localhost:8080/uploads/articles/${options["data-path"]}`,
               "data-type": "video",
             },
           }),
@@ -134,7 +134,7 @@ const Video = Node.create({
       const div = document.createElement("div")
       const video = document.createElement("video")
       const path = node.attrs["data-path"] || ""
-      const src = node.attrs["src"] || `http://localhost:8081/uploads/articles/${path}`
+      const src = node.attrs["src"] || `http://localhost:8080/uploads/articles/${path}`
 
       video.setAttribute("data-path", path)
       video.setAttribute("src", src)
@@ -385,7 +385,7 @@ export default function NewArticlePage() {
       Object.entries(article.filePreviews).forEach(([previewUrl, fileName]) => {
         updatedContent = updatedContent.replaceAll(
           previewUrl,
-          `http://localhost:8081/uploads/articles/${fileName}`
+          `http://localhost:8080/uploads/articles/${fileName}`
         )
       })
       setArticle({ ...article, content: updatedContent })
@@ -446,7 +446,7 @@ export default function NewArticlePage() {
       Object.entries(article.filePreviews).forEach(([previewUrl, fileName]) => {
         finalContent = finalContent.replaceAll(
           previewUrl,
-          `http://localhost:8081/uploads/articles/${fileName}`
+          `http://localhost:8080/uploads/articles/${fileName}`
         );
       });
       formData.append("content", finalContent); // Use updated content

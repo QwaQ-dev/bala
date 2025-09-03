@@ -19,6 +19,7 @@ export default function AuthPage() {
   const [formData, setFormData] = useState({
     username: "",
     password: "",
+    role: "user"
   });
 
 
