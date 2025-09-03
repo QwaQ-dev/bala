@@ -20,7 +20,10 @@ export default function HeaderClient({ userData }) {
   }, [userData]);
 
   const handleRedirect = () => {
-    window.location.href = "https://wa.me/77001234567";
+    const phone = "77018409229";
+    const message = "Здравствуйте! Хочу записаться на консультацию.";
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    window.location.href = url;
   };
 
   const handleLogout = async () => {
@@ -64,7 +67,7 @@ export default function HeaderClient({ userData }) {
             <Link href="/courses" className="text-gray-600 hover:text-gray-900 transition-colors">
               Курсы
             </Link>
-            <Link href="http://youtube.com" className="text-gray-600 hover:text-gray-900 transition-colors">
+            <Link href="https://t.me/putryadom" target="_blank" className="text-gray-600 hover:text-gray-900 transition-colors">
               Видео
             </Link>
             <Link href="/checklists" className="text-gray-600 hover:text-gray-900 transition-colors">
@@ -157,7 +160,7 @@ export default function HeaderClient({ userData }) {
               Курсы
             </Link>
             <Link
-              href="http://youtube.com"
+              href="https://t.me/putryadom" target="_blank"
               className="text-gray-600 hover:text-gray-900 transition-colors"
               onClick={() => setIsMobileMenuOpen(false)}
             >

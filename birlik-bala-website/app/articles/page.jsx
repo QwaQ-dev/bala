@@ -19,12 +19,12 @@ async function getArticles() {
     });
 
     if (!res.ok) {
-      console.error("[getArticles] Ошибка:", res.status, await res.text());
+
       return [];
     }
     const data = await res.json();
     const articles = data.articles;
-    console.log(articles)
+
 
 
     return articles.map((article) => ({
@@ -38,7 +38,7 @@ async function getArticles() {
       image: "/placeholder.svg?height=200&width=300", // Нет image в JSON
     }));
   } catch (error) {
-    console.error("[getArticles] Ошибка:", error.message);
+
     return [];
   }
 }
@@ -47,7 +47,7 @@ export default async function ArticlesPage() {
   const articles = await getArticles(); // Получаем статьи
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 mt-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Список статей</h1>

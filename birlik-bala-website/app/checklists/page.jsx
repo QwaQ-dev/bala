@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 
 // ISR - обновляем каждые 30 минут
-export const revalidate = 900;
+export const revalidate = 1800;
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8080";
 
 async function getChecklists() {
@@ -17,17 +17,17 @@ async function getChecklists() {
     });
 
     if (!res.ok) {
-      console.log("[getChecklists] Ошибка:", res.status, await res.text());
+
       return [];
     }
 
     let checklists = await res.json();
 
-    console.log(checklists.checklists);
+
     if (checklists.checklists === null) {
       checklists = {};
     }
-    console.log("[getChecklists] Checklists:", checklists);
+
 
     return checklists.checklists.map((checklist) => ({
       id: checklist.id,
@@ -38,7 +38,6 @@ async function getChecklists() {
       image: "/placeholder.svg?height=200&width=300", // Placeholder image
     }));
   } catch (error) {
-    console.log("[getChecklists] Ошибка:", error.message);
     return [];
   }
 }

@@ -9,10 +9,10 @@ export const dynamic = "force-dynamic";
 
 export default async function CoursesPage() {
   const userData = await getUserData();
-  console.log("Server userData:", userData);
+
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 mt-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20">
 
         <div className="text-center mb-8 sm:mb-12">

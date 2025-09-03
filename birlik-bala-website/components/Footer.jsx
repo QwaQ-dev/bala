@@ -16,10 +16,9 @@ export default function Footer() {
           <div>
             <h4 className="text-lg font-semibold mb-4">Контакты</h4>
             <ul className="space-y-2 text-green-200 text-sm">
-              <li>Телефон: +7 (775) 123 45 67</li>
-              <li>Email: info@birlibala.kz</li>
-              <li>Telegram: @birlikbala</li>
-              <li>WhatsApp: +7 (775) 123 45 67</li>
+              <li>Телефон: +7 (701) 840 92 29</li>
+              <li>Telegram: @putryadom</li>
+              <li>WhatsApp: +7 (701) 840 92 29</li>
             </ul>
           </div>
 
@@ -27,23 +26,18 @@ export default function Footer() {
             <h4 className="text-lg font-semibold mb-4">Социальные сети</h4>
             <ul className="space-y-2 text-green-200 text-sm">
               <li>
-                <a href="#" className="hover:text-white transition-colors">
+                <a href="https://www.instagram.com/prostojigit" className="hover:text-white transition-colors">
                   Instagram
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">
+                <a href="wa.me/77018409229" className="hover:text-white transition-colors">
                   WhatsApp
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">
+                <a href="https://t.me/putryadom" className="hover:text-white transition-colors">
                   Telegram
-                </a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">
-                  YouTube
                 </a>
               </li>
             </ul>
@@ -51,7 +45,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-green-700 mt-8 pt-8 text-center text-green-200 text-sm">
-          <p>&copy; 2024 BIRLIK BALA. Все права защищены.</p>
+          <p>&copy; 2025 BIRLIK BALA. Все права защищены.</p>
         </div>
       </div>
     </footer>

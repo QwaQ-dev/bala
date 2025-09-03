@@ -8,11 +8,12 @@ export async function GET(request) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    const response = await fetch(`${BACKEND_URL}/api/v1/article/get`, {
+    const response = await fetch(`${BACKEND_URL}/api/v1/article/get/`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
+      
       signal: controller.signal,
     });
 

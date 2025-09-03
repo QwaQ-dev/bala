@@ -68,7 +68,7 @@ export default function EditCoursePage() {
             : [],
         });
       } catch (error) {
-        console.error("[EditCoursePage] Error fetching course:", error);
+
         toast.error(`Ошибка: ${error.message || "Не удалось загрузить курс"}`, { action: { label: "Вернуться в админку", onClick: () => router.push("/admin") } });
         setTimeout(() => router.push("/admin"), 3000);
       } finally {
@@ -108,7 +108,7 @@ export default function EditCoursePage() {
       setCourse({ ...course, videos: course.videos.filter((v) => v.id !== videoId) });
       toast.success("Видео удалено");
     } catch (error) {
-      console.error("[EditCoursePage] Error deleting video:", error);
+
       toast.error(`Ошибка при удалении видео: ${error.message || "Не удалось выполнить запрос"}`);
     }
   };
@@ -178,7 +178,7 @@ export default function EditCoursePage() {
       toast.success("Курс успешно обновлён");
       router.push("/admin");
     } catch (error) {
-      console.error("[EditCoursePage] Error:", error);
+
       toast.error(`Ошибка: ${error.message || "Не удалось выполнить запрос"}`);
     } finally {
       setLoading(false);

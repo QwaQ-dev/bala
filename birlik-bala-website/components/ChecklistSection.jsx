@@ -1,13 +1,13 @@
 import { Card, CardContent } from "@/components/ui/card";
 
-export const revalidate = 60; // ISR: обновляем данные раз в 60 секунд
+export const revalidate = 1800; // ISR: обновляем данные раз в 60 секунд
 
 export default async function ChecklistSection() {
   let checklists = [];
 
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/checklists`, {
-      next: { revalidate: 60 }, // ISR
+      next: { revalidate: 1800 }, // ISR
     });
     const data = await res.json();
     checklists = Array.isArray(data) ? data.slice(0, 4) : [];

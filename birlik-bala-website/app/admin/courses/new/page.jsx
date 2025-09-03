@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
-import html2canvas from "html2canvas";
 
 export default function NewCoursePage() {
   const router = useRouter();
@@ -29,10 +28,6 @@ export default function NewCoursePage() {
     webinar_link: "",
     webinar_date: "",
   });
-  const [studentName, setStudentName] = useState("");
-  const [diplomaPreviewUrl, setDiplomaPreviewUrl] = useState(null);
-  const [originalDiplomaUrl, setOriginalDiplomaUrl] = useState(null);
-  const diplomaRef = useRef(null);
   const imageRef = useRef(null);
 
   const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB
@@ -123,81 +118,44 @@ export default function NewCoursePage() {
           }));
         };
         img.src = URL.createObjectURL(file);
-        setOriginalDiplomaUrl(URL.createObjectURL(file));
-        setDiplomaPreviewUrl(URL.createObjectURL(file));
-        console.log("[NewCoursePage] Diploma file selected:", {
-          name: file.name,
-          size: file.size,
-          type: file.type,
-        });
       } else {
-        setOriginalDiplomaUrl(null);
-        setDiplomaPreviewUrl(null);
+        setCourse((prevState) => ({
+          ...prevState,
+          diploma_natural_width: 0,
+          diploma_natural_height: 0,
+        }));
       }
       return newState;
     });
   };
 
   const handleImageClick = (e) => {
-    if (!imageRef.current) return;
+    if (!imageRef.current || !course.diploma) return;
     const rect = imageRef.current.getBoundingClientRect();
+    const naturalWidth = course.diploma_natural_width;
+    const naturalHeight = course.diploma_natural_height;
+    
+    // Calculate scale factors based on displayed vs natural dimensions
+    const scaleX = naturalWidth / rect.width;
+    const scaleY = naturalHeight / rect.height;
+    
+    // Get click coordinates relative to the image
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    const scaleX = course.diploma_natural_width / rect.width;
-    const scaleY = course.diploma_natural_height / rect.height;
-    const newX = Math.round(x * scaleX);
-    const newY = Math.round(y * scaleY);
-    console.log("[NewCoursePage] Click coordinates:", {
-      clientX: x,
-      clientY: y,
-      scaledX: newX,
-      scaledY: newY,
-      rectWidth: rect.width,
-      rectHeight: rect.height,
-      naturalWidth: course.diploma_natural_width,
-      naturalHeight: course.diploma_natural_height,
-      scaleX,
-      scaleY,
-    });
+    
+    // Scale coordinates to match natural dimensions
+    const scaledX = Math.round(x * scaleX);
+    const scaledY = Math.round(y * scaleY);
+    
+    // Ensure coordinates are within image bounds
+    const boundedX = Math.max(0, Math.min(scaledX, naturalWidth));
+    const boundedY = Math.max(0, Math.min(scaledY, naturalHeight));
+
     setCourse((prev) => ({
       ...prev,
-      diploma_x: newX,
-      diploma_y: newY,
+      diploma_x: boundedX,
+      diploma_y: boundedY,
     }));
-    setDiplomaPreviewUrl(originalDiplomaUrl);
-  };
-
-  const generateDiplomaPreview = async () => {
-    if (!course.diploma || !studentName) {
-      toast.error("Укажите имя студента и загрузите шаблон диплома");
-      return;
-    }
-    try {
-      setDiplomaPreviewUrl(originalDiplomaUrl);
-      await new Promise((resolve) => setTimeout(resolve, 0));
-      const canvas = await html2canvas(diplomaRef.current, { scale: 2 });
-      setDiplomaPreviewUrl(canvas.toDataURL("image/png"));
-    } catch (error) {
-      toast.error(`Ошибка при генерации предпросмотра: ${error.message}`);
-    }
-  };
-
-  const downloadDiploma = async () => {
-    if (!course.diploma || !studentName) {
-      toast.error("Укажите имя студента и загрузите шаблон диплома");
-      return;
-    }
-    try {
-      setDiplomaPreviewUrl(originalDiplomaUrl);
-      await new Promise((resolve) => setTimeout(resolve, 0));
-      const canvas = await html2canvas(diplomaRef.current, { scale: 2 });
-      const link = document.createElement("a");
-      link.href = canvas.toDataURL("image/png");
-      link.download = `diploma_${studentName}.png`;
-      link.click();
-    } catch (error) {
-      toast.error(`Ошибка при скачивании диплома: ${error.message}`);
-    }
   };
 
   const handleSubmit = async (e) => {
@@ -248,8 +206,8 @@ export default function NewCoursePage() {
       if (course.diploma) {
         formData.append("diploma", course.diploma);
       }
-      formData.append("diploma_x", course.diploma_x);
-      formData.append("diploma_y", course.diploma_y);
+      formData.append("diploma_x", course.diploma_x.toString());
+      formData.append("diploma_y", course.diploma_y.toString());
       formData.append("diploma_natural_width", course.diploma_natural_width.toString());
       formData.append("diploma_natural_height", course.diploma_natural_height.toString());
       if (course.webinar_link.trim()) formData.append("webinar_link", course.webinar_link);
@@ -270,7 +228,7 @@ export default function NewCoursePage() {
       try {
         createResult = JSON.parse(responseText);
       } catch (parseError) {
-        console.error("[NewCoursePage] Failed to parse course creation response:", responseText);
+
         throw new Error(`Неверный формат ответа: ${responseText.slice(0, 100)}...`);
       }
 
@@ -297,21 +255,19 @@ export default function NewCoursePage() {
             videoFormData.append(`title[${index}]`, video.title);
             if (video.extraFile && video.extraFile.size > 0) {
               videoFormData.append(`extra_file[${index}]`, video.extraFile);
-              console.log(`[NewCoursePage] Appending extra_file[${index}]:`, video.extraFile.name);
+
             } else {
-              // Добавляем пустое значение для extra_file, чтобы сервер знал, что файл не прикреплен
               videoFormData.append(`extra_file[${index}]`, "");
             }
           }
         });
-
 
         const xhr = new XMLHttpRequest();
         xhr.upload.onprogress = (event) => {
           if (event.lengthComputable) {
             const percent = Math.round((event.loaded / event.total) * 100);
             setUploadProgress(percent);
-            console.log(`[NewCoursePage] Upload progress: ${percent}%`);
+
           }
         };
 
@@ -325,10 +281,10 @@ export default function NewCoursePage() {
               let videoResult;
               try {
                 videoResult = JSON.parse(xhr.responseText);
-                console.log("[NewCoursePage] Video Upload Response:", videoResult);
+
                 toast.success("Все видео и дополнительные файлы успешно загружены");
               } catch (parseError) {
-                console.error("[NewCoursePage] Failed to parse video upload response:", xhr.responseText);
+
                 toast.error(`Неверный формат ответа для видео: ${xhr.responseText.slice(0, 100)}...`);
                 return;
               }
@@ -337,11 +293,11 @@ export default function NewCoursePage() {
               try {
                 videoResult = JSON.parse(xhr.responseText);
               } catch (parseError) {
-                console.error("[NewCoursePage] Failed to parse video upload error response:", xhr.responseText);
+
                 toast.error(`Ошибка загрузки видео: Неверный формат ответа`);
                 return;
               }
-              console.log("[NewCoursePage] Video Upload Response:", videoResult);
+
               toast.warning(`Видео или дополнительные файлы не загружены: ${videoResult.error || videoResult.message || "Неизвестная ошибка"}`);
             }
           }
@@ -353,7 +309,7 @@ export default function NewCoursePage() {
       toast.success("Курс успешно создан");
       router.push("/admin");
     } catch (error) {
-      console.error("[NewCoursePage] Error during submission:", error);
+
       toast.error(`Ошибка: ${error.message || "Не удалось выполнить запрос"}`);
     } finally {
       setLoading(false);
@@ -370,8 +326,7 @@ export default function NewCoursePage() {
       course.diploma ||
       course.videos.some((video) => video.file || video.title || video.extraFile) ||
       course.webinar_link ||
-      course.webinar_date ||
-      studentName
+      course.webinar_date
     ) {
       if (confirm("Вы уверены, что хотите отменить создание курса? Все изменения будут потеряны.")) {
         router.push("/admin");
@@ -382,7 +337,7 @@ export default function NewCoursePage() {
   };
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 pt-20"> {/* Added top padding for header */}
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 pt-20">
       <div className="flex flex-col sm:flex-row items-center gap-4 mb-8">
         <Link href="/admin">
           <Button variant="outline" size="sm">
@@ -488,63 +443,22 @@ export default function NewCoursePage() {
                 />
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Предпросмотр диплома */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Предпросмотр диплома</CardTitle>
-            <p className="text-sm text-gray-600">Кликните на изображение, чтобы выбрать координаты имени</p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="studentName">Имя студента</Label>
-              <Input
-                id="studentName"
-                value={studentName}
-                onChange={(e) => setStudentName(e.target.value)}
-                placeholder="Введите имя студента"
-              />
-            </div>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button type="button" onClick={generateDiplomaPreview} disabled={!course.diploma || !studentName} className="w-full sm:w-auto">
-                Показать предпросмотр
-              </Button>
-              <Button type="button" onClick={downloadDiploma} disabled={!course.diploma || !studentName} className="w-full sm:w-auto">
-                Скачать диплом
-              </Button>
-            </div>
-            {diplomaPreviewUrl && (
+            {course.diploma && (
               <div className="mt-4">
-                <div ref={diplomaRef} style={{ position: "relative", display: "inline-block" }}>
+                <Label>Выберите позицию имени на дипломе</Label>
+                <div style={{ position: "relative", display: "inline-block" }}>
                   <img
                     ref={imageRef}
-                    src={diplomaPreviewUrl}
-                    alt="Diploma Preview"
+                    src={course.diploma ? URL.createObjectURL(course.diploma) : ""}
+                    alt="Diploma Template"
                     style={{ maxWidth: "100%", height: "auto", cursor: "crosshair" }}
                     onClick={handleImageClick}
                   />
-                  {studentName && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        left: `${course.diploma_x}px`,
-                        top: `${course.diploma_y}px`,
-                        fontSize: "24px",
-                        color: "black",
-                        fontFamily: "Arial",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      {studentName}
-                    </div>
-                  )}
                   <div
                     style={{
                       position: "absolute",
-                      left: `${course.diploma_x - 4}px`,
-                      top: `${course.diploma_y - 4}px`,
+                      left: `${course.diploma_x / (course.diploma_natural_width / imageRef.current?.width || 1)}px`,
+                      top: `${course.diploma_y / (course.diploma_natural_height / imageRef.current?.height || 1)}px`,
                       width: "8px",
                       height: "8px",
                       backgroundColor: "red",
@@ -612,7 +526,7 @@ export default function NewCoursePage() {
                             type="file"
                             accept="video/mp4"
                             onChange={(e) => handleFileChange(video.id, e.target.files[0])}
-                            required={!video.file} // Required only if no file is selected
+                            required={!video.file}
                           />
                           {video.file && (
                             <p className="text-sm text-gray-500 mt-1">
@@ -682,7 +596,7 @@ export default function NewCoursePage() {
         </Card>
 
         {/* Кнопки */}
-        <div className="flex flex-col sm:flex-row items-center gap-4 pb-8"> {/* Added bottom padding */}
+        <div className="flex flex-col sm:flex-row items-center gap-4 pb-8">
           <Button type="submit" disabled={loading} className="min-w-32 w-full sm:w-auto">
             {loading ? "Создание..." : "Создать курс"}
           </Button>

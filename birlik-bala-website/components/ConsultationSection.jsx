@@ -6,12 +6,12 @@ import { Check } from "lucide-react"
 
 export default function ConsultationSection() {
   const handleRedirect = (pkgName) => {
-    const phone = "77053245524" 
+    const phone = "77053245524"
     const message = pkgName
       ? `Здравствуйте! Хочу записаться на ${pkgName}.`
       : "Здравствуйте! Хочу записаться на консультацию."
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
-    window.location.href = url
+    window.open(url, "_blank")
   }
 
   const benefits = [
@@ -31,31 +31,30 @@ export default function ConsultationSection() {
 
   const packages = [
     {
-      name: "Базовая консультация",
-      price: "5,000₸",
-      duration: "45 минут",
-      features: "Анализ ситуации • Рекомендации",
+      name: "Базовая консультация (бесплатно)",
+      description: [
+        "Подходит, если вы хотите просто понять, с чего начать.",
+        "Определяю особенности ребёнка.",
+        "Создаю сенсорный профиль (какие системы перегружены, какие требуют развития).",
+        "Даю первые рекомендации для домашних занятий.",
+        "✨ Отличный старт, чтобы понять направление."
+      ],
       color: "bg-green-500",
       hoverColor: "hover:bg-green-600",
-      isPopular: false,
     },
     {
-      name: "Расширенная консультация",
-      price: "8,000₸",
-      duration: "90 минут",
-      features: "Детальный план • Поддержка в WhatsApp",
+      name: "Расширенная консультация + сопровождение (10 000 тг)",
+      description: [
+        "Для родителей, которым важно двигаться системно и под контролем специалиста.",
+        "Подробная диагностика + расширенный сенсорный профиль.",
+        "Индивидуальный план занятий на месяц.",
+        "Подбор упражнений именно под вашего ребёнка.",
+        "Контроль выполнения: связь по WhatsApp, корректировка программы.",
+        "Ответы на все ваши вопросы в процессе.",
+        "🔥 Формат для тех, кто хочет не просто советы, а результат."
+      ],
       color: "bg-orange-500",
       hoverColor: "hover:bg-orange-600",
-      isPopular: true,
-    },
-    {
-      name: "VIP консультация",
-      price: "12,000₸",
-      duration: "120 минут",
-      features: "Индивидуальная программа • Месяц поддержки",
-      color: "bg-blue-500",
-      hoverColor: "hover:bg-blue-600",
-      isPopular: false,
     },
   ]
 
@@ -72,12 +71,12 @@ export default function ConsultationSection() {
 
             <div className="space-y-6 mb-8">
               {benefits.map((benefit, index) => (
-                <div key={index} className="flex items-start space-x-4">
-                  <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mt-1 flex-shrink-0">
-                    <Check className="w-4 h-4 text-green-600" />
+                <div key={index} className="flex items-start space-x-4 bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition">
+                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Check className="w-5 h-5 text-green-600" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-gray-900 mb-1">{benefit.title}</h4>
+                    <h4 className="font-semibold text-gray-900 mb-1">{benefit.title}</h4>
                     <p className="text-gray-600 text-sm">{benefit.description}</p>
                   </div>
                 </div>
@@ -86,7 +85,7 @@ export default function ConsultationSection() {
 
             <Button
               onClick={() => handleRedirect()}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg rounded-lg shadow"
             >
               Записаться на консультацию
             </Button>
@@ -96,44 +95,32 @@ export default function ConsultationSection() {
           <div>
             <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">Выберите формат</h3>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
               {packages.map((pkg, index) => (
-                <div key={index} className="relative">
-                  {pkg.isPopular && (
-                    <div className="absolute -top-3 left-4 z-10">
-                      <span className="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-medium">
-                        Популярный
-                      </span>
+                <Card
+                  key={index}
+                  className="border-2 border-gray-200 bg-white hover:shadow-xl transition-shadow rounded-xl overflow-hidden"
+                >
+                  <CardContent className="p-6">
+                    <h4 className={`text-xl font-bold mb-4 ${pkg.color.replace("bg", "text")}`}>
+                      {pkg.name}
+                    </h4>
+                    <div className="space-y-2 mb-4">
+                      {pkg.description.map((line, i) => (
+                        <div key={i} className="flex items-start space-x-2">
+                          <span className="text-green-600 mt-1">•</span>
+                          <p className="text-gray-700 text-sm">{line}</p>
+                        </div>
+                      ))}
                     </div>
-                  )}
-
-                  <Card
-                    className={`border-2 hover:shadow-lg transition-shadow ${
-                      pkg.isPopular ? "border-orange-200 bg-orange-50" : "border-gray-200 bg-white"
-                    }`}
-                  >
-                    <CardContent className="p-6">
-                      <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <h4 className="text-lg font-bold text-gray-900">{pkg.name}</h4>
-                          <p className="text-sm text-gray-600 mt-1">
-                            {pkg.duration} • {pkg.features}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-2xl font-bold text-gray-900">{pkg.price}</div>
-                        </div>
-                      </div>
-
-                      <Button
-                        onClick={() => handleRedirect(pkg.name)}
-                        className={`w-full ${pkg.color} ${pkg.hoverColor} text-white py-3`}
-                      >
-                        Выбрать
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </div>
+                    <Button
+                      onClick={() => handleRedirect(pkg.name)}
+                      className={`w-full ${pkg.color} ${pkg.hoverColor} text-white py-3 rounded-lg shadow`}
+                    >
+                      Выбрать
+                    </Button>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           </div>

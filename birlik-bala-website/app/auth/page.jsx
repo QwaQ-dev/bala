@@ -21,26 +21,7 @@ export default function AuthPage() {
     password: "",
   });
 
-  // Проверяем, авторизован ли пользователь
-  useEffect(() => {
-    async function checkAuth() {
-      try {
-        const response = await fetch("/api/auth/user", {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        });
 
-        if (response.ok) {
-          console.log("[AuthPage] Пользователь уже авторизован, перенаправление на /courses");
-          router.push("/courses");
-        }
-      } catch (error) {
-        console.log("[AuthPage] Нет авторизации:", error.message);
-      }
-    }
-    checkAuth();
-  }, [router]);
 
   const validateForm = () => {
     const newErrors = {};

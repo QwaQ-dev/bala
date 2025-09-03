@@ -8,7 +8,7 @@ import Footer from "@/components/Footer";
 import VideoExercises from "@/components/VideoExercises"
 
 // ISR: страница будет перегенерироваться каждые 1800 секунд (30 минут)
-export const revalidate = 10;
+export const revalidate = 1800;
 
 // 🔹 универсальный helper
 async function safeFetchJson(url, options = {}) {
@@ -21,7 +21,6 @@ async function safeFetchJson(url, options = {}) {
     const text = await res.text();
     return text ? JSON.parse(text) : {};
   } catch (err) {
-    console.error("[safeFetchJson] Fetch/parse failed:", err.message);
     return {};
   }
 }
@@ -34,22 +33,29 @@ export default async function Home() {
     headers: {
       "Content-Type": "application/json",
     },
-    next: { revalidate: 10 },
+    next: { revalidate: 1800 },
   });
-  console.log(data)
 
-  if(data === null){
-    articles = []
-  }else{
 
-    articles = (data.articles || data)
-      .slice(0, 3)
-      .map((article) => ({
-        ...article,
-        description:
-          article.description || extractDescription(article.content),
-      }));
-  }
+    if (Array.isArray(data.articles)) {
+      articles = data.articles
+        .slice(0, 3)
+        .map((article) => ({
+          ...article,
+          description: article.description || extractDescription(article.content),
+        }));
+    } else if (Array.isArray(data)) {
+      articles = data
+        .slice(0, 3)
+        .map((article) => ({
+          ...article,
+          description: article.description || extractDescription(article.content),
+        }));
+    } else {
+
+      articles = [];
+    }
+
 
   return (
     <main className="min-h-screen">

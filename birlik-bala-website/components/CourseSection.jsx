@@ -21,7 +21,7 @@ export default function CourseSection() {
   ];
 
   const handleRedirect = (message) => {
-    const phone = "77001234567"; // твой номер
+    const phone = "77018409229"; // твой номер
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
     window.location.href = url;
   };

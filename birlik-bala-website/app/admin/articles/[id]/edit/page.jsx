@@ -32,7 +32,7 @@ const CustomImage = Node.create({
       {
         ...HTMLAttributes,
         "data-path": path,
-        src: HTMLAttributes.src || `http://localhost:8080/uploads/articles/${path}`,
+        src: HTMLAttributes.src || `http://localhost:8081/uploads/articles/${path}`,
         alt: path || "Image",
         style: "max-width: 500px; width: 100%; height: auto;",
       },
@@ -55,7 +55,7 @@ const CustomImage = Node.create({
             type: this.name,
             attrs: {
               "data-path": options["data-path"],
-              src: `http://localhost:8080/uploads/articles/${options["data-path"]}`,
+              src: `http://localhost:8081/uploads/articles/${options["data-path"]}`,
             },
           }),
     }
@@ -68,7 +68,7 @@ const CustomImage = Node.create({
       const path = node.attrs["data-path"] || ""
 
       img.setAttribute("data-path", path)
-      img.setAttribute("src", `http://localhost:8080/uploads/articles/${path}`)
+      img.setAttribute("src", `http://localhost:8081/uploads/articles/${path}`)
       img.setAttribute("alt", path || "Image")
       img.setAttribute("style", "max-width: 500px; width: 100%; height: auto;")
 
@@ -95,7 +95,7 @@ const Video = Node.create({
       {
         ...HTMLAttributes,
         "data-path": path,
-        src: `http://localhost:8080/uploads/articles/${path}`,
+        src: `http://localhost:8081/uploads/articles/${path}`,
         controls: true,
         style: "width: 100%; max-width: 600px; height: auto;",
       },
@@ -118,7 +118,7 @@ const Video = Node.create({
             type: this.name,
             attrs: {
               "data-path": options["data-path"],
-              src: `http://localhost:8080/uploads/articles/${options["data-path"]}`,
+              src: `http://localhost:8081/uploads/articles/${options["data-path"]}`,
             },
           }),
     }
@@ -131,7 +131,7 @@ const Video = Node.create({
       const path = node.attrs["data-path"] || ""
 
       video.setAttribute("data-path", path)
-      video.setAttribute("src", `http://localhost:8080/uploads/articles/${path}`)
+      video.setAttribute("src", `http://localhost:8081/uploads/articles/${path}`)
       video.setAttribute("controls", "true")
       video.setAttribute("style", "width: 100%; max-width: 600px; height: auto;")
 
@@ -373,7 +373,7 @@ export default function EditArticlePage() {
     ],
     content: "",
     onUpdate: ({ editor }) => {
-      console.log("[EditArticlePage] Editor updated, content:", editor.getHTML())
+       ("[EditArticlePage] Editor updated, content:", editor.getHTML())
       setArticle((prev) => ({ ...prev, content: editor.getHTML() }))
     },
     immediatelyRender: false,
@@ -404,7 +404,7 @@ export default function EditArticlePage() {
           .split("; ")
           .find((row) => row.startsWith("access_token="))
           ?.split("=")[1]
-        console.log("[EditArticlePage] Access token:", token || "none")
+
 
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), 10000)
@@ -419,12 +419,12 @@ export default function EditArticlePage() {
         })
         clearTimeout(timeoutId)
 
-        console.log("[EditArticlePage] Fetch article response status:", response.status)
+
         const data = await response.json()
-        console.log("[EditArticlePage] Fetch article response body:", data)
+
 
         if (!response.ok) {
-          console.error("[EditArticlePage] Failed to fetch article:", response.status, data)
+
           throw new Error(data.error || `HTTP ошибка: ${response.status}`)
         }
 
@@ -442,7 +442,7 @@ export default function EditArticlePage() {
           editor.commands.setContent(data.article.content)
         }
       } catch (error) {
-        console.error("[EditArticlePage] Fetch error:", error.message)
+
         setError(error.message)
         toast.error(`Ошибка при загрузке статьи: ${error.message}`)
       } finally {
@@ -455,7 +455,7 @@ export default function EditArticlePage() {
 
   const handleCategoryChange = (e) => {
     const selected = Array.from(e.target.selectedOptions).map((option) => option.value)
-    console.log("[EditArticlePage] Selected categories:", selected)
+
     setArticle({ ...article, category: selected })
   }
 
@@ -510,12 +510,12 @@ export default function EditArticlePage() {
         .split("; ")
         .find((row) => row.startsWith("access_token="))
         ?.split("=")[1]
-      console.log("[EditArticlePage] Access token for update:", token || "none")
-      console.log("[EditArticlePage] JSON data:", jsonData)
+
+
 
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 10000)
-      console.log("JSON.stringify(jsonData):", JSON.stringify(jsonData))
+
 
       const response = await fetch(`/api/admin/articles/${id}`, {
         method: "PUT",
@@ -528,14 +528,14 @@ export default function EditArticlePage() {
         signal: controller.signal,
       })
       clearTimeout(timeoutId)
-      console.log(response)
 
-      console.log("[EditArticlePage] Update article response status:", response.status)
+
+
       const result = await response.json()
-      console.log("[EditArticlePage] Update article response body:", result)
+
 
       if (!response.ok) {
-        console.error("[EditArticlePage] Failed to update article:", response.status, result)
+
         toast.error(`Ошибка при обновлении статьи: ${result.error || result.message || "Неизвестная ошибка"}`)
         setLoading(false)
         return
@@ -544,7 +544,7 @@ export default function EditArticlePage() {
       toast.success("Статья успешно обновлена")
       router.push("/admin")
     } catch (error) {
-      console.error("[EditArticlePage] Update error:", error.message)
+
       setError(error.message)
       toast.error(`Ошибка: ${error.message || "Не удалось выполнить запрос"}`)
     } finally {

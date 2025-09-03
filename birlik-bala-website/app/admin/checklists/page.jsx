@@ -28,7 +28,7 @@ export default function AdminChecklistsPage() {
         .split("; ")
         .find((row) => row.startsWith("access_token="))
         ?.split("=")[1];
-      console.log("[AdminChecklistsPage] Access token:", token || "none");
+
 
       const response = await fetch("/api/checklists", {
         method: "GET",
@@ -38,30 +38,30 @@ export default function AdminChecklistsPage() {
         },
         credentials: "include",
       });
-      console.log("[AdminChecklistsPage] Fetch checklists response status:", response.status);
+
       const responseText = await response.text();
-      console.log("[AdminChecklistsPage] Fetch checklists response body:", responseText);
+
 
       let data;
       try {
         data = JSON.parse(responseText);
         if (!Array.isArray(data)) {
-          console.error("[AdminChecklistsPage] Expected checklists array:", data);
+
           throw new Error("Invalid checklists data format");
         }
       } catch (parseError) {
-        console.error("[AdminChecklistsPage] JSON parse error:", parseError.message, responseText);
+
         throw new Error("Invalid response format from server");
       }
 
       if (!response.ok) {
-        console.error("[AdminChecklistsPage] Failed to fetch checklists:", response.status, data);
+
         throw new Error(data.error || `HTTP error: ${response.status}`);
       }
 
       setChecklists(data);
     } catch (error) {
-      console.error("[AdminChecklistsPage] Failed to load checklists:", error.message);
+
       setError(error.message);
     } finally {
       setLoading(false);
@@ -76,7 +76,7 @@ export default function AdminChecklistsPage() {
         .split("; ")
         .find((row) => row.startsWith("access_token="))
         ?.split("=")[1];
-      console.log("[AdminChecklistsPage] Access token for delete:", token || "none");
+
 
       const response = await fetch(`/api/admin/checklists/${id}`, {
         method: "DELETE",
@@ -86,28 +86,28 @@ export default function AdminChecklistsPage() {
         },
         credentials: "include",
       });
-      console.log("[AdminChecklistsPage] Delete checklist response status:", response.status);
+
       const responseText = await response.text();
-      console.log("[AdminChecklistsPage] Delete checklist response body:", responseText);
+
 
       let data;
       try {
         data = responseText ? JSON.parse(responseText) : {};
       } catch (parseError) {
-        console.error("[AdminChecklistsPage] JSON parse error:", parseError.message, responseText);
+
         throw new Error("Invalid response format from server");
       }
 
       if (!response.ok) {
-        console.error("[AdminChecklistsPage] Failed to delete checklist:", response.status, data);
+
         throw new Error(data.error || `Failed to delete checklist: ${response.status}`);
       }
 
-      console.log("[AdminChecklistsPage] Checklist deleted successfully:", id);
+
       setSuccess(`Чеклист с ID ${id} успешно удалён`);
       setChecklists(checklists.filter((checklist) => checklist.id !== id));
     } catch (error) {
-      console.error("[AdminChecklistsPage] Delete error:", error.message);
+
       setError(error.message);
     }
   };

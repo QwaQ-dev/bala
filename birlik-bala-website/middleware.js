@@ -18,9 +18,6 @@ export async function middleware(req) {
 
   // 🔒 Админка
   if (pathname.startsWith("/admin")) {
-    if (!token) {
-      return redirect("/auth", "Пожалуйста, авторизуйтесь");
-    }
     try {
       const res = await fetch(`${process.env.BACKEND_URL}/api/v1/auth/user-info`, {
         headers: { Cookie: `access_token=${token}` },

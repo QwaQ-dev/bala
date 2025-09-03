@@ -42,12 +42,16 @@ export default function CoursesClient() {
   });
 
   const handleCourseAction = (course) => {
-    if (course.has_access) {
-      router.push(`/courses/${course.id}`);
-    } else {
-      alert(`Обратитесь в Whats App за покупкой курса`);
-    }
-  };
+  if (course.has_access) {
+    router.push(`/courses/${course.id}`);
+  } else {
+    const phone = "77018409229"; // номер для WhatsApp
+    const message = `Здравствуйте! Хочу приобрести курс "${course.title}".`;
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank", "noopener,noreferrer"); // открываем в новой вкладке
+  }
+};
+
 
   return (
     <>
@@ -86,7 +90,7 @@ export default function CoursesClient() {
             <div className="relative h-32 sm:h-48 bg-gray-100 flex-shrink-0">
               {course.img && (
                 <img
-                  src={`http://localhost:8080${course.img}`}
+                  src={`http://localhost:8081${course.img}`}
                   alt={course.title}
                   className="object-cover w-full h-full"
                 />

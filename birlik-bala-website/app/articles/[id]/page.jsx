@@ -3,16 +3,17 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Clock, User, Calendar } from "lucide-react";
 import Link from "next/link";
 
-export const revalidate = 3600;
+
 
 async function getArticle(id) {
   try {
-    const res = await fetch(`/api/articles/${id}`, {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    const res = await fetch(`${baseUrl}/api/articles/${id}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
-      credentials: "include", // For OVT (access_token)
+      cache: "no-store",
     });
     
     if (!res.ok) {
@@ -36,7 +37,7 @@ async function getArticle(id) {
       slug: article.id || article.id.toString(),
     };
   } catch (error) {
-    console.error("[getArticle] Ошибка:", error.message);
+5
     return null;
   }
 }
@@ -62,8 +63,8 @@ export default async function ArticlePage({ params }) {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="min-h-screen bg-white ">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mt-10">
         {/* Навигация назад */}
         <Link href="/articles" className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-700 mb-8">
           <ArrowLeft className="w-4 h-4" />

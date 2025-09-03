@@ -27,7 +27,7 @@ const CustomImage = Node.create({
 
   renderHTML({ HTMLAttributes }) {
     const path = HTMLAttributes["data-path"]
-    const src = HTMLAttributes["src"] || `http://localhost:8080/uploads/articles/${path}`
+    const src = HTMLAttributes["src"] || `http://localhost:8081/uploads/articles/${path}`
     return [
       "img",
       {
@@ -56,7 +56,7 @@ const CustomImage = Node.create({
             type: this.name,
             attrs: {
               "data-path": options["data-path"],
-              src: options.src || `http://localhost:8080/uploads/articles/${options["data-path"]}`,
+              src: options.src || `http://localhost:8081/uploads/articles/${options["data-path"]}`,
             },
           }),
     }
@@ -67,7 +67,7 @@ const CustomImage = Node.create({
       const div = document.createElement("div")
       const img = document.createElement("img")
       const path = node.attrs["data-path"] || ""
-      const src = node.attrs["src"] || `http://localhost:8080/uploads/articles/${path}`
+      const src = node.attrs["src"] || `http://localhost:8081/uploads/articles/${path}`
 
       img.setAttribute("data-path", path)
       img.setAttribute("src", src)
@@ -92,7 +92,7 @@ const Video = Node.create({
 
   renderHTML({ HTMLAttributes }) {
     const path = HTMLAttributes["data-path"]
-    const src = HTMLAttributes["src"] || `http://localhost:8080/uploads/articles/${path}`
+    const src = HTMLAttributes["src"] || `http://localhost:8081/uploads/articles/${path}`
     return [
       "video",
       {
@@ -122,7 +122,7 @@ const Video = Node.create({
             type: this.name,
             attrs: {
               "data-path": options["data-path"],
-              src: options.src || `http://localhost:8080/uploads/articles/${options["data-path"]}`,
+              src: options.src || `http://localhost:8081/uploads/articles/${options["data-path"]}`,
               "data-type": "video",
             },
           }),
@@ -134,7 +134,7 @@ const Video = Node.create({
       const div = document.createElement("div")
       const video = document.createElement("video")
       const path = node.attrs["data-path"] || ""
-      const src = node.attrs["src"] || `http://localhost:8080/uploads/articles/${path}`
+      const src = node.attrs["src"] || `http://localhost:8081/uploads/articles/${path}`
 
       video.setAttribute("data-path", path)
       video.setAttribute("src", src)
@@ -385,7 +385,7 @@ export default function NewArticlePage() {
       Object.entries(article.filePreviews).forEach(([previewUrl, fileName]) => {
         updatedContent = updatedContent.replaceAll(
           previewUrl,
-          `http://localhost:8080/uploads/articles/${fileName}`
+          `http://localhost:8081/uploads/articles/${fileName}`
         )
       })
       setArticle({ ...article, content: updatedContent })
@@ -418,58 +418,67 @@ export default function NewArticlePage() {
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!article.title.trim() || article.title.length < 3)
-      return toast.error("Название статьи должно быть не короче 3 символов")
+      return toast.error("Название статьи должно быть не короче 3 символов");
 
     if (!article.content.trim() || article.content === "<p></p>")
-      return toast.error("Введите содержание статьи")
+      return toast.error("Введите содержание статьи");
 
-    if (!article.category) return toast.error("Выберите категорию")
+    if (!article.category) return toast.error("Выберите категорию");
 
     if (!article.author.trim() || article.author.length < 2)
-      return toast.error("Имя автора должно быть не короче 2 символов")
+      return toast.error("Имя автора должно быть не короче 2 символов");
 
-    const readTimeNum = Number.parseInt(article.readTime)
+    const readTimeNum = Number.parseInt(article.readTime);
     if (!article.readTime || isNaN(readTimeNum) || readTimeNum <= 0)
-      return toast.error("Введите корректное время чтения")
+      return toast.error("Введите корректное время чтения");
 
-    setLoading(true)
+    setLoading(true);
 
     try {
-      const formData = new FormData()
-      formData.append("title", article.title)
-      formData.append("content", article.content)
-      formData.append("category", article.category)
-      formData.append("author", article.author)
-      formData.append("readTime", article.readTime)
-      formData.append("slug", article.slug)
+      const formData = new FormData();
+      formData.append("title", article.title);
+      
+      // Replace blob URLs with server URLs in content
+      let finalContent = article.content;
+      Object.entries(article.filePreviews).forEach(([previewUrl, fileName]) => {
+        finalContent = finalContent.replaceAll(
+          previewUrl,
+          `http://localhost:8081/uploads/articles/${fileName}`
+        );
+      });
+      formData.append("content", finalContent); // Use updated content
+      formData.append("category", article.category);
+      formData.append("author", article.author);
+      formData.append("readTime", article.readTime);
+      formData.append("slug", article.slug);
 
-      article.files.forEach((file) => formData.append("files", file))
+      article.files.forEach((file) => formData.append("files", file));
 
       const token = document.cookie
         .split("; ")
         .find((row) => row.startsWith("access_token="))
-        ?.split("=")[1]
+        ?.split("=")[1];
 
       const response = await fetch("/api/admin/articles/create", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         credentials: "include",
         body: formData,
-      })
+      });
 
-      if (!response.ok) throw new Error(await response.text())
+      if (!response.ok) throw new Error(await response.text());
 
-      toast.success("Статья успешно создана")
-      router.push("/admin")
+      toast.success("Статья успешно создана");
+      router.push("/admin");
     } catch (err) {
-      toast.error(`Ошибка: ${err.message}`)
+      toast.error(`Ошибка: ${err.message}`);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleCancel = () => {
     if (
@@ -487,7 +496,7 @@ export default function NewArticlePage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 mt-10">
       <div className="flex items-center gap-4 mb-8">
         <Link href="/admin">
           <Button variant="outline" size="sm">

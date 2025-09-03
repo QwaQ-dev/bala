@@ -85,7 +85,7 @@ export default function CoursePage({ params }) {
       const ctx = canvas.getContext("2d");
       const diplomaImg = new Image();
       diplomaImg.crossOrigin = "anonymous";
-      diplomaImg.src = `http://localhost:8080${course.diploma_path}`;
+      diplomaImg.src = `http://localhost:8081${course.diploma_path}`;
       await new Promise((resolve, reject) => {
         diplomaImg.onload = resolve;
         diplomaImg.onerror = reject;
@@ -112,11 +112,17 @@ export default function CoursePage({ params }) {
     }
   };
 
+  // ✅ Открыть файл в новой вкладке
+  const openFileInNewTab = (filePath) => {
+    const url = `http://localhost:8081${filePath}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   if (loading) return <p className="p-8">Загрузка курса...</p>;
   if (error || !course) return <p className="p-8 text-red-600">{error || "Курс не найден"}</p>;
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 mt-10">
       <h1 className="text-3xl font-bold mb-2">{course.title}</h1>
       <p className="text-gray-600 mb-4">{course.description}</p>
 
@@ -151,7 +157,7 @@ export default function CoursePage({ params }) {
                 <div>
                   <div className="aspect-video bg-black rounded-t-lg overflow-hidden">
                     <video
-                      src={`http://localhost:8080${currentVideo.path}`}
+                      src={`http://localhost:8081${currentVideo.path}`}
                       controls
                       className="w-full h-full object-contain"
                       onEnded={() =>
@@ -165,18 +171,18 @@ export default function CoursePage({ params }) {
                       <p className="text-gray-600 mb-4">{currentVideo.description}</p>
                     )}
 
-                    {/* Attached file */}
+                    {/* ✅ Открыть прикрепленный файл в новой вкладке */}
                     {currentVideo.file && (
                       <div className="mt-4">
                         <Label>Прикреплённый файл:</Label>
-                        <a
-                          href={`http://localhost:8080${currentVideo.file}`}
-                          download
-                          className="text-blue-600 hover:underline flex items-center gap-2"
+                        <Button
+                          variant="link"
+                          className="text-blue-600 hover:underline flex items-center gap-2 p-0"
+                          onClick={() => openFileInNewTab(currentVideo.file)}
                         >
                           <Download className="w-4 h-4" />
-                          Скачать файл
-                        </a>
+                          Открыть файл
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -219,7 +225,7 @@ export default function CoursePage({ params }) {
             </Card>
           ))}
 
-          {/* Вебинар (последний элемент) */}
+          {/* Вебинар */}
           {course.webinars && (
             <Card className="cursor-pointer transition-all hover:shadow-md">
               <CardHeader className="pb-2 flex items-center justify-between">

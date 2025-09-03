@@ -3,7 +3,7 @@ import { Button } from "./ui/button";
 
 export default function Action() {
   const handleRedirect = () => {
-    const phone = "77001234567";
+    const phone = "77018409229";
     const message = "Здравствуйте! Хочу записаться на консультацию.";
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
     window.location.href = url;

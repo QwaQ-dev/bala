@@ -30,7 +30,7 @@ export default function AdminDashboard() {
         .split("; ")
         .find((row) => row.startsWith("access_token="))
         ?.split("=")[1];
-      console.log("[AdminDashboard] Access token:", token || "none");
+
 
       // Fetch Checklists
       const checklistResponse = await fetch("/api/checklists", {
@@ -75,7 +75,7 @@ export default function AdminDashboard() {
       setCourses(coursesData);
       setArticles(articleData);
     } catch (error) {
-      console.error("[AdminDashboard] Failed to load data:", error.message);
+
       setError(error.message);
     } finally {
       setLoading(false);
@@ -108,7 +108,7 @@ export default function AdminDashboard() {
       setSuccess(`Чеклист с ID ${id} успешно удалён`);
       setChecklists(checklists.filter((checklist) => checklist.id !== id));
     } catch (error) {
-      console.error("[AdminDashboard] Delete checklist error:", error.message);
+
       setError(error.message);
     }
   };
@@ -139,7 +139,7 @@ export default function AdminDashboard() {
       setSuccess(`Статья с ID ${id} успешно удалена`);
       setArticles(articles.filter((article) => article.id !== id));
     } catch (error) {
-      console.error("[AdminDashboard] Delete article error:", error.message);
+
       setError(error.message);
     }
   };
@@ -170,7 +170,7 @@ export default function AdminDashboard() {
       setSuccess(`Курс с ID ${id} успешно удалён`);
       setCourses(courses.filter((course) => course.id !== id));
     } catch (error) {
-      console.error("[AdminDashboard] Delete course error:", error.message);
+
       setError(error.message);
     }
   };
@@ -191,7 +191,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+    <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 mt-10">
       <h1 className="text-2xl sm:text-3xl font-bold mb-6">Админ-панель</h1>
       {error && (
         <Alert variant="destructive" className="mb-4">

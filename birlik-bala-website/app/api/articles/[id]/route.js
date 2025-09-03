@@ -6,22 +6,17 @@ export async function GET(request, { params }) {
   console.log("[Article API] Called for id:", id, "at", new Date().toISOString());
 
   try {
-    const cookieHeader = request.headers.get("cookie") || "";
-    console.log("[Article API] Cookies:", cookieHeader || "none");
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    const token = request.cookies.get("access_token")?.value;
+
 
     const headers = {
       "Content-Type": "application/json",
-      "Cookie": cookieHeader,
     };
 
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
+
 
     const response = await fetch(`${BACKEND_URL}/api/v1/article/get/${id}`, {
       method: "GET",
