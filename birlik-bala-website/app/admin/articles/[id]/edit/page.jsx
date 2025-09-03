@@ -32,7 +32,7 @@ const CustomImage = Node.create({
       {
         ...HTMLAttributes,
         "data-path": path,
-        src: HTMLAttributes.src || `http://localhost:8080/uploads/articles/${path}`,
+        src: HTMLAttributes.src || `http://backend:8080/uploads/articles/${path}`,
         alt: path || "Image",
         style: "max-width: 500px; width: 100%; height: auto;",
       },
