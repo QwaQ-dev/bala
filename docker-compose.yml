@@ -41,9 +41,9 @@ services:
       context: ./birlik-bala-website
       dockerfile: Dockerfile
       args:
-        - NODE_ENV=production
+        - NODE_ENV=development  
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development  
       - NEXT_PUBLIC_API_URL=https://api.birlikbala.kz
       - PORT=3000
     ports:
