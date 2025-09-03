@@ -55,7 +55,7 @@ const CustomImage = Node.create({
             type: this.name,
             attrs: {
               "data-path": options["data-path"],
-              src: `http://localhost:8080/uploads/articles/${options["data-path"]}`,
+              src: `https://api.birlikbala.kz/uploads/articles/${options["data-path"]}`,
             },
           }),
     }
@@ -68,7 +68,7 @@ const CustomImage = Node.create({
       const path = node.attrs["data-path"] || ""
 
       img.setAttribute("data-path", path)
-      img.setAttribute("src", `http://localhost:8080/uploads/articles/${path}`)
+      img.setAttribute("src", `https://api.birlikbala.kz/uploads/articles/${path}`)
       img.setAttribute("alt", path || "Image")
       img.setAttribute("style", "max-width: 500px; width: 100%; height: auto;")
 
@@ -95,7 +95,7 @@ const Video = Node.create({
       {
         ...HTMLAttributes,
         "data-path": path,
-        src: `http://localhost:8080/uploads/articles/${path}`,
+        src: `https://api.birlikbala.kz/uploads/articles/${path}`,
         controls: true,
         style: "width: 100%; max-width: 600px; height: auto;",
       },
@@ -118,7 +118,7 @@ const Video = Node.create({
             type: this.name,
             attrs: {
               "data-path": options["data-path"],
-              src: `http://localhost:8080/uploads/articles/${options["data-path"]}`,
+              src: `https://api.birlikbala.kz/uploads/articles/${options["data-path"]}`,
             },
           }),
     }
@@ -131,7 +131,7 @@ const Video = Node.create({
       const path = node.attrs["data-path"] || ""
 
       video.setAttribute("data-path", path)
-      video.setAttribute("src", `http://localhost:8080/uploads/articles/${path}`)
+      video.setAttribute("src", `https://api.birlikbala.kz/uploads/articles/${path}`)
       video.setAttribute("controls", "true")
       video.setAttribute("style", "width: 100%; max-width: 600px; height: auto;")
 

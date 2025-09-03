@@ -90,7 +90,7 @@ export default function CoursesClient() {
             <div className="relative h-32 sm:h-48 bg-gray-100 flex-shrink-0">
               {course.img && (
                 <img
-                  src={`https://api.birlikbala.kz:8080${course.img}`}
+                  src={`https://api.birlikbala.kz${course.img}`}
                   alt={course.title}
                   className="object-cover w-full h-full"
                 />
