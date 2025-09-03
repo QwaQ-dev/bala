@@ -30,9 +30,9 @@ export default function NewCoursePage() {
   });
   const imageRef = useRef(null);
 
-  const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB
-  const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100 MB
-  const MAX_DIPLOMA_SIZE = 10 * 1024 * 1024; // 10 MB
+  const MAX_IMAGE_SIZE = 1000 * 1024 * 1024; // 10 MB
+  const MAX_VIDEO_SIZE = 10000 * 1024 * 1024; // 100 MB
+  const MAX_DIPLOMA_SIZE = 1000 * 1024 * 1024; // 10 MB
   const ALLOWED_VIDEO_TYPES = ["video/mp4"];
   const ALLOWED_EXTRA_FILE_TYPES = ["application/pdf", "image/jpeg", "image/png", "application/zip"];
 

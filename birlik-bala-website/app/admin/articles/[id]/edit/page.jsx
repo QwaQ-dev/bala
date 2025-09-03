@@ -152,8 +152,8 @@ const MenuBar = ({ editor, onAddMedia }) => {
       const file = e.target.files[0]
       if (!file) return
 
-      if (file.size > 100 * 1024 * 1024) {
-        toast.error(`Файл ${file.name} превышает лимит в 100 МБ`)
+      if (file.size > 100000 * 1024 * 1024) {
+        toast.error(`Файл ${file.name} превышает лимит в 100000 МБ`)
         return
       }
 
@@ -171,8 +171,8 @@ const MenuBar = ({ editor, onAddMedia }) => {
       const file = e.target.files[0]
       if (!file) return
 
-      if (file.size > 100 * 1024 * 1024) {
-        toast.error(`Файл ${file.name} превышает лимит в 100 МБ`)
+      if (file.size > 100000 * 1024 * 1024) {
+        toast.error(`Файл ${file.name} превышает лимит в 100000 МБ`)
         return
       }
 

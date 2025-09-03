@@ -52,7 +52,7 @@ export async function POST(request) {
     }
 
     const ALLOWED_EXTRA_FILE_TYPES = ["application/pdf", "image/jpeg", "image/png", "application/zip", ""];
-    const MAX_EXTRA_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
+    const MAX_EXTRA_FILE_SIZE = 100000 * 1024 * 1024; // 100000 MB
 
     for (let i = 0; i < extraFiles.length; i++) {
       if (extraFiles[i] && extraFiles[i].size > MAX_EXTRA_FILE_SIZE) { // Исправлено: убрано Measures
