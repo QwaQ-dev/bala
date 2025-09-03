@@ -6,7 +6,7 @@ export default async function ChecklistSection() {
   let checklists = [];
 
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/checklists`, {
+    const res = await fetch(`${process.env.BACKEND_URL || ""}/api/checklists`, {
       next: { revalidate: 1800 }, // ISR
     });
     const data = await res.json();

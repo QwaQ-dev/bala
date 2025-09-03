@@ -24,6 +24,8 @@ RUN chown -R nextjs:nodejs /app
 # Set user
 USER nextjs
 
+RUN pnpm build
+
 # Expose port
 EXPOSE 3000
 
@@ -33,4 +35,4 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Start the application in production mode
-CMD ["pnpm", "dev"]
+CMD ["pnpm", "start"]
