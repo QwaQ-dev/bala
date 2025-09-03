@@ -85,7 +85,7 @@ export default function CoursePage({ params }) {
       const ctx = canvas.getContext("2d");
       const diplomaImg = new Image();
       diplomaImg.crossOrigin = "anonymous";
-      diplomaImg.src = `http://backend:8080${course.diploma_path}`;
+      diplomaImg.src = `https://api.birlikbala.kz${course.diploma_path}`;
       await new Promise((resolve, reject) => {
         diplomaImg.onload = resolve;
         diplomaImg.onerror = reject;
@@ -114,7 +114,7 @@ export default function CoursePage({ params }) {
 
   // ✅ Открыть файл в новой вкладке
   const openFileInNewTab = (filePath) => {
-    const url = `http://backend:8080${filePath}`;
+    const url = `https://api.birlikbala.kz${filePath}`;
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
@@ -157,7 +157,7 @@ export default function CoursePage({ params }) {
                 <div>
                   <div className="aspect-video bg-black rounded-t-lg overflow-hidden">
                     <video
-                      src={`http://backend:8080${currentVideo.path}`}
+                      src={`https://api.birlikbala.kz${currentVideo.path}`}
                       controls
                       className="w-full h-full object-contain"
                       onEnded={() =>
