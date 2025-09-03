@@ -33,7 +33,7 @@ func main() {
 	log := setupLogger(cfg.Env)
 
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "http://localhost:3000",
+		AllowOrigins:     "https://birlikbala.kz",
 		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
 		AllowHeaders:     "Content-Type, Authorization",
 		AllowCredentials: true,
