@@ -1,10 +1,10 @@
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8080";
 
 export async function POST(request) {
-  console.log("[Admin Give Access API] Called at", new Date().toISOString());
+
   try {
     const cookieHeader = request.headers.get("cookie") || "";
-    console.log("[Admin Give Access API] Cookies:", cookieHeader || "none");
+
     const token = request.cookies.get("access_token")?.value;
 
     const headers = {
@@ -16,7 +16,7 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    console.log("[Admin Give Access API] Request body:", body);
+
 
     if (!body.user_id || !body.course_id) {
       console.error("[Admin Give Access API] Missing user_id or course_id");
@@ -37,10 +37,10 @@ export async function POST(request) {
     });
     clearTimeout(timeoutId);
 
-    console.log("[Admin Give Access API] Backend response status:", response.status);
-    console.log("[Admin Give Access API] Backend response headers:", [...response.headers.entries()]);
+
+
     const responseText = await response.text();
-    console.log("[Admin Give Access API] Backend response body:", responseText);
+
 
     if (!response.ok) {
       console.error("[Admin Give Access API] Backend error details:", responseText);
