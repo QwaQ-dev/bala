@@ -2,7 +2,7 @@ import HeroSection from "@/components/HeroSection";
 import CourseSection from "@/components/CourseSection";
 import ChecklistSection from "@/components/ChecklistSection";
 import ArticlesSection from "@/components/ArticlesSection";
-// import MethodologySection from "@/components/MethodologySection";
+import MethodologySection from "@/components/MethodologySection";
 import ConsultationSection from "@/components/ConsultationSection";
 import Footer from "@/components/Footer";
 import VideoExercises from "@/components/VideoExercises"
@@ -64,7 +64,7 @@ export default async function Home() {
       <VideoExercises/>
       <ChecklistSection />
       <ArticlesSection articles={articles} />
-      {/* <MethodologySection /> */}
+      <MethodologySection />
       <ConsultationSection />
       <Footer />
     </main>
