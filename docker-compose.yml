@@ -26,9 +26,9 @@ services:
       timeout: 5s
       retries: 5
     environment:
-      - POSTGRES_USER: postgres
-      - POSTGRES_PASSWORD: postgres
-      - POSTGRES_DB: bala
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=bala
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
