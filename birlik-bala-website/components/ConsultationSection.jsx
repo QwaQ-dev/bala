@@ -6,7 +6,7 @@ import { Check } from "lucide-react"
 
 export default function ConsultationSection() {
   const handleRedirect = (pkgName) => {
-    const phone = "77053245524"
+    const phone = "77018409229"
     const message = pkgName
       ? `Здравствуйте! Хочу записаться на ${pkgName}.`
       : "Здравствуйте! Хочу записаться на консультацию."

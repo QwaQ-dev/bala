@@ -62,7 +62,7 @@ export default function AuthPage() {
       });
 
       const data = await response.json();
-      console.log("[AuthPage] Ответ сервера:", data);
+
 
       if (response.ok || data.Message) {
         router.push("/courses");
@@ -73,7 +73,7 @@ export default function AuthPage() {
         setServerError(errorMessage);
       }
     } catch (error) {
-      console.error("[AuthPage] Ошибка соединения:", error.message);
+
       setServerError("Ошибка соединения с сервером");
     } finally {
       setIsLoading(false);
