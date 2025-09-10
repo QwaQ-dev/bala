@@ -29,6 +29,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=bala
+      - PGDATA=/var/lib/postgresql/data
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
