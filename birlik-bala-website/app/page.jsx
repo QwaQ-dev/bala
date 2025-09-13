@@ -28,33 +28,38 @@ async function safeFetchJson(url, options = {}) {
 export default async function Home() {
   let articles = [];
 
-  const data = await safeFetchJson("/api/articles", {
+try {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/articles`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
     },
-    next: { revalidate: 1800 },
+    next: { revalidate: 1800 }, // ISR каждые 10 секунд
   });
 
+  if (!res.ok) {
+    throw new Error(`Ошибка запроса: ${res.status}`);
+  }
 
-    if (Array.isArray(data.articles)) {
-      articles = data.articles
-        .slice(0, 3)
-        .map((article) => ({
-          ...article,
-          description: article.description || extractDescription(article.content),
-        }));
-    } else if (Array.isArray(data)) {
-      articles = data
-        .slice(0, 3)
-        .map((article) => ({
-          ...article,
-          description: article.description || extractDescription(article.content),
-        }));
-    } else {
+  const data = await res.json();
 
-      articles = [];
-    }
+  if (Array.isArray(data.articles)) {
+    articles = data.articles.slice(0, 3).map((article) => ({
+      ...article,
+      description: article.description || article.content?.slice(0, 150) + "...",
+    }));
+  } else if (Array.isArray(data)) {
+    articles = data.slice(0, 3).map((article) => ({
+      ...article,
+      description: extractDescription(article.description || article.content),
+    }));
+  } else {
+    articles = [];
+  }
+} catch (err) {
+  console.error("Ошибка загрузки статей:", err);
+  articles = [];
+}
 
 
   return (
